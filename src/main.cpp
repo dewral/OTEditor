@@ -5,9 +5,12 @@
 #include <QQuickWindow>
 #include <QTimer>
 #include <QDir>
+#include <QLocale>
 #include "editorbackend.h"
 int main(int argc,char **argv){
+    QGuiApplication::setAttribute(Qt::AA_DontUseNativeDialogs);
     QGuiApplication app(argc,argv);
+    QLocale::setDefault(QLocale(QLocale::English, QLocale::UnitedStates));
     app.setOrganizationName("Dewral");app.setApplicationName("OTEditor");
     QQuickStyle::setStyle("Basic");
     EditorBackend backend;QQmlApplicationEngine engine;
