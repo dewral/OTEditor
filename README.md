@@ -1,56 +1,63 @@
 # OTEditor
 
-Desktopowy edytor obiektów Tibii: **Qt 6 / QML + C++17**. Układ oparty na dostarczonej referencji ObjectBuilder: Info i Preview po lewej, katalog obiektów, obszar edycji, sprite'y po prawej oraz log na dole. Panele mają regulowaną szerokość.
+OTEditor is a desktop Tibia object editor built with **Qt 6, QML, and C++17**. Its workspace has an information and preview sidebar, an object browser, an object editor, a sprite browser, and a log panel. Panel widths are adjustable.
 
-## Uruchomienie
+## Getting started
 
-Po zbudowaniu paczki uruchom `dist/OTEditor.exe`. Nie wymaga instalacji Qt na komputerze docelowym; przenoś cały katalog `dist`, nie sam plik EXE.
+After building the portable package, run `dist/OTEditor.exe`. Keep the entire `dist` directory together; the executable alone does not include the required Qt files.
 
-1. File → Open client folder (`Ctrl+O`).
-2. Wybierz katalog zawierający DAT i SPR. Edytor automatycznie dołączy `items.otb`, `items.xml` i OTFI, jeżeli są dostępne w katalogu projektu lub jego standardowym sąsiedztwie.
-3. Ustaw wersję układu DAT (np. 772, 860, 1098). OTFI ma pierwszeństwo przy ustalaniu extended sprites, alpha, frame durations i frame groups. Wersja protokołu custom klienta może różnić się od wersji jego DAT.
-4. Wybierz obiekt. Dwuklik otwiera atrybuty. Dwuklik sprite'a otwiera przypisanie do slotu obiektu.
-5. `Ctrl+S` kompiluje bieżący projekt. `Ctrl+Shift+S` kompiluje kompletny projekt do nowego katalogu: DAT, SPR, OTFI oraz załadowane `items.otb` i `items.xml`.
+1. Choose **File → Open** (`Ctrl+O`) and select a folder containing DAT and SPR files.
+2. When available, the editor also loads `items.otb`, `items.xml`, and OTFI from the project folder or their usual nearby locations.
+3. Select the DAT format version, such as 772, 860, or 1098. OTFI settings take precedence for extended sprites, transparency, frame durations, and frame groups. A custom client's protocol version may differ from its DAT format version.
+4. Select an object to inspect it. Double-click an object to open its properties, or double-click a sprite to assign it to an object slot.
+5. Press `Ctrl+S` to compile the current project. `Ctrl+Shift+S` compiles the complete project into a new folder, including DAT, SPR, OTFI, and any loaded `items.otb` and `items.xml` files.
 
-## Zaimplementowane
+## Features
 
-- Wspólna sesja projektu dla DAT, edytowalnego SPR, OTFI, `items.otb` i `items.xml` przez lokalną bibliotekę `otformats`.
-- Jeśli klient nie ma `items.otb`, można utworzyć nowy plik z zakładki Attributes lub menu Tools. Plik trafia do wybranego katalogu serwerowego, a gdy go nie wskazano — do katalogu klienta. Polecenie Create Missing OTB Items dodaje pozostałe wpisy na podstawie DAT partiami i pokazuje postęp.
-- Wirtualizowane katalogi przedmiotów, outfitów, efektów, pocisków i sprite'ów; lista/siatka, filtr ID, ukrywanie obiektów bez przypisanych sprite'ów.
-- W katalogu obiektów Ctrl zaznacza pojedyncze pozycje, a Shift zaznacza zakres. Eksport obiektów i arkuszy animacji dla wielu zaznaczonych pozycji zapisuje osobny PNG na ID do wybranego folderu, nie nadpisując istniejących plików.
-- Podgląd z warstwami, skalowanie nearest-neighbor, szachownica przezroczystości, siatka pikseli, wybór klatki i wzorca.
-- Edycja flag i wymiarów przedmiotów, liczby klatek, warstw, wzorców oraz przypisań sprite'ów.
-- Tworzenie i duplikowanie przedmiotów; czyszczenie z zachowaniem ID, bez przesuwania identyfikatorów innych obiektów.
-- Undo/redo zmian atrybutów, przypisań i czyszczenia (100 operacji). Tworzenie/duplikowanie rozpoczyna nową historię.
-- Compile i Compile As zapisujące pełny zestaw plików projektu. Oryginalny OTFI jest zachowywany wraz z dodatkowymi ustawieniami; dla projektów bez OTFI tworzony jest zgodny plik opisowy.
-- Edycja SPR: zamiana sprite'a obrazem PNG 32×32, dodawanie nowych sprite'ów i czyszczenie slotu bez przesuwania identyfikatorów. Writer obsługuje RLE, standardowe i extended ID, RGB i kanał alpha.
-- Tools → Slicer otwiera dialog z linijkami, szachownicą i listą sprite'ów. Pozwala obracać i odbijać obraz, wybierać obszar siatką oraz powiększać podgląd. Crop zbiera kafelki w kolejności kolumnowej, zamienia magentę na przezroczystość i domyślnie pomija puste sprite'y; Import dodaje zebrane kafelki do SPR otwartego klienta.
-- Atomowy zapis DAT, SPR, OTB, XML i OTFI przez QSaveFile. Niezmienione bloki sprite'ów są kopiowane bez rekompresji.
-- Okno Export zapisuje arkusz obiektu do PNG, BMP lub JPG. Dla outfitów umieszcza kierunki w kolumnach, a klatki Idle i Walking w kolejnych wierszach bez przerwy między grupami. Można nazwać plik, wybrać folder, wyeksportować wiele zaznaczonych obiektów i w PNG wybrać przezroczyste tło. OBD jest widoczne jako niedostępne, dopóki eksport nie będzie zgodny z ObjectBuilderem.
-- Ochrona przed zamknięciem niezapisanych zmian, log, skróty klawiaturowe.
-- Menu pod prawym przyciskiem na obiekcie w siatce i liście: Replace (z innego ID w projekcie), Export, Edit, Duplicate, kopiowanie/wklejanie obiektu, wzorców/grafiki, właściwości DAT i atrybutów OTB, Remove oraz kopiowanie Client ID i Server ID z OTB. Wklejanie zachowuje docelowe ID. Schowki są niezależne i resetowane przy otwarciu projektu; Patterns obejmuje strukturę, sprite'y i animację, Properties — flagi i ich wartości bez zmiany grafiki. Bulk Edit i Compare pozostają nieaktywne.
-- Nieudane otwarcie innego klienta nie usuwa bieżącego projektu.
+- One project session for DAT, editable SPR, OTFI, `items.otb`, and `items.xml`, backed by the local `otformats` library.
+- Creation of a missing `items.otb` from the Attributes tab or Tools menu. The file is saved to the selected server folder, or to the client folder if no server folder is selected. **Create Missing OTB Items** adds remaining entries from DAT in batches and shows progress.
+- Virtualized browsers for items, outfits, effects, missiles, and sprites, with list and grid views, ID filtering, and an option to hide objects without assigned sprites.
+- Multi-selection in the object browser: Ctrl selects individual objects, and Shift selects a range. Batch export writes a separate file for each selected ID without overwriting existing files.
+- Layer-aware previews with nearest-neighbor scaling, transparency checkerboard, pixel grid, and frame and pattern selection.
+- Editing of item flags and dimensions, animation frames, layers, patterns, and sprite assignments.
+- Creating and duplicating items, and clearing an item while preserving its ID and later object IDs.
+- Undo/redo for attribute edits, sprite assignments, and clearing (up to 100 operations). Creating or duplicating an item starts a new undo history.
+- **Compile** and **Compile As** save the full project. Existing OTFI settings are preserved; projects without OTFI receive a compatible metadata file.
+- SPR editing: replace a sprite with a PNG of the configured sprite size, add sprites, or clear a slot without shifting IDs. The writer supports RLE, standard and extended IDs, RGB, and alpha.
+- **Tools → Slicer** opens a sprite-sheet workspace with rulers, a checkerboard, rotation, mirroring, grid selection, and zoom. **Crop** collects tiles in column order, converts magenta to transparency, and skips empty sprites by default; **Import** adds the tiles to the open client's SPR.
+- Atomic DAT, SPR, OTB, XML, and OTFI writes through `QSaveFile`. Unchanged sprite blocks are copied without recompression.
+- **Export** saves object sheets as PNG, BMP, or JPG. Outfit directions occupy columns; Idle and Walking frames continue in successive rows. Export supports a custom name and destination, multiple selected objects, and a transparent PNG background. OBD remains disabled until compatible export is implemented.
+- A warning before closing with unsaved changes, an activity log, and keyboard shortcuts.
+- Object context menus in both list and grid views: Replace, Export, Edit, Duplicate, copy/paste object, copy/paste patterns and graphics, copy/paste DAT properties, copy/paste OTB attributes, Remove, and copy Client or Server ID. Pasting preserves the target ID. Clipboards are independent and reset when opening another project. **Bulk Edit** and **Compare** remain disabled.
+- A failed attempt to open another client leaves the current project intact.
 
-## Inspekcja obiektu
+## Object editor
 
-Wybranie obiektu wyświetla w środkowym panelu Object Editor zakładki Texture, Properties i Attributes. Dwuklik przełącza panel na Properties. Texture zawiera zoom, klatki animacji (Film Roll), siatkę, granice crop oraz strukturę obiektu. Dla animowanych itemów i efektów pokazuje też minimum i maksimum czasu wybranej klatki oraz sumę czasów animacji; zmiany obsługują undo/redo. Podgląd układa wzorce Pattern X obok siebie, a Pattern Y/Z w kolejnych rzędach (do 256 widocznych wzorców). Wymiary, warstwy, wzorce i klatki outfitów, efektów i pocisków można zmieniać w panelu Texture; zmiany trafiają od razu do modelu DAT, obsługują undo/redo i zapisują się przy Compile. Properties grupuje właściwości i flagi DAT. Attributes pozwala edytować obsługiwane pola OTB, w tym nazwę synchronizowaną z items.xml. Pozostałe pola items.xml nie mają jeszcze formularza. Zapis plików projektu odbywa się przez Compile.
+The central **Object Editor** has **Texture**, **Properties**, and **Attributes** tabs. Double-clicking an object opens Properties. Texture provides zoom, animation frames, Film Roll, grid and crop guides, and object structure. Animated items and effects also show the selected frame's minimum and maximum duration and the animation's total duration; edits support undo/redo.
 
-Edit Pixels, Has Bones i osobna flaga Useable pozostają nieaktywne. Nazwy akcji poza None są obecnie prezentowane jako numery. Zakres dostępności pól zależy od wersji DAT. Nazwy Market muszą mieścić się w kodowaniu Latin-1 używanym przez ten format.
-## Zakres kolejnych etapów
+The preview arranges Pattern X variants side by side and Pattern Y/Z variants in subsequent rows, up to 256 visible patterns. Outfit, effect, and missile dimensions, layers, patterns, and frame counts can be changed in Texture. These changes update the DAT model immediately, support undo/redo, and are saved during Compile.
 
-To nadal nie jest pełny zamiennik [ObjectBuildera](https://github.com/punkice3407/ObjectBuilder). Pozostały: przypisywanie sprite'ów outfitom/efektom/pociskom i edycja ich flag, obsługa Has Bones, rysowanie pikseli bezpośrednio w aplikacji, import/eksport obiektów OBD, operacje masowe, formularze edycji pól OTB/XML i konwersja wersji klienta. OTB oraz XML są już częścią sesji i kompilacji, a nazwy OTB są synchronizowane z `items.xml`. Slicer importuje sprite'y z wybranego obszaru arkusza. Przeglądarka outfitów pokazuje pierwszą grupę animacji. Odtwarzanie podglądu ma stały interwał 150 ms; zapis zachowuje istniejące czasy klatek, a po zmianie liczby klatek inicjalizuje je na 100 ms. Nie deklarujemy sprawdzenia wszystkich wersji 7.10–13.10.
+Properties groups DAT flags and values. Attributes exposes supported OTB fields, including names synchronized with `items.xml`. Other `items.xml` fields do not yet have editing controls. Use Compile to save project files.
 
-## Budowanie w Windows
+**Edit Pixels**, **Has Bones**, and the separate **Useable** flag remain disabled. Action names other than None are currently shown as numbers. Available fields depend on the DAT version. Market names must fit the Latin-1 encoding used by the format.
 
-Wymagane: Qt 6.5+ (Core, Gui, Qml, Quick, QuickControls2, Test), CMake 3.24+, Ninja i kompilator zgodny z Qt. Skrypt jest skonfigurowany dla dostępnego lokalnie Qt 6.10.2 / MinGW 13.1.
+## Current limitations
+
+OTEditor is not yet a complete replacement for [ObjectBuilder](https://github.com/punkice3407/ObjectBuilder). Remaining work includes assigning sprites to outfits, effects, and missiles; editing their flags; Has Bones; drawing pixels in the app; OBD import/export; bulk operations; editing the remaining OTB/XML fields; and client-version conversion.
+
+OTB and XML already participate in loading and compilation, and OTB names are synchronized with `items.xml`. The slicer imports sprites from a selected sheet area. The outfit browser displays the first animation group. Preview playback uses a fixed 150 ms interval; saving preserves existing frame durations, and changing the frame count initializes new durations to 100 ms. Not every client version from 7.10 through 13.10 has been validated.
+
+## Building on Windows
+
+Requirements: Qt 6.5+ (Core, Gui, Qml, Quick, QuickControls2, Test), CMake 3.24+, Ninja, and a compiler compatible with your Qt installation. The script's defaults target a local Qt 6.10.2 / MinGW 13.1 installation.
 
 ```powershell
 ./scripts/build.ps1 -Deploy
 ```
 
-Jeśli `dist/OTEditor.exe` jest uruchomiony, skrypt umieszcza nową wersję w `dist/OTEditor.next.exe` i podmienia główny plik automatycznie po zamknięciu aplikacji. Nie zamyka uruchomionego edytora, więc przed wyjściem można zapisać bieżące zmiany.
+If `dist/OTEditor.exe` is running, the script stages the new build as `dist/OTEditor.next.exe` and replaces the main executable after the app closes. It does not close the editor, so current changes can be saved first.
 
-`QT_ROOT` pozwala zmienić katalog Qt. Ścieżki MinGW i Ninja są w skrypcie. Ręczne budowanie innym toolchainem:
+Set `QT_ROOT` to use another Qt installation. The script also contains local MinGW and Ninja paths. To build manually with another toolchain:
 
 ```powershell
 cmake -S . -B build -G Ninja -DCMAKE_PREFIX_PATH=C:/Qt/6.10.2/mingw_64 -DCMAKE_BUILD_TYPE=Release
@@ -58,21 +65,21 @@ cmake --build build
 ctest --test-dir build --output-on-failure
 ```
 
-Testy generują własne miniaturowe DAT/SPR w katalogu tymczasowym. Sprawdzają odczyt, undo/redo, pełną kompilację, surowe zachowanie niezmienionych bloków SPR, zapis RLE w RGB i RGBA, standardowe i extended liczniki, ponowny odczyt, dodatkowe flagi i animację, uszkodzone kategorie, eksport PNG, duplikowanie i walidację sprite'ów.
+Tests generate small DAT and SPR fixtures in a temporary directory. They cover parsing, undo/redo, complete compilation, preservation of unchanged SPR blocks, RGB/RGBA RLE writing, standard and extended counters, reloading, additional flags and animation data, malformed categories, PNG export, duplication, and sprite validation.
 
-Parametry diagnostyczne:
+Diagnostic launch options:
 
 ```powershell
 ./dist/OTEditor.exe --folder "C:/path/to/client" --version 1098
 ./dist/OTEditor.exe --folder "C:/path/to/client" --version 1098 --screenshot "C:/path/to/preview.png"
 ```
 
-## Struktura i pochodzenie
+## Project layout and provenance
 
-- `libs/otformats`: kopia biblioteki z projektu ModernItemEditor, z poprawkami lokalnymi. Projekt źródłowy nie został zmieniony.
-- `src/projectmodel.*`: wspólna sesja DAT/SPR/OTFI/OTB/XML oraz Compile/Compile As.
-- `src/editorbackend.cpp` i `src/editorbackend.h`: model obiektów, edycja, historia i dostawca obrazów. `src/editorbackend_slicer.cpp` oraz `src/editorbackend_export.cpp` zawierają odpowiednio cięcie sprite'ów i eksport obrazów.
-- `qml/Main.qml`: stan okna, menu, połączenia między panelami i oknami dialogowymi. `*Panel.qml` zawierają panele przestrzeni roboczej, a nazwane `*Dialog.qml` — okna poszczególnych narzędzi. Wspólne kontrolki są w `AssetToggle.qml`, `Tool.qml`, `Panel.qml` i `Checker.qml`.
-- `tests/`: regresje formatów i backendu.
+- `libs/otformats`: a copy of the library from ModernItemEditor with local fixes. The source project was not modified.
+- `src/projectmodel.*`: the shared DAT/SPR/OTFI/OTB/XML session and Compile/Compile As.
+- `src/editorbackend.cpp` and `src/editorbackend.h`: object model, editing, history, and image provider. `src/editorbackend_slicer.cpp` and `src/editorbackend_export.cpp` contain sprite slicing and image export.
+- `qml/Main.qml`: window state, menus, and connections between panels and dialogs. Named `*Panel.qml` and `*Dialog.qml` files contain workspace panels and tools. Shared controls are in `AssetToggle.qml`, `Tool.qml`, `Panel.qml`, and `Checker.qml`.
+- `tests/`: format and backend regression tests.
 
-Repozytorium ObjectBuilder służyło jako referencja funkcjonalna; jego kod nie został skopiowany. Dane graficzne klienta nie są dołączone do dystrybucji.
+ObjectBuilder was used as a functional reference; its code was not copied. Client graphics are not included in the distribution.
