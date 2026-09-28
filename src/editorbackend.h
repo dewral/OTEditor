@@ -117,6 +117,7 @@ public:
     Q_INVOKABLE int slicerImport();
     Q_INVOKABLE QVariantMap frameDuration(int category, int id, int group, int frame) const;
     Q_INVOKABLE bool setFrameDuration(int category, int id, int group, int frame, int minimum, int maximum);
+    Q_INVOKABLE bool setAnimationSettings(int category, int id, int group, int mode, int loopCount, int startFrame);
     Q_INVOKABLE bool duplicateFrame(int category, int id, int group, int frame);
     Q_INVOKABLE bool deleteFrame(int category, int id, int group, int frame);
     Q_INVOKABLE int optimizeFrameDurations(bool items, bool outfits, bool effects, int minimum, int maximum);

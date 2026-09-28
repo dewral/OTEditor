@@ -135,7 +135,16 @@ Item {
         if((clientVersion>=710 && clientVersion<=792) || clientVersion>=1092)flags.push(["Wrappable","wrappable"],["Unwrappable","unwrappable"])
         return flags
     }
-    Timer { interval: 150; repeat: true; running: inspector.visible && inspector.animate && (inspector.activeFrameGroup.frames||1)>1; onTriggered: inspector.previewFrame=(inspector.previewFrame+1)%inspector.activeFrameGroup.frames }
+    Timer {
+        interval: {
+            let revision=Backend.revision
+            let duration=Backend.frameDuration(Backend.category,Number(Backend.details.itemId||0),inspector.isOutfit ? inspector.outfitGroup : 0,inspector.previewFrame)
+            return Math.max(1,Math.round((Number(duration.minimum||150)+Number(duration.maximum||150))/2))
+        }
+        repeat: true
+        running: inspector.visible && inspector.animate && (inspector.activeFrameGroup.frames||1)>1
+        onTriggered: inspector.previewFrame=(inspector.previewFrame+1)%inspector.activeFrameGroup.frames
+    }
 
     component NumberField: RowLayout {
         id: numberField

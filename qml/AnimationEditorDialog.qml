@@ -21,6 +21,9 @@ Dialog {
         let data = backend.frameDuration(backend.category, objectId, animationGroup.value, animationFrame.value);
         animationMinimum.value = Number(data.minimum || 100);
         animationMaximum.value = Number(data.maximum || 100);
+        animationMode.currentIndex = Number(data.mode || 0);
+        animationLoop.value = Number(data.loopCount || 0);
+        animationStart.value = Number(data.startFrame || 0);
     }
     onOpened: refreshDuration()
     ColumnLayout {
@@ -89,6 +92,25 @@ Dialog {
             Layout.alignment: Qt.AlignRight
             enabled: Number(animationDialog.duration.frames || 1) > 1 && animationMinimum.value <= animationMaximum.value
             onClicked: backend.setFrameDuration(backend.category, animationDialog.objectId, animationGroup.value, animationFrame.value, animationMinimum.value, animationMaximum.value)
+        }
+        RowLayout {
+            Label { text: "Mode"; Layout.preferredWidth: 105 }
+            ComboBox { id: animationMode; model: ["Asynchronous", "Synchronous"]; Layout.fillWidth: true }
+        }
+        RowLayout {
+            Label { text: "Loop count"; Layout.preferredWidth: 105 }
+            SpinBox { id: animationLoop; from: 0; to: 1000000; editable: true; Layout.fillWidth: true }
+        }
+        RowLayout {
+            Label { text: "Start frame"; Layout.preferredWidth: 105 }
+            SpinBox { id: animationStart; from: 0; to: Math.max(0,Number(animationDialog.duration.frames||1)-1); editable: true; Layout.fillWidth: true }
+        }
+        Button {
+            text: "Apply playback settings"
+            Layout.alignment: Qt.AlignRight
+            enabled: Number(animationDialog.duration.frames || 1) > 1
+            onClicked: backend.setAnimationSettings(backend.category,animationDialog.objectId,animationGroup.value,
+                                                    animationMode.currentIndex,animationLoop.value,animationStart.value)
         }
         RowLayout {
             Layout.fillWidth: true

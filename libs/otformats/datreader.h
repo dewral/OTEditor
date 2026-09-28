@@ -189,6 +189,7 @@ public:
     bool replaceItems(int firstRow, const std::vector<ClientItem> &items);
     bool setFrameDuration(int category, int row, int group, int frame, quint32 minimum, quint32 maximum);
     bool duplicateFrame(int category, int row, int group, int frame);
+    bool setAnimationSettings(int category, int row, int group, int mode, int loopCount, int startFrame);
     bool deleteFrame(int category, int row, int group, int frame);
     int optimizeFrameDurations(bool items, bool outfits, bool effects, quint32 minimum, quint32 maximum);
     int convertFrameDurations(bool enabled, quint32 minimum, quint32 maximum);

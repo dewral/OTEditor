@@ -1192,6 +1192,29 @@ bool DatReader::setFrameDuration(int category,int row,int group,int frame,quint3
     if(category==0)emit dataChanged(index(row),index(row));
     return true;
 }
+bool DatReader::setAnimationSettings(int category,int row,int group,int mode,int loopCount,int startFrame) {
+    if (!frameDurations() || category<0 || category>3 || mode<0 || mode>1 || loopCount<0) return false;
+    auto &objects=category==1 ? m_outfits : category==2 ? m_effects : category==3 ? m_missiles : m_items;
+    if (row<0 || row>=int(objects.size())) return false;
+    auto &item=objects[size_t(row)];
+    ClientFrameGroup *selected=nullptr;
+    if (category==1 && !item.frame_groups.empty()) {
+        if (group<0 || group>=int(item.frame_groups.size())) return false;
+        selected=&item.frame_groups[size_t(group)];
+    } else if (group!=0) return false;
+    const int frames=selected ? selected->frames : item.frames;
+    if (frames<2 || startFrame<0 || startFrame>=frames) return false;
+    QByteArray &data=selected ? selected->animation_data : item.animation_data;
+    if (data.size()!=6+frames*8 && !updateDuration(data,frames,0,100,100)) return false;
+    data[0]=char(mode);
+    qToLittleEndian<quint32>(quint32(loopCount),reinterpret_cast<uchar *>(data.data()+1));
+    data[5]=char(startFrame);
+    if (selected && group==0) item.animation_data=data;
+    item.modified=true;
+    if (!m_dirty) { m_dirty=true;emit dirtyChanged(); }
+    if (category==0) emit dataChanged(index(row),index(row));
+    return true;
+}
 bool DatReader::duplicateFrame(int category,int row,int group,int frame) {
     if(category<0 || category>3)return false;
     auto &objects=category==1 ? m_outfits : category==2 ? m_effects : category==3 ? m_missiles : m_items;

@@ -266,10 +266,13 @@ QVariantMap EditorBackend::frameDuration(int category,int id,int group,int frame
         data=&selected.animation_data;frames=selected.frames;
     }
     if(frame<0 || frame>=frames)return {};
-    if(data->size()!=6+frames*8)return {{"minimum",100},{"maximum",100},{"frames",frames}};
+    if(data->size()!=6+frames*8)return {{"minimum",100},{"maximum",100},{"frames",frames},
+        {"mode",0},{"loopCount",0},{"startFrame",0}};
     const uchar *bytes=reinterpret_cast<const uchar *>(data->constData()+6+frame*8);
     return {{"minimum",qFromLittleEndian<quint32>(bytes)},
-            {"maximum",qFromLittleEndian<quint32>(bytes+4)},{"frames",frames}};
+            {"maximum",qFromLittleEndian<quint32>(bytes+4)},{"frames",frames},
+            {"mode",quint8(data->at(0))},{"loopCount",qFromLittleEndian<quint32>(reinterpret_cast<const uchar *>(data->constData()+1))},
+            {"startFrame",quint8(data->at(5))}};
 }
 bool EditorBackend::setFrameDuration(int category,int id,int group,int frame,int minimum,int maximum) {
     const int row=id-(category==0?100:1);
@@ -281,6 +284,16 @@ bool EditorBackend::setFrameDuration(int category,int id,int group,int frame,int
     if(m_undo.size()>100)m_undo.erase(m_undo.begin());
     m_redo.clear();refresh();
     message(QStringLiteral("Updated animation frame duration"));return true;
+}
+bool EditorBackend::setAnimationSettings(int category,int id,int group,int mode,int loopCount,int startFrame) {
+    const int row=id-(category==0?100:1);
+    const auto *current=loaded()?m_project.dat()->objectAt(category,row):nullptr;
+    if (!current) return false;
+    const ClientItem before=*current;
+    if (!m_project.dat()->setAnimationSettings(category,row,group,mode,loopCount,startFrame)) return false;
+    m_undo.push_back({category,row,before,*m_project.dat()->objectAt(category,row)});
+    if (m_undo.size()>100) m_undo.erase(m_undo.begin());
+    m_redo.clear();refresh();message("Updated animation playback settings");return true;
 }
 bool EditorBackend::duplicateFrame(int category,int id,int group,int frame) {
     if(!loaded() || !m_project.dat()->duplicateFrame(category,id-(category==0?100:1),group,frame))return false;
@@ -684,7 +697,8 @@ int EditorBackend::bulkSetItemAttribute(const QString &key,const QVariant &value
 QVariantMap EditorBackend::compareSelectedObjects() const {
     QVariantMap result;
     if (!loaded() || m_selectedRows.size()!=2) { result.insert("error","Select exactly two objects"); return result; }
-    auto it=m_selectedRows.cbegin(); const int firstRow=*it++; const int secondRow=*it;
+    auto it=m_selectedRows.cbegin(); const int rowA=*it++; const int rowB=*it;
+    const int firstRow=qMin(rowA,rowB),secondRow=qMax(rowA,rowB);
     const auto *first=m_project.dat()->objectAt(m_category,firstRow);
     const auto *second=m_project.dat()->objectAt(m_category,secondRow);
     if (!first || !second) { result.insert("error","Selection is unavailable"); return result; }

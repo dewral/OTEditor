@@ -336,6 +336,11 @@ private slots:
     QCOMPARE(backend.frameDuration(0,100,0,3).value("minimum").toInt(),80);
     backend.undo(); QCOMPARE(backend.frameDuration(0,100,0,3).value("minimum").toInt(),100);
     backend.redo(); QCOMPARE(backend.frameDuration(0,100,0,3).value("maximum").toInt(),160);
+    QVERIFY(backend.setAnimationSettings(0,100,0,1,4,2));
+    QCOMPARE(backend.frameDuration(0,100,0,0).value("mode").toInt(),1);
+    QCOMPARE(backend.frameDuration(0,100,0,0).value("loopCount").toInt(),4);
+    QCOMPARE(backend.frameDuration(0,100,0,0).value("startFrame").toInt(),2);
+    QVERIFY(!backend.setAnimationSettings(0,100,0,1,4,8));
     backend.setCategory(2); backend.jump(1);
     QCOMPARE(backend.details().value("frames").toInt(),3);
     QVERIFY(backend.setFrameDuration(2,1,0,1,120,240));
@@ -358,6 +363,7 @@ private slots:
     EditorBackend reopened; QVERIFY2(reopened.openFolder(dir.path(),1098),qPrintable(reopened.status()));
     QCOMPARE(reopened.frameDuration(0,100,0,3).value("maximum").toInt(),160);
     QCOMPARE(reopened.frameDuration(2,1,0,1).value("minimum").toInt(),120);
+    QCOMPARE(reopened.frameDuration(0,100,0,0).value("loopCount").toInt(),4);
  }
  void frameDurationsConverterRoundTrip() {
     QTemporaryDir dir; QVERIFY(dir.isValid()); fixture(dir.path());
