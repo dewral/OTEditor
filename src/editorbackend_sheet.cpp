@@ -116,6 +116,7 @@ bool EditorBackend::saveTextureEdit()
     if (!current)
         return false;
     m_undo.push_back({m_category, m_selected, m_textureEdits.take(textureEditKey()), *current});
+    m_textureImportedSprites.remove(textureEditKey());
     if (m_undo.size() > 100)
         m_undo.erase(m_undo.begin());
     refresh();
@@ -128,7 +129,9 @@ bool EditorBackend::resetTextureEdit()
     if (!textureEditPending())
         return false;
     const ClientItem before = m_textureEdits.take(textureEditKey());
+    const QSet<quint32> imported = m_textureImportedSprites.take(textureEditKey());
     m_project.dat()->restoreObject(m_category, m_selected, before);
+    m_project.sprites()->discardImportedSprites(imported, m_project.dat()->usedSpriteIds());
     refresh();
     message(QStringLiteral("Reset texture changes for object %1.").arg(before.id));
     return true;
@@ -148,6 +151,7 @@ void EditorBackend::commitTextureEdits()
     if (m_undo.size() > 100)
         m_undo.erase(m_undo.begin(), m_undo.end() - 100);
     m_textureEdits.clear();
+    m_textureImportedSprites.clear();
     refresh();
 }
 
@@ -234,6 +238,7 @@ bool EditorBackend::importObjectImage(const QString &fileUrl, int groupIndex, in
         edited.modified = true;
         m_project.dat()->restoreObject(m_category, m_selected, edited);
         stageTextureEdit(before);
+        m_textureImportedSprites[textureEditKey()].insert(quint32(id));
         message(QStringLiteral("Imported image into object %1, sprite %2").arg(edited.id).arg(id));
         return true;
     }
@@ -353,6 +358,9 @@ bool EditorBackend::importObjectImage(const QString &fileUrl, int groupIndex, in
     edited.modified = true;
     m_project.dat()->restoreObject(m_category, m_selected, edited);
     stageTextureEdit(before);
+    auto &imported = m_textureImportedSprites[textureEditKey()];
+    for (int id = firstId; id < firstId + tiles.size(); ++id)
+        imported.insert(quint32(id));
     message(QStringLiteral("Imported %1 sprites into object %2%3.")
                 .arg(tiles.size()).arg(edited.id)
                 .arg(detectedSize ? QStringLiteral(" (dimensions detected from image)") : QString()));

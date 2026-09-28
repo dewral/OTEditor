@@ -75,6 +75,7 @@ public:
     bool hasSpriteData(quint32 spriteId) const;
     // Keeps IDs stable: the entry becomes an empty sprite instead of shifting IDs.
     Q_INVOKABLE bool removeSprite(int spriteId);
+    void discardImportedSprites(const QSet<quint32> &ids, const QSet<quint32> &usedIds);
 
     Q_INVOKABLE QString toLocalFile(const QUrl &url) const { return url.toLocalFile(); }
 

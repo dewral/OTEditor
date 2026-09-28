@@ -62,6 +62,7 @@ private slots:
     QVERIFY(backend.resetTextureEdit());
     QVERIFY(!backend.textureEditPending());
     QCOMPARE(backend.details().value("itemWidth").toInt(),1);
+    QCOMPARE(backend.spriteCount(),originalSprites);
     QVERIFY(backend.importObjectImage(imagePath,0,0,0,0,0,0));
     QVERIFY(backend.assignSpriteToCell(0,0,0,0,1,1,1));
     QVERIFY(backend.saveTextureEdit());
@@ -74,7 +75,7 @@ private slots:
     QImage invalid(48,32,QImage::Format_ARGB32); invalid.fill(Qt::cyan);
     const QString invalidPath=dir.path()+"/invalid.png"; QVERIFY(invalid.save(invalidPath));
     QVERIFY(!backend.importObjectImage(invalidPath,0,0,0,0,0,0));
-    QCOMPARE(backend.spriteCount(),originalSprites+8);
+    QCOMPARE(backend.spriteCount(),originalSprites+4);
     QVERIFY(backend.assignSpriteToCell(0,0,0,0,0,0,1));
     QVERIFY(backend.textureEditPending());
     QVERIFY2(backend.compile(),qPrintable(backend.status()));
@@ -118,6 +119,7 @@ private slots:
     combined.fill(Qt::blue);
     const QString combinedPath=dir.path()+"/combined.png"; QVERIFY(combined.save(combinedPath));
     QVERIFY(backend.importObjectImage(combinedPath,1,0,0,0,0,0));
+    const int spritesBeforeReset=backend.spriteCount()-4;
     groups=backend.details().value("frameGroups").toList();
     for(const auto &group:groups) {
         const auto ids=group.toMap().value("spriteIds").toList();
@@ -125,6 +127,7 @@ private slots:
         QVERIFY(ids[0].toInt()>0 && ids[1].toInt()>0);
     }
     QVERIFY(backend.resetTextureEdit());
+    QCOMPARE(backend.spriteCount(),spritesBeforeReset);
     groups=backend.details().value("frameGroups").toList();
     QCOMPARE(groups[0].toMap().value("spriteIds").toList(),QVariantList({0,0}));
     QCOMPARE(groups[1].toMap().value("spriteIds").toList(),walking);

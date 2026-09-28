@@ -76,7 +76,7 @@ bool EditorBackend::openFolder(const QString &url,int version,bool alpha,const Q
     m_selectedRows.clear();if(m_selected>=0)m_selectedRows.insert(m_selected);m_selectionAnchor=m_selected;notifySelection();
     m_version=version;m_folder=m_project.folder();m_alpha=m_project.transparency();m_extended=m_project.extended();
     m_durations=m_project.frameDurations();m_groups=m_project.frameGroups();
-    m_undo.clear();m_redo.clear();m_textureEdits.clear();m_objectCopy.reset();m_patternsCopy.reset();m_propertiesCopy.reset();m_serverAttributesCopy.clear();++m_revision;rebuild();
+    m_undo.clear();m_redo.clear();m_textureEdits.clear();m_textureImportedSprites.clear();m_objectCopy.reset();m_patternsCopy.reset();m_propertiesCopy.reset();m_serverAttributesCopy.clear();++m_revision;rebuild();
     message(QString("Loaded %1 items, %2 outfits, %3 effects, %4 missiles and %5 sprites%6%7.")
                 .arg(m_project.dat()->categoryCount(0)).arg(m_project.dat()->categoryCount(1))
                 .arg(m_project.dat()->categoryCount(2)).arg(m_project.dat()->categoryCount(3))

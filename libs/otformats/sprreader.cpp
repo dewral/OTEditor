@@ -436,6 +436,37 @@ bool SprReader::removeSprite(int spriteId)
     emit dataChanged(index(spriteId - 1), index(spriteId - 1));
     return true;
 }
+void SprReader::discardImportedSprites(const QSet<quint32> &ids, const QSet<quint32> &usedIds)
+{
+    if (!m_loaded || ids.isEmpty()) return;
+    const uint32_t oldCount = m_spriteCount;
+    uint32_t newCount = oldCount;
+    while (newCount > 0 && ids.contains(newCount) && !usedIds.contains(newCount))
+        --newCount;
+    if (newCount < oldCount) {
+        beginRemoveRows({}, int(newCount), int(oldCount) - 1);
+        for (uint32_t id = newCount + 1; id <= oldCount; ++id)
+            m_modifiedSprites.remove(id);
+        m_offsets.resize(int(newCount));
+        if (!m_compactedBlocks.isEmpty()) m_compactedBlocks.resize(int(newCount));
+        m_spriteCount = newCount;
+        endRemoveRows();
+        emit spriteCountChanged();
+    }
+    int firstCleared = std::numeric_limits<int>::max();
+    int lastCleared = -1;
+    for (quint32 id : ids) {
+        if (id < 1 || id > newCount || usedIds.contains(id)) continue;
+        m_modifiedSprites.insert(id, QImage());
+        firstCleared = qMin(firstCleared, int(id) - 1);
+        lastCleared = qMax(lastCleared, int(id) - 1);
+    }
+    if (newCount == oldCount && lastCleared < 0) return;
+    clearImageCaches();
+    m_dirty = true;
+    emit dirtyChanged();
+    if (lastCleared >= 0) emit dataChanged(index(firstCleared), index(lastCleared));
+}
 int SprReader::clearSprites(const QSet<quint32> &ids) {
     if(!m_loaded)return 0;
     int count=0;

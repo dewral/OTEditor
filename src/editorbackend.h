@@ -171,6 +171,7 @@ private:
     QHash<int,int> m_visiblePositions;
     std::vector<Edit> m_undo,m_redo;
     QHash<quint64, ClientItem> m_textureEdits;
+    QHash<quint64, QSet<quint32>> m_textureImportedSprites;
     int m_selected=-1, m_category=0, m_revision=0, m_version=1098;
     QSet<int> m_selectedRows;
     int m_selectionAnchor=-1;
