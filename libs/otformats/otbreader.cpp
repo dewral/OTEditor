@@ -639,6 +639,13 @@ bool OtbReader::setValue(int row, const QString &key, const QVariant &value)
 {
     if (row < 0 || row >= static_cast<int>(m_items.size()))
         return false;
+    if (key == "serverId" || key == "clientId") {
+        bool valid = false;
+        const uint32_t id = value.toUInt(&valid);
+        if (!valid || id < (key == "serverId" ? 1u : 100u) || id > 65535u) return false;
+        const int existing = key == "serverId" ? rowForServerId(int(id)) : rowForClientId(int(id));
+        if (existing >= 0 && existing != row) return false;
+    }
     OtbItem &item = m_items[static_cast<size_t>(row)];
     auto flag = [&item](uint32_t bit, bool on) {
         item.flags = on ? (item.flags | bit) : (item.flags & ~bit);

@@ -647,6 +647,12 @@ Item {
                     Button { text: "Create server item"; visible: inspector.isItem && Boolean(Backend.info.otb) && Backend.serverId<0; enabled: inspector.editable && Number(inspector.draft.itemId||0)<=65535; onClicked: Backend.createServerItem() }
                     Section { title: "Identity"; visible: Backend.serverId>=0
                         ColumnLayout { anchors.left: parent.left; anchors.right: parent.right
+                            Repeater { model: [["Server ID","serverId",1],["Client ID","clientId",100]]
+                                RowLayout { required property var modelData; Layout.fillWidth: true
+                                    Label { text: modelData[0]; Layout.preferredWidth: 125 }
+                                    SpinBox { Layout.fillWidth: true; from: modelData[2]; to: 65535; value: Number(inspector.serverDraft[modelData[1]]||modelData[2]); editable: true; onValueModified: inspector.editServer(modelData[1],value) }
+                                }
+                            }
                             Repeater { model: [["Name","name"],["Description","description"]]
                                 RowLayout { required property var modelData; Layout.fillWidth: true
                                     Label { text: modelData[0]; Layout.preferredWidth: 125 }

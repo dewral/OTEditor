@@ -215,7 +215,9 @@ QVariantMap EditorBackend::info() const {
     if(metadataController.isEmpty()||metadataController.compare("default",Qt::CaseInsensitive)==0)
         metadataController=QStringLiteral("Default");
     return {{"version",QString::number(m_version/100)+"."+QString::number(m_version%100).rightJustified(2,'0')},{"folder",m_project.folder()},{"dat",QFileInfo(m_project.dat()->filePath()).fileName()},
-    {"otbVersion",otbVersion},{"attributes",attributes},
+    {"otbVersion",otbVersion},{"otbMajor",m_project.otbLoaded()?int(m_project.otb()->majorVersion()):0},
+    {"otbMinor",m_project.otbLoaded()?int(m_project.otb()->minorVersion()):0},
+    {"otbBuild",m_project.otbLoaded()?int(m_project.otb()->buildNumber()):0},{"attributes",attributes},
     {"spriteDimension",QString("%1x%1").arg(m_project.spriteSize())},
     {"metadataController",metadataController},
     {"signature",QString::number(m_project.dat()->signature(),16).toUpper()},{"items",m_project.dat()->categoryCount(0)},{"outfits",m_project.dat()->categoryCount(1)},{"effects",m_project.dat()->categoryCount(2)},{"missiles",m_project.dat()->categoryCount(3)},
@@ -500,6 +502,7 @@ bool EditorBackend::setServerAttributes(const QVariantMap &values) {
     const int row = otb->rowForServerId(serverId());
     const QVariantMap current = otb->detailsAt(row);
     const QHash<QString, QPair<int,int>> numeric = {
+        {"serverId",{1,65535}}, {"clientId",{100,65535}},
         {"groupId",{0,15}}, {"speed",{0,65535}}, {"maxReadWriteLength",{0,65535}},
         {"maxReadLength",{0,65535}}, {"minimapColor",{0,65535}}, {"wareId",{0,65535}},
         {"lightLevel",{0,255}}, {"lightColor",{0,255}}, {"stackOrder",{-128,127}}};
@@ -514,6 +517,8 @@ bool EditorBackend::setServerAttributes(const QVariantMap &values) {
         bool ok=false; const qlonglong n=it.value().toLongLong(&ok);
         const auto bounds=numeric.value(it.key());
         if (!ok || n<bounds.first || n>bounds.second) return false;
+        if (it.key()=="serverId" && otb->rowForServerId(int(n))>=0 && otb->rowForServerId(int(n))!=row) return false;
+        if (it.key()=="clientId" && otb->rowForClientId(int(n))>=0 && otb->rowForClientId(int(n))!=row) return false;
     }
     bool modified=false;
     for (auto it=values.cbegin(); it!=values.cend(); ++it) {
@@ -529,6 +534,7 @@ bool EditorBackend::copyServerAttributes() {
     if (attributes.isEmpty()) return false;
     m_serverAttributesCopy.clear();
     const QStringList keys={"name","description","groupId","speed","maxReadWriteLength",
+        "serverId","clientId",
         "maxReadLength","minimapColor","wareId","lightLevel","lightColor","stackOrder",
         "unpassable","blockMissiles","blockPathfinder","hasElevation","useable","pickupable",
         "moveable","stackable","alwaysOnTop","readable","rotatable","hangable","hookEast",
@@ -559,6 +565,50 @@ bool EditorBackend::createOtbFile() {
     ++m_revision; emit changed();
     message(QStringLiteral("Created items.otb. Use Create Missing OTB Items to add the remaining client items."));
     return true;
+}
+bool EditorBackend::reloadSelectedOtbItem() {
+    if (serverId()<0) return false;
+    auto *otb=m_project.otb();
+    const int row=otb->rowForServerId(serverId());
+    if (row<0 || !otb->reloadItem(row)) return false;
+    ++m_revision; emit changed(); message("Reloaded selected OTB item from its client object");
+    return true;
+}
+bool EditorBackend::updateOtbVersion(int major,int minor,int build) {
+    if (!m_project.otbLoaded() || major<0 || minor<0 || build<0) return false;
+    m_project.otb()->setOtbVersion(quint32(major),quint32(minor),quint32(build));
+    ++m_revision; emit changed(); message("Updated OTB version");
+    return true;
+}
+QVariantMap EditorBackend::compareOtbFile(const QString &fileUrl) const {
+    QVariantMap result;
+    if (!m_project.otbLoaded()) { result.insert("error","No items.otb is loaded"); return result; }
+    OtbReader other;
+    if (!other.loadFile(path(fileUrl))) { result.insert("error",other.errorString()); return result; }
+    const OtbReader *current=m_project.otb();
+    int added=0,removed=0,changed=0;
+    QVariantList differences;
+    const QStringList keys={"clientId","name","description","groupId","speed","maxReadWriteLength",
+        "maxReadLength","minimapColor","wareId","lightLevel","lightColor","stackOrder","unpassable",
+        "blockMissiles","blockPathfinder","hasElevation","useable","pickupable","moveable","stackable",
+        "alwaysOnTop","readable","rotatable","hangable","hookEast","hookSouth","allowDistRead",
+        "clientDuration","clientCharges","ignoreLook","animation","fullGround","forceUse"};
+    for (int row=0;row<current->itemCount();++row) {
+        const auto left=current->detailsAt(row);
+        const int id=left.value("serverId").toInt();
+        const int otherRow=other.rowForServerId(id);
+        if (otherRow<0) { ++removed; differences.append(QString("Only in current: server ID %1").arg(id)); continue; }
+        const auto right=other.detailsAt(otherRow);
+        QStringList fields;
+        for (const QString &key:keys) if (left.value(key)!=right.value(key)) fields.append(key);
+        if (!fields.isEmpty()) { ++changed; differences.append(QString("Server ID %1: %2").arg(id).arg(fields.join(", "))); }
+    }
+    for (int row=0;row<other.itemCount();++row) {
+        const int id=other.detailsAt(row).value("serverId").toInt();
+        if (current->rowForServerId(id)<0) { ++added; differences.append(QString("Only in comparison: server ID %1").arg(id)); }
+    }
+    result.insert("added",added); result.insert("removed",removed); result.insert("changed",changed);
+    result.insert("differences",differences); return result;
 }
 void EditorBackend::copyId(bool server) {
     if(!loaded()||m_selected<0)return;

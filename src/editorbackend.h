@@ -68,6 +68,9 @@ public:
     Q_INVOKABLE bool pasteServerAttributes();
     Q_INVOKABLE bool createServerItem();
     Q_INVOKABLE bool createOtbFile();
+    Q_INVOKABLE bool reloadSelectedOtbItem();
+    Q_INVOKABLE bool updateOtbVersion(int major, int minor, int build);
+    Q_INVOKABLE QVariantMap compareOtbFile(const QString &fileUrl) const;
     bool compiling() const { return m_compiling; }
     int compileProgress() const { return m_compileProgress; }
     QString compileStage() const { return m_compileStage; }

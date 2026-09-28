@@ -292,6 +292,21 @@ ApplicationWindow {
                 enabled: Boolean(Backend.info.otb)
                 onTriggered: Backend.reloadItemAttributes()
             }
+            Action {
+                text: "Reload Selected OTB Item"
+                enabled: Backend.serverId >= 0
+                onTriggered: Backend.reloadSelectedOtbItem()
+            }
+            Action {
+                text: "Update OTB Version..."
+                enabled: Boolean(Backend.info.otb)
+                onTriggered: otbVersionDialog.open()
+            }
+            Action {
+                text: "Compare items.otb..."
+                enabled: Boolean(Backend.info.otb)
+                onTriggered: compareOtbDialog.open()
+            }
         }
         CompactDropdown {
             title: "Help"
@@ -798,6 +813,57 @@ ApplicationWindow {
         id: durationOptimizer
         backend: Backend
         owner: win
+    }
+    FileDialog {
+        id: compareOtbDialog
+        title: "Compare with items.otb"
+        fileMode: FileDialog.OpenFile
+        nameFilters: ["OTB files (*.otb)"]
+        onAccepted: {
+            const comparison = Backend.compareOtbFile(selectedFile.toString());
+            comparisonText.text = comparison.error ||
+                ("Changed: " + comparison.changed + " · Only in current: " + comparison.removed +
+                 " · Only in comparison: " + comparison.added + "\n\n" + comparison.differences.join("\n"));
+            compareOtbResult.open();
+        }
+    }
+    Dialog {
+        id: compareOtbResult
+        title: "OTB comparison"
+        width: 540
+        height: 440
+        anchors.centerIn: parent
+        modal: true
+        standardButtons: Dialog.Close
+        ScrollView { anchors.fill: parent; TextArea { id: comparisonText; readOnly: true; wrapMode: TextEdit.Wrap } }
+    }
+    Dialog {
+        id: otbVersionDialog
+        title: "Update OTB version"
+        width: 370
+        anchors.centerIn: parent
+        modal: true
+        standardButtons: Dialog.Ok | Dialog.Cancel
+        onOpened: {
+            otbMajor.value = Number(Backend.info.otbMajor);
+            otbMinor.value = Number(Backend.info.otbMinor);
+            otbBuild.value = Number(Backend.info.otbBuild);
+        }
+        onAccepted: Backend.updateOtbVersion(otbMajor.value, otbMinor.value, otbBuild.value)
+        ColumnLayout {
+            RowLayout {
+                Label { text: "Major"; Layout.preferredWidth: 65 }
+                SpinBox { id: otbMajor; from: 0; to: 999999; editable: true }
+            }
+            RowLayout {
+                Label { text: "Minor"; Layout.preferredWidth: 65 }
+                SpinBox { id: otbMinor; from: 0; to: 999999; editable: true }
+            }
+            RowLayout {
+                Label { text: "Build"; Layout.preferredWidth: 65 }
+                SpinBox { id: otbBuild; from: 0; to: 999999; editable: true }
+            }
+        }
     }
     FrameDurationsConverterDialog {
         id: durationConverter
