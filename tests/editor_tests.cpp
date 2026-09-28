@@ -8,6 +8,7 @@
 #include <QQuickWindow>
 #include <QQuickItem>
 #include <QClipboard>
+#include <QPainter>
 #include <QAbstractItemModelTester>
 #include <QtEndian>
 #include <algorithm>
@@ -31,6 +32,97 @@ private:
  }
 private slots:
  void initTestCase() { QQuickStyle::setStyle("Basic"); }
+ void droppedImageDetectsItemSizeAndTargetsSpriteCell() {
+    QTemporaryDir dir; QVERIFY(dir.isValid()); fixture(dir.path());
+    EditorBackend backend; QVERIFY2(backend.openFolder(dir.path(),860),qPrintable(backend.status()));
+    const int originalSprites=backend.spriteCount();
+    QImage sheet(64,64,QImage::Format_ARGB32);
+    sheet.fill(Qt::transparent);
+    sheet.fill(Qt::red);
+    QPainter painter(&sheet);
+    painter.fillRect(32,0,32,32,Qt::green);
+    painter.fillRect(0,32,32,32,Qt::blue);
+    painter.fillRect(32,32,32,32,Qt::yellow);
+    painter.end();
+    const QString imagePath=dir.path()+"/item-sheet.png";
+    QVERIFY(sheet.save(imagePath));
+    QVERIFY(backend.importObjectImage(imagePath,0,0,0,0,0,0));
+    QCOMPARE(backend.details().value("itemWidth").toInt(),2);
+    QCOMPARE(backend.details().value("itemHeight").toInt(),2);
+    QCOMPARE(backend.spriteCount(),originalSprites+4);
+    auto source=backend.preview(0);
+    QImage preview=backend.image(source.mid(QStringLiteral("image://itempreview/").size()));
+    QCOMPARE(preview.pixelColor(8,8),QColor(Qt::red));
+    QCOMPARE(preview.pixelColor(40,8),QColor(Qt::green));
+    QCOMPARE(preview.pixelColor(8,40),QColor(Qt::blue));
+    QCOMPARE(preview.pixelColor(40,40),QColor(Qt::yellow));
+    QVERIFY(backend.assignSpriteToCell(0,0,0,0,1,1,1));
+    QCOMPARE(backend.details().value("spriteIds").toList().at(3).toInt(),1);
+    backend.undo();
+    QCOMPARE(backend.details().value("spriteIds").toList().at(3).toInt(),originalSprites+4);
+    backend.undo();
+    QCOMPARE(backend.details().value("itemWidth").toInt(),1);
+    backend.redo();
+    QCOMPARE(backend.details().value("itemWidth").toInt(),2);
+    QImage invalid(48,32,QImage::Format_ARGB32); invalid.fill(Qt::cyan);
+    const QString invalidPath=dir.path()+"/invalid.png"; QVERIFY(invalid.save(invalidPath));
+    QVERIFY(!backend.importObjectImage(invalidPath,0,0,0,0,0,0));
+    QCOMPARE(backend.spriteCount(),originalSprites+4);
+    QVERIFY2(backend.compile(),qPrintable(backend.status()));
+    EditorBackend reopened; QVERIFY2(reopened.openFolder(dir.path(),860),qPrintable(reopened.status()));
+    QCOMPARE(reopened.details().value("itemWidth").toInt(),2);
+    QCOMPARE(reopened.details().value("itemHeight").toInt(),2);
+ }
+ void droppedOutfitSheetPreservesOtherGroupsAndAcceptsCombinedSheet() {
+    QTemporaryDir dir; QVERIFY(dir.isValid());
+    quint32 signature=0;
+    {
+        EditorBackend created; QVERIFY(created.createAssetFiles(dir.path(),1098,true,false,false,true));
+        signature=created.info().value("signature").toString().toUInt(nullptr,16);
+    }
+    QFile dat(dir.path()+"/Tibia.dat"); QVERIFY(dat.open(QIODevice::WriteOnly));
+    QDataStream out(&dat); out.setByteOrder(QDataStream::LittleEndian);
+    out<<signature<<quint16(99)<<quint16(1)<<quint16(0)<<quint16(0);
+    out<<quint8(255)<<quint8(2);
+    for(int group=0;group<2;++group) {
+        out<<quint8(group)<<quint8(1)<<quint8(1)<<quint8(1)
+           <<quint8(2)<<quint8(1)<<quint8(1)<<quint8(1);
+        out<<quint32(0)<<quint32(0);
+    }
+    dat.close();
+    EditorBackend backend; QVERIFY2(backend.openFolder(dir.path(),1098),qPrintable(backend.status()));
+    backend.setCategory(1); backend.jump(1);
+    QImage groupSheet(64,32,QImage::Format_ARGB32); groupSheet.fill(Qt::red);
+    const QString groupPath=dir.path()+"/walking.png"; QVERIFY(groupSheet.save(groupPath));
+    QVERIFY(backend.importObjectImage(groupPath,1,0,0,0,0,0));
+    auto groups=backend.details().value("frameGroups").toList();
+    QCOMPARE(groups.size(),2);
+    QCOMPARE(groups[0].toMap().value("spriteIds").toList(),QVariantList({0,0}));
+    const auto walking=groups[1].toMap().value("spriteIds").toList();
+    QCOMPARE(walking.size(),2);
+    QVERIFY(walking[0].toInt()>0 && walking[1].toInt()>0);
+
+    QImage combined(64,64,QImage::Format_ARGB32);
+    combined.fill(Qt::blue);
+    const QString combinedPath=dir.path()+"/combined.png"; QVERIFY(combined.save(combinedPath));
+    QVERIFY(backend.importObjectImage(combinedPath,1,0,0,0,0,0));
+    groups=backend.details().value("frameGroups").toList();
+    for(const auto &group:groups) {
+        const auto ids=group.toMap().value("spriteIds").toList();
+        QCOMPARE(ids.size(),2);
+        QVERIFY(ids[0].toInt()>0 && ids[1].toInt()>0);
+    }
+    backend.undo();
+    groups=backend.details().value("frameGroups").toList();
+    QCOMPARE(groups[0].toMap().value("spriteIds").toList(),QVariantList({0,0}));
+    QCOMPARE(groups[1].toMap().value("spriteIds").toList(),walking);
+    QVERIFY2(backend.compile(),qPrintable(backend.status()));
+    EditorBackend reopened; QVERIFY2(reopened.openFolder(dir.path(),1098),qPrintable(reopened.status()));
+    reopened.setCategory(1); reopened.jump(1);
+    groups=reopened.details().value("frameGroups").toList();
+    QCOMPARE(groups[0].toMap().value("spriteIds").toList(),QVariantList({0,0}));
+    QCOMPARE(groups[1].toMap().value("spriteIds").toList(),walking);
+ }
  void removeSelectedItemShiftsFollowingIds() {
     QTemporaryDir dir;QVERIFY(dir.isValid());fixture(dir.path());
     EditorBackend backend;QVERIFY(backend.openFolder(dir.path(),860));

@@ -24,6 +24,7 @@ After building the portable package, run `dist/OTEditor.exe`. Keep the entire `d
 - Undo/redo for attribute edits, sprite assignments, and clearing (up to 100 operations). Creating or duplicating an item starts a new undo history.
 - **Compile** and **Compile As** save the full project. Existing OTFI settings are preserved; projects without OTFI receive a compatible metadata file.
 - SPR editing: replace a sprite with a PNG of the configured sprite size, add sprites, or clear a slot without shifting IDs. The writer supports RLE, standard and extended IDs, RGB, and alpha.
+- Drag a sprite from the sprite browser onto a texture tile to assign it to that exact frame, pattern, layer, and position. Drop an image from the file manager onto the texture to import a single sprite or a complete sprite sheet. Matching sheets replace the selected animation group; a combined outfit sheet can replace all groups. For objects with one frame, layer, and pattern, the editor detects width and height from the image's tile dimensions. Images are limited to 16 million pixels and sheets to 4,096 sprites.
 - **Tools → Slicer** opens a sprite-sheet workspace with rulers, a checkerboard, rotation, mirroring, grid selection, and zoom. **Crop** collects tiles in column order, converts magenta to transparency, and skips empty sprites by default; **Import** adds the tiles to the open client's SPR.
 - Atomic DAT, SPR, OTB, XML, and OTFI writes through `QSaveFile`. Unchanged sprite blocks are copied without recompression.
 - **Export** saves object sheets as PNG, BMP, or JPG. Outfit directions occupy columns; Idle and Walking frames continue in successive rows. Export supports a custom name and destination, multiple selected objects, and a transparent PNG background. OBD remains disabled until compatible export is implemented.
@@ -43,7 +44,7 @@ Properties groups DAT flags and values. Attributes exposes supported OTB fields,
 
 ## Current limitations
 
-OTEditor is not yet a complete replacement for [ObjectBuilder](https://github.com/punkice3407/ObjectBuilder). Remaining work includes assigning sprites to outfits, effects, and missiles; editing their flags; Has Bones; drawing pixels in the app; OBD import/export; bulk operations; editing the remaining OTB/XML fields; and client-version conversion.
+OTEditor is not yet a complete replacement for [ObjectBuilder](https://github.com/punkice3407/ObjectBuilder). Remaining work includes editing outfit, effect, and missile flags; Has Bones; drawing pixels in the app; OBD import/export; bulk operations; editing the remaining OTB/XML fields; and client-version conversion.
 
 OTB and XML already participate in loading and compilation, and OTB names are synchronized with `items.xml`. The slicer imports sprites from a selected sheet area. The outfit browser displays the first animation group. Preview playback uses a fixed 150 ms interval; saving preserves existing frame durations, and changing the frame count initializes new durations to 100 ms. Not every client version from 7.10 through 13.10 has been validated.
 

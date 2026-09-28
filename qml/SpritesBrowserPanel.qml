@@ -49,12 +49,15 @@ Panel {
                 boundsBehavior: Flickable.StopAtBounds
                 ScrollBar.vertical: ScrollBar {}
                 delegate: Rectangle {
+                    id: spriteDelegate
                     required property int index
                     width: sprites.cellWidth - 1
                     height: sprites.cellHeight
                     color: owner.selectedSprite === index ? "#175886" : index % 2 === 0 ? "#272d34" : "#242a30"
                     border.color: owner.selectedSprite === index ? "#3295d2" : "#373f48"
                     Image {
+                        id: spriteImage
+                        property int spriteId: spriteDelegate.index
                         x: 4
                         y: 3
                         width: 32
@@ -65,6 +68,13 @@ Panel {
                             return backend.spriteSource(index);
                         }
                         cache: false
+                        Drag.active: spriteDrag.drag.active && spriteId > 0
+                        Drag.dragType: Drag.Automatic
+                        Drag.supportedActions: Qt.CopyAction
+                        Drag.mimeData: { "application/x-oteditor-sprite-id": String(spriteId) }
+                        Drag.imageSource: source
+                        Drag.hotSpot: Qt.point(width / 2, height / 2)
+                        Drag.onDragFinished: { x = 4; y = 3 }
                     }
                     Label {
                         text: index
@@ -76,8 +86,13 @@ Panel {
                         font.pixelSize: 11
                     }
                     MouseArea {
+                        id: spriteDrag
                         anchors.fill: parent
                         acceptedButtons: Qt.LeftButton | Qt.RightButton
+                        preventStealing: true
+                        drag.target: spriteImage
+                        onReleased: { spriteImage.x = 4; spriteImage.y = 3 }
+                        onCanceled: { spriteImage.x = 4; spriteImage.y = 3 }
                         onClicked: function (event) {
                             owner.selectedSprite = index;
                             if (event.button === Qt.RightButton) {

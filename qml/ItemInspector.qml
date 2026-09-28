@@ -395,6 +395,58 @@ Item {
                                             c.stroke()
                                         }
                                     }
+                                    DropArea {
+                                        id: textureDropArea
+                                        objectName: "objectTextureDropArea"
+                                        anchors.fill: parent
+                                        z: 3
+                                        enabled: Backend.loaded && Backend.selected >= 0
+                                        onEntered: function(drag) {
+                                            if (drag.hasUrls || (drag.source && drag.source.spriteId > 0)
+                                                    || drag.formats.indexOf("application/x-oteditor-sprite-id") >= 0)
+                                                drag.accept(Qt.CopyAction)
+                                            else drag.accepted = false
+                                        }
+                                        onDropped: function(drop) {
+                                            const group = inspector.isOutfit ? inspector.outfitGroup : 0
+                                            const layer = inspector.isOutfit ? inspector.outfitLayer : 0
+                                            const column = Math.floor(drop.x / inspector.patternCellWidth)
+                                            const row = Math.floor(drop.y / inspector.patternCellHeight)
+                                            const displayedPattern = row * inspector.previewColumns + column
+                                            if (displayedPattern < 0 || displayedPattern >= inspector.shownPatternCount) {
+                                                drop.accepted = false
+                                                return
+                                            }
+                                            const pattern = inspector.isOutfit ? inspector.outfitPattern : displayedPattern
+                                            const width = Math.max(1, Number(inspector.activeFrameGroup.itemWidth || 1))
+                                            const height = Math.max(1, Number(inspector.activeFrameGroup.itemHeight || 1))
+                                            const tileSize = inspector.spriteSize * inspector.textureZoom
+                                            const tileX = width - 1 - Math.floor((drop.x - column * inspector.patternCellWidth) / tileSize)
+                                            const tileY = height - 1 - Math.floor((drop.y - row * inspector.patternCellHeight) / tileSize)
+                                            let ok = false
+                                            if (drop.hasUrls && drop.urls.length)
+                                                ok = Backend.importObjectImage(String(drop.urls[0]), group, inspector.previewFrame,
+                                                                               pattern, layer, tileX, tileY)
+                                            else {
+                                                const spriteId = drop.source && drop.source.spriteId > 0
+                                                    ? drop.source.spriteId
+                                                    : Number(drop.getDataAsString("application/x-oteditor-sprite-id"))
+                                                if (spriteId > 0)
+                                                    ok = Backend.assignSpriteToCell(group, inspector.previewFrame,
+                                                                                    pattern, layer, tileX, tileY, spriteId)
+                                            }
+                                            if (ok) drop.accept(Qt.CopyAction)
+                                            else drop.accepted = false
+                                        }
+                                    }
+                                    Rectangle {
+                                        anchors.fill: parent
+                                        z: 4
+                                        visible: textureDropArea.containsDrag
+                                        color: "transparent"
+                                        border.color: "#4cb6ed"
+                                        border.width: 2
+                                    }
                                 }
                             }
                             Label { visible: !inspector.isOutfit && inspector.patternCount>inspector.shownPatternCount; text: "Showing first " + inspector.shownPatternCount + " of " + inspector.patternCount + " patterns"; color: "#91a6ba" }

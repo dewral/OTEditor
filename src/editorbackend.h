@@ -120,6 +120,10 @@ public:
     Q_INVOKABLE bool setValues(const QVariantMap &values);
     Q_INVOKABLE bool setTextureValue(int group, const QString &key, int value);
     Q_INVOKABLE bool assignSprite(int slot, int id);
+    Q_INVOKABLE bool assignSpriteToCell(int group, int frame, int pattern, int layer,
+                                       int tileX, int tileY, int spriteId);
+    Q_INVOKABLE bool importObjectImage(const QString &fileUrl, int group, int frame,
+                                      int pattern, int layer, int tileX, int tileY);
     Q_INVOKABLE void create(bool duplicate=false);
     Q_INVOKABLE void clearObject();
     Q_INVOKABLE bool removeObject();

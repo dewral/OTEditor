@@ -14,7 +14,7 @@ target_include_directories(otformats PUBLIC libs/otformats)
 target_link_libraries(otformats PUBLIC Qt6::Core Qt6::Gui Qt6::Qml)
 add_library(editorcore STATIC
     src/editorbackend.cpp src/editorbackend.h
-    src/editorbackend_slicer.cpp src/editorbackend_export.cpp
+    src/editorbackend_slicer.cpp src/editorbackend_export.cpp src/editorbackend_sheet.cpp
     src/projectmodel.cpp src/projectmodel.h)
 target_include_directories(editorcore PUBLIC src)
 target_link_libraries(editorcore PUBLIC otformats Qt6::Quick)
