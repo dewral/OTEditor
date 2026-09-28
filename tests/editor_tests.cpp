@@ -772,6 +772,27 @@ private slots:
     backend.select(1);
     QCOMPARE(backend.selectedCount(),1);
  }
+ void bulkItemOperationsAndComparison() {
+    QTemporaryDir dir; QVERIFY(dir.isValid()); fixture(dir.path());
+    EditorBackend backend; QVERIFY(backend.openFolder(dir.path(),860));
+    backend.create();
+    backend.select(0);
+    backend.selectWithModifiers(2,Qt::ShiftModifier);
+    QCOMPARE(backend.selectedCount(),3);
+    QCOMPARE(backend.bulkSetItemAttribute("isStackable",true),3);
+    QCOMPARE(backend.bulkReplaceObjects(100),3);
+    backend.select(0);
+    backend.selectWithModifiers(1,Qt::ControlModifier);
+    const auto comparison=backend.compareSelectedObjects();
+    QVERIFY(!comparison.contains("error"));
+    QCOMPARE(comparison.value("firstId").toInt(),100);
+    QVERIFY2(backend.compile(),qPrintable(backend.status()));
+    EditorBackend reopened; QVERIFY(reopened.openFolder(dir.path(),860));
+    for (int row=0;row<3;++row) {
+        reopened.select(row);
+        QVERIFY(reopened.details().value("isStackable").toBool());
+    }
+ }
  void outfitSheetKeepsDirectionsInColumnsAndGroupsInRows() {
     QTemporaryDir client,output;QVERIFY(client.isValid());QVERIFY(output.isValid());
     {

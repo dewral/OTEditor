@@ -81,6 +81,9 @@ public:
     Q_INVOKABLE bool copyObjectPart(const QString &part);
     Q_INVOKABLE bool pasteObjectPart(const QString &part);
     Q_INVOKABLE bool replaceObject(int clientId);
+    Q_INVOKABLE int bulkReplaceObjects(int sourceId);
+    Q_INVOKABLE int bulkSetItemAttribute(const QString &key, const QVariant &value);
+    Q_INVOKABLE QVariantMap compareSelectedObjects() const;
     Q_INVOKABLE bool importItemGraphics(const QString &folderUrl, int sourceVersion, int sourceId);
     Q_INVOKABLE int importItemGraphicsRange(const QString &folderUrl, int sourceVersion,
                                            int sourceFirstId, int sourceLastId, int targetFirstId);

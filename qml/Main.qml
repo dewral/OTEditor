@@ -270,7 +270,8 @@ ApplicationWindow {
             }
             Action {
                 text: "Bulk Replace Objects"
-                enabled: false
+                enabled: Backend.loaded && Backend.category === 0 && Backend.selectedCount > 0
+                onTriggered: bulkReplaceDialog.open()
             }
             MenuSeparator {
                 implicitHeight: 7
@@ -559,7 +560,8 @@ ApplicationWindow {
         }
         CompactContextItem {
             text: "Bulk Edit"
-            enabled: false
+            enabled: Backend.category === 0 && Backend.selectedCount > 0
+            onTriggered: bulkEditDialog.open()
         }
         CompactContextItem {
             text: "Copy Object"
@@ -611,7 +613,14 @@ ApplicationWindow {
         }
         CompactContextItem {
             text: "Compare…"
-            enabled: false
+            enabled: Backend.selectedCount === 2
+            onTriggered: {
+                const comparison = Backend.compareSelectedObjects();
+                objectComparisonText.text = comparison.error ||
+                    (comparison.firstId + " vs " + comparison.secondId + "\n\n" +
+                     (comparison.differences.length ? comparison.differences.join("\n") : "No differences"));
+                objectComparisonDialog.open();
+            }
         }
         MenuSeparator {
             implicitHeight: 7
@@ -836,6 +845,59 @@ ApplicationWindow {
         modal: true
         standardButtons: Dialog.Close
         ScrollView { anchors.fill: parent; TextArea { id: comparisonText; readOnly: true; wrapMode: TextEdit.Wrap } }
+    }
+    Dialog {
+        id: objectComparisonDialog
+        title: "Compare selected objects"
+        width: 520
+        height: 400
+        anchors.centerIn: parent
+        modal: true
+        standardButtons: Dialog.Close
+        ScrollView { anchors.fill: parent; TextArea { id: objectComparisonText; readOnly: true; wrapMode: TextEdit.Wrap } }
+    }
+    Dialog {
+        id: bulkReplaceDialog
+        title: "Replace selected items"
+        width: 390
+        anchors.centerIn: parent
+        modal: true
+        standardButtons: Dialog.Ok | Dialog.Cancel
+        onAccepted: Backend.bulkReplaceObjects(bulkSourceId.value)
+        ColumnLayout {
+            Label { text: "Copy the complete object from this client ID into " + Backend.selectedCount + " selected item(s). Target IDs are preserved."; wrapMode: Text.Wrap; Layout.preferredWidth: 340 }
+            RowLayout {
+                Label { text: "Source client ID" }
+                SpinBox { id: bulkSourceId; from: 100; to: 65535; value: 100; editable: true }
+            }
+        }
+    }
+    Dialog {
+        id: bulkEditDialog
+        title: "Bulk edit selected items"
+        width: 390
+        anchors.centerIn: parent
+        modal: true
+        standardButtons: Dialog.Ok | Dialog.Cancel
+        onAccepted: Backend.bulkSetItemAttribute(bulkAttribute.currentValue,bulkFlag.checked)
+        ColumnLayout {
+            Label { text: "Apply one property to " + Backend.selectedCount + " selected item(s)." }
+            ComboBox {
+                id: bulkAttribute
+                Layout.fillWidth: true
+                textRole: "text"
+                valueRole: "key"
+                model: [
+                    {text:"Stackable",key:"isStackable"},{text:"Container",key:"isContainer"},
+                    {text:"Unpassable",key:"isUnpassable"},{text:"Unmoveable",key:"isUnmoveable"},
+                    {text:"Blocks missiles",key:"blocksMissiles"},{text:"Blocks pathfinder",key:"blocksPathfinder"},
+                    {text:"Pickupable",key:"isPickupable"},{text:"Useable",key:"isUseable"},
+                    {text:"Rotatable",key:"isRotatable"},{text:"Hangable",key:"isHangable"},
+                    {text:"Animate always",key:"animateAlways"},{text:"Ignore look",key:"ignoreLook"}
+                ]
+            }
+            CheckBox { id: bulkFlag; text: "Enabled"; checked: true }
+        }
     }
     Dialog {
         id: otbVersionDialog

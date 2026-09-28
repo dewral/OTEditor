@@ -648,6 +648,74 @@ bool EditorBackend::replaceObject(int clientId) {
     if(!applyObject(*source))return false;
     message(QString("Replaced object using client ID %1; target ID preserved").arg(clientId));return true;
 }
+int EditorBackend::bulkReplaceObjects(int sourceId) {
+    if (!loaded() || m_category!=0 || m_selectedRows.isEmpty() || sourceId<100 || sourceId>65535) return 0;
+    const auto *source=m_project.dat()->itemByClientId(uint16_t(sourceId));
+    if (!source) return 0;
+    commitTextureEdits();
+    const ClientItem original=*source;
+    int count=0;
+    for (int row:m_selectedRows) {
+        const auto *target=m_project.dat()->objectAt(0,row);
+        if (!target) continue;
+        ClientItem replacement=original;
+        replacement.id=target->id;
+        replacement.modified=true;
+        m_project.dat()->restoreItem(row,replacement);
+        ++count;
+    }
+    if (count) { m_undo.clear();m_redo.clear();refresh();message(QString("Replaced %1 selected item(s) from client ID %2").arg(count).arg(sourceId)); }
+    return count;
+}
+int EditorBackend::bulkSetItemAttribute(const QString &key,const QVariant &value) {
+    if (!loaded() || m_category!=0 || m_selectedRows.isEmpty()) return 0;
+    // Validate the requested attribute before touching any selected object.
+    const auto *first=m_project.dat()->objectAt(0,*m_selectedRows.cbegin());
+    if (!first) return 0;
+    ClientItem probe=*first;
+    const int probeRow=*m_selectedRows.cbegin();
+    if (!m_project.dat()->setValue(probeRow,key,value)) return 0;
+    m_project.dat()->restoreItem(probeRow,probe);
+    int count=0;
+    for (int row:m_selectedRows) if (m_project.dat()->setValue(row,key,value)) ++count;
+    if (count) { m_undo.clear();m_redo.clear();refresh();message(QString("Updated %1 selected item(s): %2").arg(count).arg(key)); }
+    return count;
+}
+QVariantMap EditorBackend::compareSelectedObjects() const {
+    QVariantMap result;
+    if (!loaded() || m_selectedRows.size()!=2) { result.insert("error","Select exactly two objects"); return result; }
+    auto it=m_selectedRows.cbegin(); const int firstRow=*it++; const int secondRow=*it;
+    const auto *first=m_project.dat()->objectAt(m_category,firstRow);
+    const auto *second=m_project.dat()->objectAt(m_category,secondRow);
+    if (!first || !second) { result.insert("error","Selection is unavailable"); return result; }
+    QVariantList differences;
+    if (m_category==0) {
+        const auto left=m_project.dat()->detailsAt(firstRow);
+        const auto right=m_project.dat()->detailsAt(secondRow);
+        for (auto field=left.cbegin();field!=left.cend();++field) {
+            if (field.key()=="itemId" || field.key()=="spriteIds" || field.key()=="previewSpriteId") continue;
+            if (field.value()!=right.value(field.key()))
+                differences.append(QString("%1: %2 → %3").arg(field.key(),field.value().toString(),right.value(field.key()).toString()));
+        }
+    } else {
+        const auto field=[&](const QString &name,int a,int b){if(a!=b)differences.append(QString("%1: %2 → %3").arg(name).arg(a).arg(b));};
+        field("width",first->width,second->width); field("height",first->height,second->height);
+        field("layers",first->layers,second->layers); field("pattern X",first->pattern_x,second->pattern_x);
+        field("pattern Y",first->pattern_y,second->pattern_y); field("pattern Z",first->pattern_z,second->pattern_z);
+        field("frames",first->frames,second->frames);
+        field("frame groups",int(first->frame_groups.size()),int(second->frame_groups.size()));
+    }
+    const auto &leftSprites=first->sprite_ids,&rightSprites=second->sprite_ids;
+    if (leftSprites.size()!=rightSprites.size())
+        differences.append(QString("Sprite slots: %1 → %2").arg(leftSprites.size()).arg(rightSprites.size()));
+    else {
+        int mismatch=0;
+        for (size_t slot=0;slot<leftSprites.size();++slot) if(leftSprites[slot]!=rightSprites[slot]) ++mismatch;
+        if (mismatch) differences.append(QString("Different sprite slots: %1").arg(mismatch));
+    }
+    result.insert("firstId",first->id); result.insert("secondId",second->id);
+    result.insert("differences",differences); return result;
+}
 bool EditorBackend::importItemGraphics(const QString &folderUrl,int sourceVersion,int sourceId) {
     if(!loaded() || m_category!=0 || m_selected<0){message("Select a target item first.");return false;}
     return importItemGraphicsRange(folderUrl,sourceVersion,sourceId,sourceId,m_selected+100)==1;
