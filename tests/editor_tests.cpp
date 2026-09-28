@@ -58,20 +58,31 @@ private slots:
     QCOMPARE(preview.pixelColor(40,40),QColor(Qt::yellow));
     QVERIFY(backend.assignSpriteToCell(0,0,0,0,1,1,1));
     QCOMPARE(backend.details().value("spriteIds").toList().at(3).toInt(),1);
-    backend.undo();
-    QCOMPARE(backend.details().value("spriteIds").toList().at(3).toInt(),originalSprites+4);
+    QVERIFY(backend.textureEditPending());
+    QVERIFY(backend.resetTextureEdit());
+    QVERIFY(!backend.textureEditPending());
+    QCOMPARE(backend.details().value("itemWidth").toInt(),1);
+    QVERIFY(backend.importObjectImage(imagePath,0,0,0,0,0,0));
+    QVERIFY(backend.assignSpriteToCell(0,0,0,0,1,1,1));
+    QVERIFY(backend.saveTextureEdit());
+    QVERIFY(!backend.textureEditPending());
     backend.undo();
     QCOMPARE(backend.details().value("itemWidth").toInt(),1);
     backend.redo();
     QCOMPARE(backend.details().value("itemWidth").toInt(),2);
+    QCOMPARE(backend.details().value("spriteIds").toList().at(3).toInt(),1);
     QImage invalid(48,32,QImage::Format_ARGB32); invalid.fill(Qt::cyan);
     const QString invalidPath=dir.path()+"/invalid.png"; QVERIFY(invalid.save(invalidPath));
     QVERIFY(!backend.importObjectImage(invalidPath,0,0,0,0,0,0));
-    QCOMPARE(backend.spriteCount(),originalSprites+4);
+    QCOMPARE(backend.spriteCount(),originalSprites+8);
+    QVERIFY(backend.assignSpriteToCell(0,0,0,0,0,0,1));
+    QVERIFY(backend.textureEditPending());
     QVERIFY2(backend.compile(),qPrintable(backend.status()));
+    QVERIFY(!backend.textureEditPending());
     EditorBackend reopened; QVERIFY2(reopened.openFolder(dir.path(),860),qPrintable(reopened.status()));
     QCOMPARE(reopened.details().value("itemWidth").toInt(),2);
     QCOMPARE(reopened.details().value("itemHeight").toInt(),2);
+    QCOMPARE(reopened.details().value("spriteIds").toList().first().toInt(),1);
  }
  void droppedOutfitSheetPreservesOtherGroupsAndAcceptsCombinedSheet() {
     QTemporaryDir dir; QVERIFY(dir.isValid());
@@ -101,6 +112,7 @@ private slots:
     const auto walking=groups[1].toMap().value("spriteIds").toList();
     QCOMPARE(walking.size(),2);
     QVERIFY(walking[0].toInt()>0 && walking[1].toInt()>0);
+    QVERIFY(backend.saveTextureEdit());
 
     QImage combined(64,64,QImage::Format_ARGB32);
     combined.fill(Qt::blue);
@@ -112,6 +124,12 @@ private slots:
         QCOMPARE(ids.size(),2);
         QVERIFY(ids[0].toInt()>0 && ids[1].toInt()>0);
     }
+    QVERIFY(backend.resetTextureEdit());
+    groups=backend.details().value("frameGroups").toList();
+    QCOMPARE(groups[0].toMap().value("spriteIds").toList(),QVariantList({0,0}));
+    QCOMPARE(groups[1].toMap().value("spriteIds").toList(),walking);
+    QVERIFY(backend.importObjectImage(combinedPath,1,0,0,0,0,0));
+    QVERIFY(backend.saveTextureEdit());
     backend.undo();
     groups=backend.details().value("frameGroups").toList();
     QCOMPARE(groups[0].toMap().value("spriteIds").toList(),QVariantList({0,0}));
@@ -989,7 +1007,32 @@ private slots:
     QTest::mouseClick(window,Qt::RightButton,Qt::NoModifier,cell->mapToScene(QPointF(cell->width()/2,cell->height()/2)).toPoint());
     QTest::qWait(100);QCOMPARE(backend.selected(),1);
     auto menu=root->findChild<QObject *>("objectContextMenu");QVERIFY(menu);QVERIFY(menu->property("visible").toBool());
-    QMetaObject::invokeMethod(menu,"close");
+    auto importAction=qobject_cast<QQuickItem *>(root->findChild<QObject *>("importClientObjectsContextAction"));QVERIFY(importAction);
+    QTest::mouseClick(window,Qt::LeftButton,Qt::NoModifier,
+                      importAction->mapToScene(QPointF(importAction->width()/2,importAction->height()/2)).toPoint());
+    auto importDialog=root->findChild<QObject *>("importGraphicsDialog");QVERIFY(importDialog);
+    QTRY_VERIFY(importDialog->property("visible").toBool());
+    auto targetSpinBox=importDialog->findChild<QObject *>("importTargetFirstSpinBox");QVERIFY(targetSpinBox);
+    QCOMPARE(targetSpinBox->property("value").toInt(),101);
+    QVERIFY(QMetaObject::invokeMethod(importDialog,"close"));
+    attributes->setProperty("tabIndex",0);
+    QImage dropped(32,32,QImage::Format_ARGB32);dropped.fill(Qt::green);
+    const QString droppedPath=dir.path()+"/dropped.png";QVERIFY(dropped.save(droppedPath));
+    const int spriteId=backend.addSprite(droppedPath);QVERIFY(spriteId>0);
+    QVERIFY(backend.assignSpriteToCell(0,0,0,0,0,0,spriteId));
+    auto saveButton=attributes->findChild<QObject *>("inspectorSaveButton");QVERIFY(saveButton);
+    auto resetButton=attributes->findChild<QObject *>("inspectorResetButton");QVERIFY(resetButton);
+    QTRY_VERIFY(saveButton->property("enabled").toBool());
+    QVERIFY(resetButton->property("enabled").toBool());
+    QVERIFY(QMetaObject::invokeMethod(attributes,"resetDraft"));
+    QVERIFY(!backend.textureEditPending());
+    QTRY_VERIFY(!saveButton->property("enabled").toBool());
+    QVERIFY(backend.assignSpriteToCell(0,0,0,0,0,0,spriteId));
+    QTRY_VERIFY(saveButton->property("enabled").toBool());
+    QVERIFY(QMetaObject::invokeMethod(attributes,"saveDraft"));
+    QVERIFY(!backend.textureEditPending());
+    QCOMPARE(backend.details().value("spriteIds").toList().first().toInt(),spriteId);
+    QTRY_VERIFY(!saveButton->property("enabled").toBool());
     QVERIFY2(warnings.isEmpty(),qPrintable(warnings.join("\n")));
  }
  void realClientRoundTrip() {

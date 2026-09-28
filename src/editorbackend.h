@@ -24,6 +24,7 @@ class EditorBackend final : public QAbstractListModel {
     Q_PROPERTY(QString log READ log NOTIFY logChanged)
     Q_PROPERTY(bool canUndo READ canUndo NOTIFY changed)
     Q_PROPERTY(bool canRedo READ canRedo NOTIFY changed)
+    Q_PROPERTY(bool textureEditPending READ textureEditPending NOTIFY changed)
     Q_PROPERTY(QVariantMap objectClipboard READ objectClipboard NOTIFY changed)
     Q_PROPERTY(int serverId READ serverId NOTIFY changed)
     Q_PROPERTY(QVariantMap serverAttributes READ serverAttributes NOTIFY changed)
@@ -55,8 +56,9 @@ public:
     QString log() const { return m_log; }
     QVariantMap details() const;
     QVariantMap info() const;
-    bool canUndo() const { return !m_undo.empty(); }
-    bool canRedo() const { return !m_redo.empty(); }
+    bool canUndo() const { return textureEditPending() || !m_undo.empty(); }
+    bool canRedo() const { return m_textureEdits.isEmpty() && !m_redo.empty(); }
+    bool textureEditPending() const;
     QVariantMap objectClipboard() const;
     int serverId() const;
     QVariantMap serverAttributes() const;
@@ -124,6 +126,8 @@ public:
                                        int tileX, int tileY, int spriteId);
     Q_INVOKABLE bool importObjectImage(const QString &fileUrl, int group, int frame,
                                       int pattern, int layer, int tileX, int tileY);
+    Q_INVOKABLE bool saveTextureEdit();
+    Q_INVOKABLE bool resetTextureEdit();
     Q_INVOKABLE void create(bool duplicate=false);
     Q_INVOKABLE void clearObject();
     Q_INVOKABLE bool removeObject();
@@ -153,6 +157,9 @@ private:
     void rebuild();
     void notifySelection();
     void remember(const ClientItem &before);
+    void stageTextureEdit(const ClientItem &before);
+    void commitTextureEdits();
+    quint64 textureEditKey() const;
     bool applyObject(ClientItem item);
     bool exportPngAt(const QString &filePath, bool sheet, int row);
     QImage renderObjectAt(bool sheet, int row);
@@ -163,6 +170,7 @@ private:
     QVector<int> m_rows;
     QHash<int,int> m_visiblePositions;
     std::vector<Edit> m_undo,m_redo;
+    QHash<quint64, ClientItem> m_textureEdits;
     int m_selected=-1, m_category=0, m_revision=0, m_version=1098;
     QSet<int> m_selectedRows;
     int m_selectionAnchor=-1;

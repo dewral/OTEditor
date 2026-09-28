@@ -90,6 +90,67 @@ void removeMagenta(QImage &image)
 
 } // namespace
 
+quint64 EditorBackend::textureEditKey() const
+{
+    return (quint64(quint32(m_category)) << 32) | quint32(m_selected);
+}
+
+bool EditorBackend::textureEditPending() const
+{
+    return loaded() && m_selected >= 0 && m_textureEdits.contains(textureEditKey());
+}
+
+void EditorBackend::stageTextureEdit(const ClientItem &before)
+{
+    if (!textureEditPending())
+        m_textureEdits.insert(textureEditKey(), before);
+    m_redo.clear();
+    refresh();
+}
+
+bool EditorBackend::saveTextureEdit()
+{
+    if (!textureEditPending())
+        return false;
+    const auto *current = m_project.dat()->objectAt(m_category, m_selected);
+    if (!current)
+        return false;
+    m_undo.push_back({m_category, m_selected, m_textureEdits.take(textureEditKey()), *current});
+    if (m_undo.size() > 100)
+        m_undo.erase(m_undo.begin());
+    refresh();
+    message(QStringLiteral("Saved texture changes for object %1.").arg(current->id));
+    return true;
+}
+
+bool EditorBackend::resetTextureEdit()
+{
+    if (!textureEditPending())
+        return false;
+    const ClientItem before = m_textureEdits.take(textureEditKey());
+    m_project.dat()->restoreObject(m_category, m_selected, before);
+    refresh();
+    message(QStringLiteral("Reset texture changes for object %1.").arg(before.id));
+    return true;
+}
+
+void EditorBackend::commitTextureEdits()
+{
+    if (m_textureEdits.isEmpty())
+        return;
+    for (auto it = m_textureEdits.cbegin(); it != m_textureEdits.cend(); ++it) {
+        const int category = int(it.key() >> 32);
+        const int row = int(quint32(it.key()));
+        const auto *current = m_project.dat()->objectAt(category, row);
+        if (current && current->id == it.value().id)
+            m_undo.push_back({category, row, it.value(), *current});
+    }
+    if (m_undo.size() > 100)
+        m_undo.erase(m_undo.begin(), m_undo.end() - 100);
+    m_textureEdits.clear();
+    refresh();
+}
+
 bool EditorBackend::assignSpriteToCell(int groupIndex, int frame, int pattern,
                                        int layer, int tileX, int tileY, int spriteId)
 {
@@ -114,7 +175,7 @@ bool EditorBackend::assignSpriteToCell(int groupIndex, int frame, int pattern,
         syncDefaultGroup(edited);
     edited.modified = true;
     m_project.dat()->restoreObject(m_category, m_selected, edited);
-    remember(before);
+    stageTextureEdit(before);
     message(QStringLiteral("Assigned sprite %1 to object %2").arg(spriteId).arg(edited.id));
     return true;
 }
@@ -172,7 +233,7 @@ bool EditorBackend::importObjectImage(const QString &fileUrl, int groupIndex, in
             syncDefaultGroup(edited);
         edited.modified = true;
         m_project.dat()->restoreObject(m_category, m_selected, edited);
-        remember(before);
+        stageTextureEdit(before);
         message(QStringLiteral("Imported image into object %1, sprite %2").arg(edited.id).arg(id));
         return true;
     }
@@ -291,7 +352,7 @@ bool EditorBackend::importObjectImage(const QString &fileUrl, int groupIndex, in
         syncDefaultGroup(edited);
     edited.modified = true;
     m_project.dat()->restoreObject(m_category, m_selected, edited);
-    remember(before);
+    stageTextureEdit(before);
     message(QStringLiteral("Imported %1 sprites into object %2%3.")
                 .arg(tiles.size()).arg(edited.id)
                 .arg(detectedSize ? QStringLiteral(" (dimensions detected from image)") : QString()));

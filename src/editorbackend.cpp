@@ -76,7 +76,7 @@ bool EditorBackend::openFolder(const QString &url,int version,bool alpha,const Q
     m_selectedRows.clear();if(m_selected>=0)m_selectedRows.insert(m_selected);m_selectionAnchor=m_selected;notifySelection();
     m_version=version;m_folder=m_project.folder();m_alpha=m_project.transparency();m_extended=m_project.extended();
     m_durations=m_project.frameDurations();m_groups=m_project.frameGroups();
-    m_undo.clear();m_redo.clear();m_objectCopy.reset();m_patternsCopy.reset();m_propertiesCopy.reset();m_serverAttributesCopy.clear();++m_revision;rebuild();
+    m_undo.clear();m_redo.clear();m_textureEdits.clear();m_objectCopy.reset();m_patternsCopy.reset();m_propertiesCopy.reset();m_serverAttributesCopy.clear();++m_revision;rebuild();
     message(QString("Loaded %1 items, %2 outfits, %3 effects, %4 missiles and %5 sprites%6%7.")
                 .arg(m_project.dat()->categoryCount(0)).arg(m_project.dat()->categoryCount(1))
                 .arg(m_project.dat()->categoryCount(2)).arg(m_project.dat()->categoryCount(3))
@@ -367,6 +367,7 @@ QImage EditorBackend::image(const QString &id){
     return m_project.sprites()?m_project.sprites()->imageForProviderId(clean):QImage();
 }
 void EditorBackend::remember(const ClientItem &before){
+    if (textureEditPending()) { refresh(); return; }
     m_undo.push_back({m_category,m_selected,before,*m_project.dat()->objectAt(m_category,m_selected)});if(m_undo.size()>100)m_undo.erase(m_undo.begin());m_redo.clear();refresh();
 }
 bool EditorBackend::convertFrameDurations(bool enabled,int minimum,int maximum) {
@@ -444,7 +445,7 @@ bool EditorBackend::assignSprite(int slot,int id){
     if(!m_project.dat()->setSpriteId(m_selected,slot,id))return false;remember(before);message(QString("Assigned sprite %1 to slot %2").arg(id).arg(slot));return true;
 }
 void EditorBackend::create(bool duplicate){
-    if(!loaded()||m_category!=0)return;int row=duplicate?m_project.dat()->duplicateItem(m_selected):m_project.dat()->createItem();
+    if(!loaded()||m_category!=0)return;commitTextureEdits();int row=duplicate?m_project.dat()->duplicateItem(m_selected):m_project.dat()->createItem();
     if(row<0){message("Cannot create item");return;}m_selected=row;m_selectedRows={row};m_selectionAnchor=row;notifySelection();m_undo.clear();m_redo.clear();refresh();message(QString("Created item %1").arg(row+100));
 }
 void EditorBackend::clearObject(){
@@ -452,6 +453,7 @@ void EditorBackend::clearObject(){
 }
 bool EditorBackend::removeObject(){
     if(!loaded()||m_category!=0||m_selected<0)return false;
+    commitTextureEdits();
     const int removedId=m_selected+100;
     if(!m_project.dat()->removeItem(m_selected))return false;
     m_undo.clear();m_redo.clear();
@@ -599,8 +601,9 @@ int EditorBackend::importItemGraphicsRange(const QString &folderUrl,int sourceVe
     if(!loaded() || m_category!=0 || m_compiling){message("Open a target item project first.");return 0;}
     if(sourceFirstId<100 || sourceLastId<sourceFirstId || sourceLastId>65535 || targetFirstId<100
        || quint64(targetFirstId)+quint64(sourceLastId-sourceFirstId)>65535){
-        message("The source range or target range is outside the valid item IDs.");return 0;
+       message("The source range or target range is outside the valid item IDs.");return 0;
     }
+    commitTextureEdits();
     m_compiling=true;
     const auto progress=[this](int value,const QString &stage){
         m_compileProgress=value;m_compileStage=stage;emit compileProgressChanged();
@@ -697,7 +700,7 @@ int EditorBackend::importItemGraphicsRange(const QString &folderUrl,int sourceVe
             .arg(targetFirstId).arg(targetLastId).arg(mapped.size()).arg(qMax(0,targetLastId-previousLastId)));
     return sources.size();
 }
-void EditorBackend::undo(){if(!canUndo())return;auto e=m_undo.back();m_undo.pop_back();m_project.dat()->restoreObject(e.category,e.row,e.before);m_redo.push_back(e);m_category=e.category;m_selected=e.row;m_selectedRows={m_selected};m_selectionAnchor=m_selected;notifySelection();refresh();}
+void EditorBackend::undo(){if(textureEditPending()){resetTextureEdit();return;}if(!canUndo())return;auto e=m_undo.back();m_undo.pop_back();m_project.dat()->restoreObject(e.category,e.row,e.before);m_redo.push_back(e);m_category=e.category;m_selected=e.row;m_selectedRows={m_selected};m_selectionAnchor=m_selected;notifySelection();refresh();}
 void EditorBackend::redo(){if(!canRedo())return;auto e=m_redo.back();m_redo.pop_back();m_project.dat()->restoreObject(e.category,e.row,e.after);m_undo.push_back(e);m_category=e.category;m_selected=e.row;m_selectedRows={m_selected};m_selectionAnchor=m_selected;notifySelection();refresh();}
 bool EditorBackend::compile(){
     if(m_compiling)return false;
@@ -710,6 +713,7 @@ bool EditorBackend::compile(){
     };
     QString error;const bool ok=m_project.compile(&error,progress);
     m_compiling=false;emit compileProgressChanged();
+    if (ok) commitTextureEdits();
     message(ok?QStringLiteral("Project compiled: DAT, SPR%1%2").arg(m_project.otbLoaded()?QStringLiteral(", OTB"):QString()).arg(m_project.itemsXmlLoaded()?QStringLiteral(", items.xml"):QString()):error);
     return ok;
 }
@@ -724,6 +728,7 @@ bool EditorBackend::compileAs(const QString &folderUrl){
     };
     QString error;const bool ok=m_project.compileAs(path(folderUrl),&error,progress);
     m_compiling=false;emit compileProgressChanged();
+    if (ok) commitTextureEdits();
     if(ok)m_folder=m_project.folder();
     message(ok?QStringLiteral("Project compiled to %1").arg(m_project.folder()):error);
     return ok;

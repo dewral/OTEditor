@@ -87,8 +87,22 @@ Item {
         let pending=Object.assign({},changes); pending[key]=value; changes=pending
         saveError=""
     }
-    function resetDraft() { draft=Object.assign({},Backend.details); changes=({}); delete pendingDrafts[selectedKey]; saveError=""; previewFrame=Math.min(previewFrame,(draft.frames||1)-1) }
-    function saveDraft() { if(Backend.setValues(changes))resetDraft();else saveError="Could not save these values. Check the selected DAT version and field limits." }
+    function resetDraft() {
+        if (Backend.textureEditPending) Backend.resetTextureEdit()
+        draft=Object.assign({},Backend.details); changes=({}); delete pendingDrafts[selectedKey]
+        saveError=""; previewFrame=Math.min(previewFrame,(draft.frames||1)-1)
+    }
+    function saveDraft() {
+        if (Object.keys(changes).length && !Backend.setValues(changes)) {
+            saveError="Could not save these values. Check the selected DAT version and field limits."
+            return
+        }
+        if (Backend.textureEditPending && !Backend.saveTextureEdit()) {
+            saveError="Could not save the texture changes."
+            return
+        }
+        resetDraft()
+    }
     function editServer(key,value) { let next=Object.assign({},serverDraft); next[key]=value; serverDraft=next; let pending=Object.assign({},serverChanges); pending[key]=value; serverChanges=pending; saveError="" }
     function resetServer() { serverDraft=Object.assign({},Backend.serverAttributes); serverChanges=({}); saveError="" }
     function saveServer() { if(Backend.setServerAttributes(serverChanges))resetServer(); else saveError="Could not save server attributes." }
@@ -673,8 +687,8 @@ Item {
         implicitHeight: 34
         RowLayout {
             anchors { right: parent.right; rightMargin: 12; verticalCenter: parent.verticalCenter }
-            Tool { text: "Reset"; implicitWidth: 72; enabled: inspector.tabIndex===2 ? Object.keys(inspector.serverChanges).length>0 : Object.keys(inspector.changes).length>0; onClicked: inspector.tabIndex===2 ? inspector.resetServer() : inspector.resetDraft() }
-            Tool { text: "Save"; accent: true; implicitWidth: 72; enabled: inspector.tabIndex===2 ? Backend.serverId>=0 && Object.keys(inspector.serverChanges).length>0 : inspector.editable && Object.keys(inspector.changes).length>0; onClicked: inspector.tabIndex===2 ? inspector.saveServer() : inspector.saveDraft() }
+            Tool { objectName: "inspectorResetButton"; text: "Reset"; implicitWidth: 72; enabled: inspector.tabIndex===2 ? Object.keys(inspector.serverChanges).length>0 : Object.keys(inspector.changes).length>0 || Backend.textureEditPending; onClicked: inspector.tabIndex===2 ? inspector.resetServer() : inspector.resetDraft() }
+            Tool { objectName: "inspectorSaveButton"; text: "Save"; accent: true; implicitWidth: 72; enabled: inspector.tabIndex===2 ? Backend.serverId>=0 && Object.keys(inspector.serverChanges).length>0 : (inspector.editable && Object.keys(inspector.changes).length>0) || Backend.textureEditPending; onClicked: inspector.tabIndex===2 ? inspector.saveServer() : inspector.saveDraft() }
         }
     }
     PaletteColorDialog {
