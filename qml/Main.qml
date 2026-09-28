@@ -46,6 +46,7 @@ ApplicationWindow {
     property bool pendingOpen: false
     property bool pendingNew: false
     property string spriteImportMode: "replace"
+    property string allExportMode: "objects"
     readonly property string currentImage: {
         let revision = Backend.revision;
         return Backend.preview(Backend.selected, frame,
@@ -148,6 +149,21 @@ ApplicationWindow {
                 shortcut: StandardKey.SaveAs
                 enabled: Backend.loaded
                 onTriggered: compileFolderDialog.open()
+            }
+            Action {
+                text: "Export All Objects..."
+                enabled: Backend.loaded
+                onTriggered: { win.allExportMode="objects"; allExportFolderDialog.open() }
+            }
+            Action {
+                text: "Export All Animation Sheets..."
+                enabled: Backend.loaded
+                onTriggered: { win.allExportMode="sheets"; allExportFolderDialog.open() }
+            }
+            Action {
+                text: "Export All Sprites..."
+                enabled: Backend.loaded
+                onTriggered: { win.allExportMode="sprites"; allExportFolderDialog.open() }
             }
             MenuSeparator {
                 implicitHeight: 7
@@ -822,6 +838,14 @@ ApplicationWindow {
         id: durationOptimizer
         backend: Backend
         owner: win
+    }
+    FolderDialog {
+        id: allExportFolderDialog
+        title: win.allExportMode === "sprites" ? "Export all sprites" : "Export all objects"
+        onAccepted: {
+            if (win.allExportMode === "sprites") Backend.exportAllSprites(selectedFolder.toString());
+            else Backend.exportAllObjects(selectedFolder.toString(),win.allExportMode === "sheets");
+        }
     }
     FileDialog {
         id: compareOtbDialog

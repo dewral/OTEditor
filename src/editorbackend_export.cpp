@@ -19,10 +19,11 @@ bool EditorBackend::exportPngAt(const QString &filePath,bool sheet,int row){
     const QImage output=renderObjectAt(sheet,row);
     return !output.isNull() && output.save(filePath,"PNG");
 }
-QImage EditorBackend::renderObjectAt(bool sheet,int row){
-    const auto item=m_project.dat()->objectAt(m_category,row);
+QImage EditorBackend::renderObjectAt(bool sheet,int row,int category){
+    if (category<0) category=m_category;
+    const auto item=m_project.dat()->objectAt(category,row);
     if(!item)return {};
-    const bool outfitSheet=sheet && m_category==1;
+    const bool outfitSheet=sheet && category==1;
     const int groupCount=outfitSheet && !item->frame_groups.empty()?int(item->frame_groups.size()):1;
     const int spriteSize=m_project.spriteSize();
     qint64 outputWidth=0,outputHeight=0;
@@ -55,8 +56,8 @@ QImage EditorBackend::renderObjectAt(bool sheet,int row){
             ? int(group?group->pattern_x:item->pattern_x)*int(group?group->pattern_y:item->pattern_y)*int(group?group->pattern_z:item->pattern_z)
             : 1;
         for(int frame=0;frame<frames;++frame)for(int pattern=0;pattern<patterns;++pattern){
-            const int previewPattern=outfitSheet?pattern:(m_category==1?2:0);
-            const QString source=previewForCategory(m_category,row,frame,previewPattern,groupIndex,-1);
+            const int previewPattern=outfitSheet?pattern:(category==1?2:0);
+            const QString source=previewForCategory(category,row,frame,previewPattern,groupIndex,-1);
             painter.drawImage((outfitSheet?pattern:frame)*cellWidth,
                               groupY+(outfitSheet?frame:0)*cellHeight,
                               image(source.mid(QStringLiteral("image://itempreview/").size())));
@@ -138,6 +139,53 @@ int EditorBackend::exportSelectedPngs(const QString &folderUrl,bool sheet){
     }
     m_compiling=false;emit compileProgressChanged();
     message(QStringLiteral("Exported %1 of %2 %3 to %4").arg(exported).arg(rows.size()).arg(sheet?QStringLiteral("animation sheets"):QStringLiteral("objects")).arg(folder.absolutePath()));
+    return exported;
+}
+int EditorBackend::exportAllObjects(const QString &folderUrl,bool sheet){
+    if (!loaded() || m_compiling) return 0;
+    const QDir folder(path(folderUrl));
+    if (!folder.exists()) { message("Export folder does not exist");return 0; }
+    int total=0;
+    for (int category=0;category<4;++category) total+=m_project.dat()->categoryCount(category);
+    const QStringList categories={"item","outfit","effect","missile"};
+    m_compiling=true;m_compileProgress=0;m_compileStage="Exporting all objects";emit compileProgressChanged();
+    int exported=0;
+    int processed=0;
+    for (int category=0;category<4;++category) for (int row=0;row<m_project.dat()->categoryCount(category);++row) {
+        const auto *item=m_project.dat()->objectAt(category,row);
+        if (item) {
+            const QString base=QString("%1_%2_%3").arg(categories[category]).arg(item->id).arg(sheet?"sheet":"object");
+            QString target=folder.filePath(base+".png");
+            for (int suffix=2;QFileInfo::exists(target);++suffix) target=folder.filePath(QString("%1_%2.png").arg(base).arg(suffix));
+            const QImage output=renderObjectAt(sheet,row,category);
+            if (!output.isNull() && output.save(target,"PNG")) ++exported;
+        }
+        ++processed;
+        m_compileProgress=total?100*processed/total:100;
+        m_compileStage=QString("Exporting objects: %1 / %2").arg(processed).arg(total);
+        if (processed%8==0 || processed==total) { emit compileProgressChanged();QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents); }
+    }
+    m_compiling=false;emit compileProgressChanged();
+    message(QString("Exported %1 of %2 objects to %3").arg(exported).arg(total).arg(folder.absolutePath()));
+    return exported;
+}
+int EditorBackend::exportAllSprites(const QString &folderUrl){
+    if (!loaded() || m_compiling) return 0;
+    const QDir folder(path(folderUrl));
+    if (!folder.exists()) { message("Export folder does not exist");return 0; }
+    const int total=spriteCount();
+    m_compiling=true;m_compileProgress=0;m_compileStage="Exporting all sprites";emit compileProgressChanged();
+    int exported=0;
+    for (int id=1;id<=total;++id) {
+        QString target=folder.filePath(QString("sprite_%1.png").arg(id));
+        for (int suffix=2;QFileInfo::exists(target);++suffix) target=folder.filePath(QString("sprite_%1_%2.png").arg(id).arg(suffix));
+        if (m_project.sprites()->spriteImage(id).save(target,"PNG")) ++exported;
+        m_compileProgress=total?100*id/total:100;
+        m_compileStage=QString("Exporting sprites: %1 / %2").arg(id).arg(total);
+        if (id%16==0 || id==total) { emit compileProgressChanged();QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents); }
+    }
+    m_compiling=false;emit compileProgressChanged();
+    message(QString("Exported %1 of %2 sprites to %3").arg(exported).arg(total).arg(folder.absolutePath()));
     return exported;
 }
 bool EditorBackend::exportSprite(const QString &url,int id){

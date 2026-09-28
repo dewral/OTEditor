@@ -799,6 +799,18 @@ private slots:
         QVERIFY(reopened.details().value("isStackable").toBool());
     }
  }
+ void exportAllObjectsAndSprites() {
+    QTemporaryDir client,objects,sprites;
+    QVERIFY(client.isValid()); QVERIFY(objects.isValid()); QVERIFY(sprites.isValid());
+    fixture(client.path());
+    EditorBackend backend; QVERIFY(backend.openFolder(client.path(),860));
+    QCOMPARE(backend.exportAllObjects(objects.path(),false),3);
+    QVERIFY(QFile::exists(objects.path()+"/item_100_object.png"));
+    QVERIFY(QFile::exists(objects.path()+"/missile_1_object.png"));
+    QCOMPARE(backend.exportAllSprites(sprites.path()),1);
+    QVERIFY(QFile::exists(sprites.path()+"/sprite_1.png"));
+    QCOMPARE(backend.compileProgress(),100);
+ }
  void outfitSheetKeepsDirectionsInColumnsAndGroupsInRows() {
     QTemporaryDir client,output;QVERIFY(client.isValid());QVERIFY(output.isValid());
     {

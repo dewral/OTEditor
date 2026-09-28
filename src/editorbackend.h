@@ -150,6 +150,8 @@ public:
     Q_INVOKABLE bool removeSprite(int spriteId);
     Q_INVOKABLE bool exportPng(const QString &url, bool sheet=false);
     Q_INVOKABLE int exportSelectedPngs(const QString &folderUrl, bool sheet=false);
+    Q_INVOKABLE int exportAllObjects(const QString &folderUrl, bool sheet=false);
+    Q_INVOKABLE int exportAllSprites(const QString &folderUrl);
     Q_INVOKABLE int exportObjects(const QString &folderUrl, const QString &name,
                                  const QString &format, bool transparentBackground);
     Q_INVOKABLE QString defaultExportFolder() const;
@@ -169,7 +171,7 @@ private:
     quint64 textureEditKey() const;
     bool applyObject(ClientItem item);
     bool exportPngAt(const QString &filePath, bool sheet, int row);
-    QImage renderObjectAt(bool sheet, int row);
+    QImage renderObjectAt(bool sheet, int row, int category=-1);
     QString previewForCategory(int category, int row, int frame, int pattern, int group, int layer) const;
     std::optional<ClientItem> m_objectCopy, m_patternsCopy, m_propertiesCopy;
     QVariantMap m_serverAttributesCopy;
