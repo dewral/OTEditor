@@ -521,13 +521,10 @@ ApplicationWindow {
             onTriggered: replaceDialog.open()
         }
         CompactContextItem {
+            objectName: "importClientObjectsContextAction"
             text: "Import Objects from Client..."
             enabled: win.editable
-            onTriggered: {
-                importTargetFirst.value = Number(win.d.itemId || 100);
-                importGraphicsDialog.importError = "";
-                importGraphicsDialog.open();
-            }
+            onTriggered: importGraphicsDialog.openForTarget(Number(win.d.itemId || 100))
         }
         CompactContextItem {
             text: "Export"

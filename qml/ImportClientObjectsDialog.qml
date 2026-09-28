@@ -11,6 +11,11 @@ Dialog {
     title: "Import Client Objects"
     anchors.centerIn: parent
     property string importError: ""
+    function openForTarget(itemId) {
+        importTargetFirst.value = Math.max(100, Math.min(65535, Number(itemId) || 100))
+        importError = ""
+        open()
+    }
     width: 600
     modal: true
     standardButtons: Dialog.NoButton
@@ -86,6 +91,7 @@ Dialog {
             }
             SpinBox {
                 id: importTargetFirst
+                objectName: "importTargetFirstSpinBox"
                 from: 100
                 to: 65535
                 value: 100
