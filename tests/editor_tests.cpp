@@ -159,6 +159,29 @@ private slots:
     QCOMPARE(reopened.details().value("itemId").toInt(),100);
     QVERIFY(reopened.details().value("isStackable").toBool());
  }
+ void categoryObjectsCreateDuplicateAndRemoveRoundTrip() {
+    QTemporaryDir dir; QVERIFY(dir.isValid()); fixture(dir.path());
+    EditorBackend backend; QVERIFY2(backend.openFolder(dir.path(),860),qPrintable(backend.status()));
+    for (int category=1; category<=3; ++category) {
+        backend.setCategory(category);
+        QCOMPARE(backend.count(),category==3?1:0);
+        backend.create();
+        QCOMPARE(backend.details().value("itemId").toInt(),category==3?2:1);
+        backend.create(true);
+        QCOMPARE(backend.details().value("itemId").toInt(),category==3?3:2);
+        backend.select(category==3?1:0);
+        QVERIFY(backend.removeObject());
+        QCOMPARE(backend.count(),category==3?2:1);
+        QCOMPARE(backend.details().value("itemId").toInt(),category==3?2:1);
+    }
+    QVERIFY2(backend.compile(),qPrintable(backend.status()));
+    EditorBackend reopened; QVERIFY2(reopened.openFolder(dir.path(),860),qPrintable(reopened.status()));
+    for (int category=1; category<=3; ++category) {
+        reopened.setCategory(category);
+        QCOMPARE(reopened.count(),category==3?2:1);
+        QCOMPARE(reopened.details().value("itemId").toInt(),1);
+    }
+ }
  void outfitTexturePatternRoundTrip() {
     QTemporaryDir dir; QVERIFY(dir.isValid()); fixture(dir.path());
     QFile dat(dir.path()+"/Tibia.dat"); QVERIFY(dat.open(QIODevice::WriteOnly));

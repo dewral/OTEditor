@@ -169,6 +169,8 @@ public:
     void adaptImportedItem(ClientItem &item) const;
     Q_INVOKABLE int duplicateItem(int row);
     Q_INVOKABLE bool removeItem(int row);
+    int createObject(int category, int sourceRow = -1);
+    bool removeObject(int category, int row);
 
     const ClientItem *itemByClientId(uint16_t clientId) const;
 
@@ -240,6 +242,7 @@ private:
     uint16_t m_maxOutfitId = 0;
     uint16_t m_maxEffectId = 0;
     uint16_t m_maxMissileId = 0;
+    bool m_categoryStructureChanged = false;
 };
 
 #endif

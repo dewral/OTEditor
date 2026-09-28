@@ -131,6 +131,7 @@ void DatReader::reset()
     m_dirty = false;
     m_filePath.clear();
     m_categoryTail.clear();
+    m_categoryStructureChanged = false;
     endResetModel();
 
     emit itemCountChanged();
@@ -209,6 +210,7 @@ bool DatReader::loadFile(const QString &path, quint32 expectedSignature)
     }
     m_loaded = true;
     m_dirty = false;
+    m_categoryStructureChanged = false;
     endResetModel();
 
     emit itemCountChanged();
@@ -327,7 +329,7 @@ bool DatReader::saveFile(const QString &path)
     const auto modified = [](const auto &items) {
         return std::any_of(items.begin(),items.end(),[](const ClientItem &item){return item.modified;});
     };
-    if (!modified(m_outfits) && !modified(m_effects) && !modified(m_missiles)) {
+    if (!m_categoryStructureChanged && !modified(m_outfits) && !modified(m_effects) && !modified(m_missiles)) {
         if (!m_categoryTail.isEmpty()) out.writeRawData(m_categoryTail.constData(), m_categoryTail.size());
     } else {
         for (const ClientItem &item : m_outfits) writeItem(item,true,true);
@@ -340,6 +342,7 @@ bool DatReader::saveFile(const QString &path)
     }
     m_filePath = target;
     m_dirty = false;
+    m_categoryStructureChanged = false;
     // Modified records continue to serialize from current state on subsequent saves.
     // Keeping old raw_record with modified=false would silently revert edits.
     emit dirtyChanged();
@@ -1027,6 +1030,43 @@ void DatReader::restoreItem(int row, const ClientItem &item) {
     m_dirty = true;
     emit dirtyChanged();
     emit dataChanged(index(row), index(row));
+}
+
+int DatReader::createObject(int category, int sourceRow)
+{
+    if (category == 0) return sourceRow < 0 ? createItem() : duplicateItem(sourceRow);
+    if (!m_loaded || category < 1 || category > 3) return -1;
+    auto &objects = category == 1 ? m_outfits : category == 2 ? m_effects : m_missiles;
+    if (objects.size() >= 65535 || sourceRow >= int(objects.size())) return -1;
+    ClientItem item;
+    if (sourceRow >= 0) item = objects[size_t(sourceRow)];
+    item.id = static_cast<uint16_t>(objects.size() + 1);
+    if (item.sprite_ids.empty()) item.sprite_ids.push_back(0);
+    item.modified = true;
+    objects.push_back(std::move(item));
+    auto &maxId = category == 1 ? m_maxOutfitId : category == 2 ? m_maxEffectId : m_maxMissileId;
+    maxId = static_cast<uint16_t>(objects.size());
+    m_categoryStructureChanged = true;
+    if (!m_dirty) { m_dirty = true; emit dirtyChanged(); }
+    return int(objects.size()) - 1;
+}
+
+bool DatReader::removeObject(int category, int row)
+{
+    if (category == 0) return removeItem(row);
+    if (!m_loaded || category < 1 || category > 3) return false;
+    auto &objects = category == 1 ? m_outfits : category == 2 ? m_effects : m_missiles;
+    if (row < 0 || row >= int(objects.size())) return false;
+    objects.erase(objects.begin() + row);
+    for (size_t index = size_t(row); index < objects.size(); ++index) {
+        objects[index].id = static_cast<uint16_t>(index + 1);
+        objects[index].modified = true;
+    }
+    auto &maxId = category == 1 ? m_maxOutfitId : category == 2 ? m_maxEffectId : m_maxMissileId;
+    maxId = static_cast<uint16_t>(objects.size());
+    m_categoryStructureChanged = true;
+    if (!m_dirty) { m_dirty = true; emit dirtyChanged(); }
+    return true;
 }
 void DatReader::restoreObject(int category, int row, const ClientItem &item) {
     if (category == 0) { restoreItem(row, item); return; }

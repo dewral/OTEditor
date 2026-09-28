@@ -54,6 +54,7 @@ ApplicationWindow {
                                Backend.category === 1 ? attributes.outfitLayer : -1);
     }
     readonly property bool editable: Backend.loaded && Backend.category === 0 && Backend.selected >= 0
+    readonly property bool objectEditable: Backend.loaded && Backend.selected >= 0
     function openProject() {
         if (Backend.dirty) {
             pendingOpen = true;
@@ -336,22 +337,22 @@ ApplicationWindow {
             Tool {
                 text: "+"
                 font.pixelSize: 20
-                tip: "New item"
-                enabled: Backend.loaded && Backend.category === 0
+                tip: "New object"
+                enabled: Backend.loaded
                 onClicked: Backend.create()
             }
             Tool {
                 text: "⧉"
                 font.pixelSize: 19
-                tip: "Duplicate item · Ctrl+D"
-                enabled: win.editable
+                tip: "Duplicate object · Ctrl+D"
+                enabled: win.objectEditable
                 onClicked: Backend.create(true)
             }
             Tool {
                 text: "×"
                 font.pixelSize: 18
-                tip: "Remove selected item"
-                enabled: win.editable
+                tip: "Remove selected object"
+                enabled: win.objectEditable
                 onClicked: removeItemConfirm.open()
             }
             Tool {
@@ -538,7 +539,7 @@ ApplicationWindow {
         }
         CompactContextItem {
             text: "Duplicate"
-            enabled: win.editable
+            enabled: win.objectEditable
             onTriggered: Backend.create(true)
         }
         CompactContextItem {
@@ -586,8 +587,8 @@ ApplicationWindow {
             onTriggered: Backend.pasteServerAttributes()
         }
         CompactContextItem {
-            text: "Remove item"
-            enabled: win.editable
+            text: "Remove object"
+            enabled: win.objectEditable
             onTriggered: removeItemConfirm.open()
         }
         MenuSeparator {
@@ -722,12 +723,17 @@ ApplicationWindow {
     }
     Dialog {
         id: removeItemConfirm
-        title: "Remove item " + (win.d.itemId ?? "")
+        title: "Remove object " + (win.d.itemId ?? "")
         anchors.centerIn: parent
+        width: 490
         modal: true
         standardButtons: Dialog.Ok | Dialog.Cancel
         Label {
-            text: "Remove the selected item? Later client IDs will shift down by one.\nServer item mappings may need to be updated."
+            width: 440
+            wrapMode: Text.WordWrap
+            text: Backend.category === 0
+                  ? "Remove the selected item? Later client IDs will shift down by one.\nServer item mappings may need to be updated."
+                  : "Remove the selected object? Later IDs in this category will shift down by one."
         }
         onAccepted: Backend.removeObject()
     }

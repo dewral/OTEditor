@@ -302,8 +302,8 @@ Panel {
                 implicitWidth: 26
                 implicitHeight: 24
                 padding: 2
-                tip: "Duplicate item"
-                enabled: owner.editable
+                tip: "Duplicate object"
+                enabled: owner.objectEditable
                 onClicked: backend.create(true)
             }
             Tool {
@@ -311,8 +311,8 @@ Panel {
                 implicitWidth: 26
                 implicitHeight: 24
                 padding: 2
-                tip: "New item"
-                enabled: backend.loaded && backend.category === 0
+                tip: "New object"
+                enabled: backend.loaded
                 onClicked: backend.create()
             }
             Tool {
@@ -320,8 +320,8 @@ Panel {
                 implicitWidth: 26
                 implicitHeight: 24
                 padding: 2
-                tip: "Remove selected item"
-                enabled: owner.editable
+                tip: "Remove selected object"
+                enabled: owner.objectEditable
                 onClicked: browserPanel.removeRequested()
             }
         }

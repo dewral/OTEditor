@@ -445,24 +445,29 @@ bool EditorBackend::assignSprite(int slot,int id){
     if(!m_project.dat()->setSpriteId(m_selected,slot,id))return false;remember(before);message(QString("Assigned sprite %1 to slot %2").arg(id).arg(slot));return true;
 }
 void EditorBackend::create(bool duplicate){
-    if(!loaded()||m_category!=0)return;commitTextureEdits();int row=duplicate?m_project.dat()->duplicateItem(m_selected):m_project.dat()->createItem();
-    if(row<0){message("Cannot create item");return;}m_selected=row;m_selectedRows={row};m_selectionAnchor=row;notifySelection();m_undo.clear();m_redo.clear();refresh();message(QString("Created item %1").arg(row+100));
+    if(!loaded()||(duplicate&&m_selected<0))return;
+    commitTextureEdits();
+    const int row=m_project.dat()->createObject(m_category,duplicate?m_selected:-1);
+    if(row<0){message("Cannot create object");return;}
+    m_selected=row;m_selectedRows={row};m_selectionAnchor=row;notifySelection();m_undo.clear();m_redo.clear();refresh();
+    message(QString("Created object %1").arg(row+(m_category==0?100:1)));
 }
 void EditorBackend::clearObject(){
     if(!loaded()||m_category!=0||m_selected<0)return;auto before=*m_project.dat()->objectAt(0,m_selected);ClientItem empty;empty.id=before.id;empty.sprite_ids={0};empty.modified=true;m_project.dat()->restoreItem(m_selected,empty);remember(before);message("Object cleared; its ID is preserved.");
 }
 bool EditorBackend::removeObject(){
-    if(!loaded()||m_category!=0||m_selected<0)return false;
+    if(!loaded()||m_selected<0)return false;
     commitTextureEdits();
-    const int removedId=m_selected+100;
-    if(!m_project.dat()->removeItem(m_selected))return false;
+    const int removedId=m_selected+(m_category==0?100:1);
+    if(!m_project.dat()->removeObject(m_category,m_selected))return false;
     m_undo.clear();m_redo.clear();
-    m_selected=m_project.dat()->itemCount()>0 ? qMin(m_selected,m_project.dat()->itemCount()-1) : -1;
+    const int count=m_project.dat()->categoryCount(m_category);
+    m_selected=count>0 ? qMin(m_selected,count-1) : -1;
     m_selectedRows.clear();if(m_selected>=0)m_selectedRows.insert(m_selected);m_selectionAnchor=m_selected;
     refresh();
     if(!m_visiblePositions.contains(m_selected)){m_selected=m_rows.isEmpty() ? -1 : m_rows.front();m_selectedRows.clear();if(m_selected>=0)m_selectedRows.insert(m_selected);m_selectionAnchor=m_selected;}
     notifySelection();emit changed();
-    message(QString("Removed item %1; later item IDs shifted down by one.").arg(removedId));
+    message(QString("Removed object %1; later IDs shifted down by one.").arg(removedId));
     return true;
 }
 namespace {
