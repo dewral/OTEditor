@@ -4,7 +4,7 @@ OTEditor is a desktop Tibia object editor built with **Qt 6, QML, and C++17**. I
 
 ## Getting started
 
-After building the portable package, run `dist/OTEditor.exe`. Keep the entire `dist` directory together; the executable alone does not include the required Qt files.
+For the Windows release ZIP, extract the archive and run `OTEditor.exe` from the extracted `OTEditor` folder. Keep the entire folder together; the executable alone does not include the required Qt files. For a local build, run `dist/OTEditor.exe`.
 
 1. Choose **File → Open** (`Ctrl+O`) and select a folder containing DAT and SPR files.
 2. When available, the editor also loads `items.otb`, `items.xml`, and OTFI from the project folder or their usual nearby locations.
