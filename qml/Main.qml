@@ -299,6 +299,26 @@ ApplicationWindow {
                 onTriggered: Backend.createOtbFile()
             }
             Action {
+                text: "Save items.otb"
+                enabled: Boolean(Backend.info.otb)
+                onTriggered: Backend.saveOtbFile()
+            }
+            Action {
+                text: "Save items.otb Copy..."
+                enabled: Boolean(Backend.info.otb)
+                onTriggered: saveOtbCopyDialog.open()
+            }
+            Action {
+                text: "Save items.xml"
+                enabled: Boolean(Backend.info.itemsXml)
+                onTriggered: Backend.saveItemsXmlFile()
+            }
+            Action {
+                text: "Save items.xml Copy..."
+                enabled: Boolean(Backend.info.itemsXml)
+                onTriggered: saveItemsXmlCopyDialog.open()
+            }
+            Action {
                 objectName: "createMissingOtbItemsAction"
                 text: "Create Missing OTB Items"
                 enabled: Boolean(Backend.info.otb)
@@ -692,6 +712,22 @@ ApplicationWindow {
         id: compileFolderDialog
         title: "Compile complete project to folder"
         onAccepted: Backend.compileAs(selectedFolder.toString())
+    }
+    FileDialog {
+        id: saveOtbCopyDialog
+        title: "Save items.otb copy"
+        fileMode: FileDialog.SaveFile
+        nameFilters: ["OTB files (*.otb)"]
+        defaultSuffix: "otb"
+        onAccepted: Backend.saveOtbFile(selectedFile.toString())
+    }
+    FileDialog {
+        id: saveItemsXmlCopyDialog
+        title: "Save items.xml copy"
+        fileMode: FileDialog.SaveFile
+        nameFilters: ["XML files (*.xml)"]
+        defaultSuffix: "xml"
+        onAccepted: Backend.saveItemsXmlFile(selectedFile.toString())
     }
     FileDialog {
         id: spriteExportDialog

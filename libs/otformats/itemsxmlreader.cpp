@@ -110,6 +110,20 @@ bool ItemsXmlReader::saveFile(const QString &path)
     const QString target = path.isEmpty() ? m_filePath : path;
     if (target == m_filePath && m_dirtyNames.isEmpty()) return true;
 
+    if (!writeFile(target)) return false;
+    m_dirtyNames.clear();
+    m_filePath = target;
+    emit loadedChanged();
+    return true;
+}
+
+bool ItemsXmlReader::saveCopy(const QString &path)
+{
+    return !m_filePath.isEmpty() && !path.isEmpty() && writeFile(path);
+}
+
+bool ItemsXmlReader::writeFile(const QString &target)
+{
     QFile input(m_filePath);
     if (!input.open(QIODevice::ReadOnly)) return false;
 
@@ -173,9 +187,6 @@ bool ItemsXmlReader::saveFile(const QString &path)
     input.close();
     if (xml.hasError() || !output.commit()) return false;
 
-    m_dirtyNames.clear();
-    m_filePath = target;
-    emit loadedChanged();
     return true;
 }
 

@@ -735,6 +735,25 @@ bool OtbReader::saveFile(const QString &path)
         return false;
     }
 
+    if (!writeFile(target)) return false;
+    m_filePath = target;
+    m_dirty = false;
+    emit dirtyChanged();
+    emit loadedChanged();
+    return true;
+}
+
+bool OtbReader::saveCopy(const QString &path)
+{
+    if (!m_loaded || path.isEmpty()) {
+        setError(QStringLiteral("No OTB target file selected"));
+        return false;
+    }
+    return writeFile(path);
+}
+
+bool OtbReader::writeFile(const QString &target)
+{
     QByteArray output(4, '\0');
     output.append(static_cast<char>(0xfe));
     appendEscaped(output, m_rootData);
@@ -774,10 +793,6 @@ bool OtbReader::saveFile(const QString &path)
         setError(QStringLiteral("Cannot save OTB file: %1").arg(target));
         return false;
     }
-    m_filePath = target;
-    m_dirty = false;
-    emit dirtyChanged();
-    emit loadedChanged();
     return true;
 }
 

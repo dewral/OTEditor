@@ -142,6 +142,7 @@ public:
     Q_INVOKABLE QVariantMap detailsAt(int row) const;
     Q_INVOKABLE bool setValue(int row, const QString &key, const QVariant &value);
     Q_INVOKABLE bool saveFile(const QString &path = QString());
+    bool saveCopy(const QString &path);
     void syncNamesToItemsXml();
     Q_INVOKABLE int createItem(int clientId = 100);
     Q_INVOKABLE int duplicateItem(int row);
@@ -166,6 +167,7 @@ private:
     void reset();
     void setError(const QString &message);
     void refreshDatRoles();
+    bool writeFile(const QString &target);
 
     std::vector<OtbItem> m_items;
     QHash<uint16_t, int> m_serverIdToRow;

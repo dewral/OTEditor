@@ -598,6 +598,24 @@ bool EditorBackend::createOtbFile() {
     message(QStringLiteral("Created items.otb. Use Create Missing OTB Items to add the remaining client items."));
     return true;
 }
+bool EditorBackend::saveOtbFile(const QString &fileUrl) {
+    if (!m_project.otbLoaded() || m_compiling) return false;
+    auto *otb=m_project.otb();
+    const bool copy=!fileUrl.isEmpty();
+    const QString target=copy?path(fileUrl):otb->filePath();
+    const bool ok=copy?otb->saveCopy(target):otb->saveFile();
+    message(ok?QString("Saved items.otb%1: %2").arg(copy?" copy":"",target):otb->errorString());
+    return ok;
+}
+bool EditorBackend::saveItemsXmlFile(const QString &fileUrl) {
+    if (!m_project.itemsXmlLoaded() || m_compiling) return false;
+    auto *xml=m_project.itemsXml();
+    const bool copy=!fileUrl.isEmpty();
+    const QString target=copy?path(fileUrl):xml->filePath();
+    const bool ok=copy?xml->saveCopy(target):xml->saveFile();
+    message(ok?QString("Saved items.xml%1: %2").arg(copy?" copy":"",target):QString("Could not save items.xml: %1").arg(target));
+    return ok;
+}
 bool EditorBackend::reloadSelectedOtbItem() {
     if (serverId()<0) return false;
     auto *otb=m_project.otb();

@@ -21,6 +21,7 @@ public:
     Q_INVOKABLE bool loadForDir(const QString &dirName);
     Q_INVOKABLE bool loadFile(const QString &path);
     Q_INVOKABLE bool saveFile(const QString &path = QString());
+    bool saveCopy(const QString &path);
     Q_INVOKABLE void clear();
 
     int count() const { return m_items.size(); }
@@ -38,6 +39,7 @@ signals:
     void loadedChanged();
 
 private:
+    bool writeFile(const QString &target);
     struct Entry {
         QString name;
         QString type;

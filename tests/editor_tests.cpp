@@ -688,11 +688,16 @@ private slots:
     QVERIFY(backend.setServerAttributes({{"speed",321},{"pickupable",true}}));
     QVERIFY(backend.updateOtbVersion(3,860,7));
     QCOMPARE(backend.info().value("otbBuild").toInt(),7);
+    const QString otbCopy=dir.path()+"/items-copy.otb";
+    QVERIFY(backend.saveOtbFile(otbCopy));
+    QVERIFY(QFile::exists(otbCopy));
+    QVERIFY(backend.dirty());
     const QString comparisonPath=dir.path()+"/comparison.otb";
     QVERIFY(QFile::copy(dir.path()+"/items.otb",comparisonPath));
     const auto comparison=backend.compareOtbFile(comparisonPath);
     QVERIFY(!comparison.contains("error"));
     QVERIFY(comparison.value("changed").toInt()>0);
+    QVERIFY(backend.saveOtbFile());
     QVERIFY(backend.compile());
     EditorBackend reopened; QVERIFY(reopened.openFolder(dir.path(),860));
     QCOMPARE(reopened.serverAttributes().value("name").toString(),QStringLiteral("Test Sword"));
@@ -702,6 +707,31 @@ private slots:
     QVERIFY(reopened.createServerItem());
     QVERIFY(reopened.serverId()>=0);
     QVERIFY(!reopened.createServerItem());
+ }
+ void serverFileCopiesKeepActivePathsAndPendingChanges() {
+    QTemporaryDir dir; QVERIFY(dir.isValid()); fixture(dir.path());
+    OtbReader otb; otb.newFile();
+    const QString otbPath=dir.path()+"/items.otb";
+    QVERIFY(otb.saveFile(otbPath));
+    QVERIFY(otb.createItem(100)>=0);
+    QVERIFY(otb.dirty());
+    QVERIFY(otb.saveCopy(dir.path()+"/items-copy.otb"));
+    QCOMPARE(otb.filePath(),otbPath);
+    QVERIFY(otb.dirty());
+
+    const QString xmlPath=dir.path()+"/items.xml";
+    QFile xmlFile(xmlPath); QVERIFY(xmlFile.open(QIODevice::WriteOnly));
+    QVERIFY(xmlFile.write("<items><item id=\"100\" name=\"Original\"/></items>")>0);
+    xmlFile.close();
+    ItemsXmlReader xml; QVERIFY(xml.loadFile(xmlPath));
+    xml.setNameForServerId(100,"Changed");
+    QVERIFY(xml.dirty());
+    const QString copyPath=dir.path()+"/items-copy.xml";
+    QVERIFY(xml.saveCopy(copyPath));
+    QCOMPARE(xml.filePath(),xmlPath);
+    QVERIFY(xml.dirty());
+    QFile copy(copyPath); QVERIFY(copy.open(QIODevice::ReadOnly));
+    QVERIFY(copy.readAll().contains("Changed"));
  }
  void createOtbWhenMissing() {
     QTemporaryDir client; QTemporaryDir server;
