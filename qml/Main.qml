@@ -179,7 +179,8 @@ ApplicationWindow {
             Action {
                 text: "Merge..."
                 shortcut: "Ctrl+M"
-                enabled: false
+                enabled: Backend.loaded
+                onTriggered: mergeDialog.open()
             }
             MenuSeparator {
                 implicitHeight: 7
@@ -840,6 +841,7 @@ ApplicationWindow {
         owner: win
     }
     PreferencesDialog { id: preferencesDialog; backend: Backend }
+    MergeProjectDialog { id: mergeDialog; backend: Backend }
     FolderDialog {
         id: allExportFolderDialog
         title: win.allExportMode === "sprites" ? "Export all sprites" : "Export all objects"

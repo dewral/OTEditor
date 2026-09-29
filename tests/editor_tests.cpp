@@ -869,6 +869,25 @@ private slots:
     QVERIFY(QFile::exists(sprites.path()+"/sprite_1.png"));
     QCOMPARE(backend.compileProgress(),100);
  }
+ void mergeClientProjects() {
+    QTemporaryDir target,source; QVERIFY(target.isValid()); QVERIFY(source.isValid());
+    fixture(target.path()); fixture(source.path());
+    EditorBackend backend; QVERIFY(backend.openFolder(target.path(),860));
+    QCOMPARE(backend.mergeProject(source.path(),1098),0);
+    QCOMPARE(backend.spriteCount(),1);
+    QCOMPARE(backend.mergeProject(source.path(),860),3);
+    QCOMPARE(backend.count(),4);
+    QCOMPARE(backend.details().value("itemId").toInt(),102);
+    QCOMPARE(backend.spriteCount(),2);
+    QCOMPARE(backend.details().value("spriteIds").toList().first().toInt(),2);
+    backend.setCategory(3);
+    QCOMPARE(backend.count(),2);
+    QVERIFY2(backend.compile(),qPrintable(backend.status()));
+    EditorBackend reopened; QVERIFY2(reopened.openFolder(target.path(),860),qPrintable(reopened.status()));
+    QCOMPARE(reopened.count(),4);
+    reopened.setCategory(3);
+    QCOMPARE(reopened.count(),2);
+ }
  void outfitSheetKeepsDirectionsInColumnsAndGroupsInRows() {
     QTemporaryDir client,output;QVERIFY(client.isValid());QVERIFY(output.isValid());
     {
