@@ -732,6 +732,22 @@ private slots:
     QVERIFY(xml.dirty());
     QFile copy(copyPath); QVERIFY(copy.open(QIODevice::ReadOnly));
     QVERIFY(copy.readAll().contains("Changed"));
+    const QString xmlAs=dir.path()+"/renamed.xml";
+    QVERIFY(xml.saveFile(xmlAs));
+    QCOMPARE(xml.filePath(),xmlAs);
+    QVERIFY(!xml.dirty());
+
+    ProjectModel project;
+    QVERIFY(project.open(dir.path(),860,false));
+    const QString activeOtb=dir.path()+"/renamed.otb";
+    QVERIFY(project.saveOtbAs(activeOtb));
+    QCOMPARE(project.otb()->filePath(),activeOtb);
+    const QString activeXml=dir.path()+"/active.xml";
+    QVERIFY(project.saveItemsXmlAs(activeXml));
+    QCOMPARE(project.itemsXml()->filePath(),activeXml);
+    QVERIFY(project.compile());
+    QVERIFY(QFile::exists(activeOtb));
+    QVERIFY(QFile::exists(activeXml));
  }
  void createOtbWhenMissing() {
     QTemporaryDir client; QTemporaryDir server;

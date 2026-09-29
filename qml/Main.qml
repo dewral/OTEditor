@@ -304,6 +304,11 @@ ApplicationWindow {
                 onTriggered: Backend.saveOtbFile()
             }
             Action {
+                text: "Save items.otb As..."
+                enabled: Boolean(Backend.info.otb)
+                onTriggered: saveOtbAsDialog.open()
+            }
+            Action {
                 text: "Save items.otb Copy..."
                 enabled: Boolean(Backend.info.otb)
                 onTriggered: saveOtbCopyDialog.open()
@@ -312,6 +317,11 @@ ApplicationWindow {
                 text: "Save items.xml"
                 enabled: Boolean(Backend.info.itemsXml)
                 onTriggered: Backend.saveItemsXmlFile()
+            }
+            Action {
+                text: "Save items.xml As..."
+                enabled: Boolean(Backend.info.itemsXml)
+                onTriggered: saveItemsXmlAsDialog.open()
             }
             Action {
                 text: "Save items.xml Copy..."
@@ -722,12 +732,28 @@ ApplicationWindow {
         onAccepted: Backend.saveOtbFile(selectedFile.toString())
     }
     FileDialog {
+        id: saveOtbAsDialog
+        title: "Save items.otb as"
+        fileMode: FileDialog.SaveFile
+        nameFilters: ["OTB files (*.otb)"]
+        defaultSuffix: "otb"
+        onAccepted: Backend.saveOtbAsFile(selectedFile.toString())
+    }
+    FileDialog {
         id: saveItemsXmlCopyDialog
         title: "Save items.xml copy"
         fileMode: FileDialog.SaveFile
         nameFilters: ["XML files (*.xml)"]
         defaultSuffix: "xml"
         onAccepted: Backend.saveItemsXmlFile(selectedFile.toString())
+    }
+    FileDialog {
+        id: saveItemsXmlAsDialog
+        title: "Save items.xml as"
+        fileMode: FileDialog.SaveFile
+        nameFilters: ["XML files (*.xml)"]
+        defaultSuffix: "xml"
+        onAccepted: Backend.saveItemsXmlAsFile(selectedFile.toString())
     }
     FileDialog {
         id: spriteExportDialog

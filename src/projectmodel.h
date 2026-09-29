@@ -30,6 +30,8 @@ public:
     bool compile(QString *error = nullptr, const CompileProgress &progress = {});
     bool compileAs(const QString &folder, QString *error = nullptr, const CompileProgress &progress = {});
     bool createOtb(QString *error = nullptr);
+    bool saveOtbAs(const QString &target, QString *error = nullptr);
+    bool saveItemsXmlAs(const QString &target, QString *error = nullptr);
     bool convertFrameGroups(bool enabled, bool removeMounts=false);
     bool convertFrameDurations(bool enabled, int minimum=100, int maximum=100);
     void close();

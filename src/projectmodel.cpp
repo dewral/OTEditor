@@ -291,6 +291,28 @@ bool ProjectModel::createOtb(QString *error)
     return true;
 }
 
+bool ProjectModel::saveOtbAs(const QString &target, QString *error)
+{
+    if (!otbLoaded() || target.isEmpty() || !m_otb->saveFile(target)) {
+        if (error) *error = m_otb ? m_otb->errorString() : QStringLiteral("No items.otb loaded");
+        return false;
+    }
+    m_otbPath = target;
+    emit changed();
+    return true;
+}
+
+bool ProjectModel::saveItemsXmlAs(const QString &target, QString *error)
+{
+    if (!itemsXmlLoaded() || target.isEmpty() || !m_itemsXml->saveFile(target)) {
+        if (error) *error = QStringLiteral("Could not save items.xml: %1").arg(target);
+        return false;
+    }
+    m_itemsXmlPath = target;
+    emit changed();
+    return true;
+}
+
 bool ProjectModel::compileAs(const QString &folder, QString *error, const CompileProgress &progress)
 {
     if (!loaded()) {

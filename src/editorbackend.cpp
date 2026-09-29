@@ -616,6 +616,22 @@ bool EditorBackend::saveItemsXmlFile(const QString &fileUrl) {
     message(ok?QString("Saved items.xml%1: %2").arg(copy?" copy":"",target):QString("Could not save items.xml: %1").arg(target));
     return ok;
 }
+bool EditorBackend::saveOtbAsFile(const QString &fileUrl) {
+    if (m_compiling) return false;
+    const QString target=path(fileUrl);
+    QString error;
+    const bool ok=m_project.saveOtbAs(target,&error);
+    message(ok?QString("Saved items.otb as: %1").arg(target):error);
+    return ok;
+}
+bool EditorBackend::saveItemsXmlAsFile(const QString &fileUrl) {
+    if (m_compiling) return false;
+    const QString target=path(fileUrl);
+    QString error;
+    const bool ok=m_project.saveItemsXmlAs(target,&error);
+    message(ok?QString("Saved items.xml as: %1").arg(target):error);
+    return ok;
+}
 bool EditorBackend::reloadSelectedOtbItem() {
     if (serverId()<0) return false;
     auto *otb=m_project.otb();
