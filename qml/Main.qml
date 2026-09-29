@@ -561,6 +561,11 @@ ApplicationWindow {
             onTriggered: importGraphicsDialog.openForTarget(Number(win.d.itemId || 100))
         }
         CompactContextItem {
+            text: "Import OBD..."
+            enabled: win.objectEditable && Backend.info.spriteDimension === "32x32"
+            onTriggered: obdImportDialog.open()
+        }
+        CompactContextItem {
             text: "Export"
             enabled: Backend.selected >= 0
             onTriggered: win.openObjectExport()
@@ -862,6 +867,13 @@ ApplicationWindow {
                  " · Only in comparison: " + comparison.added + "\n\n" + comparison.differences.join("\n"));
             compareOtbResult.open();
         }
+    }
+    FileDialog {
+        id: obdImportDialog
+        title: "Import Object Builder OBD"
+        fileMode: FileDialog.OpenFile
+        nameFilters: ["Object Builder Data (*.obd)"]
+        onAccepted: Backend.importObd(selectedFile.toString())
     }
     Dialog {
         id: compareOtbResult

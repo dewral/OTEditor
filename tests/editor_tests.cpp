@@ -869,6 +869,52 @@ private slots:
     QVERIFY(QFile::exists(sprites.path()+"/sprite_1.png"));
     QCOMPARE(backend.compileProgress(),100);
  }
+ void objectBuilderObdRoundTrip() {
+    QTemporaryDir client,output; QVERIFY(client.isValid()); QVERIFY(output.isValid());
+    fixture(client.path());
+    EditorBackend backend; QVERIFY(backend.openFolder(client.path(),860));
+    QVERIFY(backend.setValue("isStackable",true));
+    QCOMPARE(backend.exportObjects(output.path(),"sample","obd",true),1);
+    const QString file=output.path()+"/sample.obd";
+    QVERIFY(QFileInfo(file).size()>0);
+    backend.select(1);
+    QVERIFY(backend.importObd(file));
+    QVERIFY(backend.textureEditPending());
+    QVERIFY(backend.details().value("isStackable").toBool());
+    QCOMPARE(backend.details().value("spriteIds").toList().first().toInt(),2);
+    QVERIFY(backend.resetTextureEdit());
+    QCOMPARE(backend.spriteCount(),1);
+    QVERIFY(backend.importObd(file));
+    QVERIFY(backend.saveTextureEdit());
+    QVERIFY2(backend.compile(),qPrintable(backend.status()));
+    EditorBackend reopened; QVERIFY(reopened.openFolder(client.path(),860));
+    reopened.select(1);
+    QVERIFY(reopened.details().value("isStackable").toBool());
+    QCOMPARE(reopened.details().value("spriteIds").toList().first().toInt(),2);
+ }
+ void outfitObdKeepsDirections() {
+    QTemporaryDir client,output; QVERIFY(client.isValid()); QVERIFY(output.isValid());
+    fixture(client.path());
+    QFile dat(client.path()+"/Tibia.dat"); QVERIFY(dat.open(QIODevice::WriteOnly));
+    QDataStream out(&dat);out.setByteOrder(QDataStream::LittleEndian);
+    out<<quint32(0x12345678)<<quint16(99)<<quint16(2)<<quint16(0)<<quint16(0);
+    for(int outfit=0;outfit<2;++outfit) {
+        out<<quint8(255)<<quint8(1)<<quint8(1)<<quint8(1)<<quint8(4)<<quint8(1)<<quint8(1)<<quint8(1);
+        for(int direction=0;direction<4;++direction)out<<quint16(1);
+    }
+    dat.close();
+    EditorBackend backend; QVERIFY2(backend.openFolder(client.path(),860),qPrintable(backend.status()));
+    backend.setCategory(1);
+    QCOMPARE(backend.exportObjects(output.path(),"outfit","obd",true),1);
+    backend.select(1);
+    QVERIFY(backend.importObd(output.path()+"/outfit.obd"));
+    QCOMPARE(backend.details().value("patternX").toInt(),4);
+    QCOMPARE(backend.details().value("spriteIds").toList().size(),4);
+    QVERIFY(backend.compile());
+    EditorBackend reopened; QVERIFY(reopened.openFolder(client.path(),860));
+    reopened.setCategory(1);reopened.select(1);
+    QCOMPARE(reopened.details().value("spriteIds").toList().size(),4);
+ }
  void mergeClientProjects() {
     QTemporaryDir target,source; QVERIFY(target.isValid()); QVERIFY(source.isValid());
     fixture(target.path()); fixture(source.path());
@@ -958,7 +1004,8 @@ private slots:
     QVERIFY(!QImage(output.path()+"/batch_100.bmp").isNull());
     QVERIFY(!QImage(output.path()+"/batch_101.bmp").isNull());
     QCOMPARE(backend.exportObjects(output.path(),"bad/name","png",true),0);
-    QCOMPARE(backend.exportObjects(output.path(),"batch","obd",true),0);
+    QCOMPARE(backend.exportObjects(output.path(),"batch","obd",true),2);
+    QVERIFY(QFileInfo(output.path()+"/batch_100.obd").size()>0);
     QQmlApplicationEngine engine;
     engine.rootContext()->setContextProperty("Backend",&backend);
     engine.addImageProvider("itempreview",new EditorImageProvider(&backend));

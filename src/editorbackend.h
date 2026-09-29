@@ -102,6 +102,7 @@ public:
     Q_INVOKABLE QString localPath(const QString &url) const;
     Q_INVOKABLE bool openNewWindow() const;
     Q_INVOKABLE int mergeProject(const QString &folderUrl, int version=0);
+    Q_INVOKABLE bool importObd(const QString &fileUrl);
     Q_INVOKABLE int detectFolderVersion(const QString &url) const;
     Q_INVOKABLE QVariantMap inspectFolder(const QString &url, int version, bool alpha=false,
                                           const QString &serverFolder=QString(), int spriteSizeOverride=0);

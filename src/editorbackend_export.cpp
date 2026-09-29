@@ -1,4 +1,5 @@
 #include "editorbackend.h"
+#include "obdcodec.h"
 #include <QCoreApplication>
 #include <QDir>
 #include <QEventLoop>
@@ -7,6 +8,7 @@
 #include <QRegularExpression>
 #include <QStandardPaths>
 #include <QSettings>
+#include <QSaveFile>
 #include <climits>
 
 bool EditorBackend::exportPng(const QString &url,bool sheet){
@@ -99,7 +101,7 @@ int EditorBackend::exportObjects(const QString &folderUrl,const QString &name,
         message(QStringLiteral("Enter a valid export name without path separators."));return 0;
     }
     const QString extension=format.trimmed().toLower();
-    if(extension!="png"&&extension!="bmp"&&extension!="jpg"){
+    if(extension!="png"&&extension!="bmp"&&extension!="jpg"&&extension!="obd"){
         message(QStringLiteral("Unsupported export format: ")+format);return 0;
     }
     const QDir folder(path(folderUrl));
@@ -116,15 +118,24 @@ int EditorBackend::exportObjects(const QString &folderUrl,const QString &name,
             QString target=folder.filePath(fileBase+"."+extension);
             for(int suffix=2;QFileInfo::exists(target);++suffix)
                 target=folder.filePath(QStringLiteral("%1_%2.%3").arg(fileBase).arg(suffix).arg(extension));
-            QImage output=renderObjectAt(true,row);
-            if(!output.isNull()){
-                if(extension!="png"||!transparentBackground){
-                    QImage opaque(output.size(),QImage::Format_RGB32);
-                    opaque.fill(Qt::white);
-                    QPainter painter(&opaque);painter.drawImage(0,0,output);painter.end();
-                    output=std::move(opaque);
+            if (extension=="obd") {
+                QString error;
+                const QByteArray data=ObdCodec::encode(m_project.clientVersion(),m_category,*item,*m_project.sprites(),&error);
+                if (!data.isEmpty()) {
+                    QSaveFile file(target);
+                    if (file.open(QIODevice::WriteOnly) && file.write(data)==data.size() && file.commit()) ++exported;
+                } else message(error);
+            } else {
+                QImage output=renderObjectAt(true,row);
+                if(!output.isNull()){
+                    if(extension!="png"||!transparentBackground){
+                        QImage opaque(output.size(),QImage::Format_RGB32);
+                        opaque.fill(Qt::white);
+                        QPainter painter(&opaque);painter.drawImage(0,0,output);painter.end();
+                        output=std::move(opaque);
+                    }
+                    if(output.save(target,extension.toUpper().toLatin1().constData()))++exported;
                 }
-                if(output.save(target,extension.toUpper().toLatin1().constData()))++exported;
             }
         }
         m_compileProgress=100*(i+1)/rows.size();

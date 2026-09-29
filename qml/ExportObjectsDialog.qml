@@ -79,10 +79,9 @@ Dialog {
                     text: "JPG"
                 }
                 RadioButton {
+                    id: formatObd
                     text: "OBD"
-                    enabled: false
-                    ToolTip.visible: hovered
-                    ToolTip.text: "OBD export is not available yet"
+                    enabled: Number(String(backend.info.spriteDimension || "32x32").split("x")[0]) === 32
                 }
             }
         }
@@ -117,7 +116,7 @@ Dialog {
                 objectName: "confirmObjectExport"
                 text: "Confirm"
                 onClicked: {
-                    const format = formatPng.checked ? "png" : formatBmp.checked ? "bmp" : "jpg";
+                    const format = formatPng.checked ? "png" : formatBmp.checked ? "bmp" : formatJpg.checked ? "jpg" : "obd";
                     const count = backend.exportObjects(exportFolder.text, exportName.text, format, transparentExport.checked);
                     if (count > 0)
                         objectExportDialog.close();

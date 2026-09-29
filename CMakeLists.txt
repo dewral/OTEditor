@@ -4,6 +4,13 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_AUTOMOC ON)
 find_package(Qt6 6.5 REQUIRED COMPONENTS Core Gui Qml Quick QuickControls2 Test)
+get_filename_component(TOOLCHAIN_BIN_DIR "${CMAKE_CXX_COMPILER}" DIRECTORY)
+get_filename_component(TOOLCHAIN_ROOT "${TOOLCHAIN_BIN_DIR}" DIRECTORY)
+find_path(LZMA_INCLUDE_DIR lzma.h HINTS "${TOOLCHAIN_ROOT}/opt/include")
+find_library(LZMA_LIBRARY NAMES lzma HINTS "${TOOLCHAIN_ROOT}/opt/lib")
+if(NOT LZMA_INCLUDE_DIR OR NOT LZMA_LIBRARY)
+    message(FATAL_ERROR "liblzma is required for Object Builder OBD support")
+endif()
 qt_standard_project_setup(REQUIRES 6.5)
 if(Qt6_VERSION VERSION_GREATER_EQUAL 6.8)
     qt_policy(SET QTP0004 NEW)
@@ -15,9 +22,11 @@ target_link_libraries(otformats PUBLIC Qt6::Core Qt6::Gui Qt6::Qml)
 add_library(editorcore STATIC
     src/editorbackend.cpp src/editorbackend.h
     src/editorbackend_slicer.cpp src/editorbackend_export.cpp src/editorbackend_sheet.cpp src/editorbackend_merge.cpp
+    src/obdcodec.cpp src/obdcodec.h src/editorbackend_obd.cpp
     src/projectmodel.cpp src/projectmodel.h)
 target_include_directories(editorcore PUBLIC src)
-target_link_libraries(editorcore PUBLIC otformats Qt6::Quick)
+target_include_directories(editorcore PRIVATE "${LZMA_INCLUDE_DIR}")
+target_link_libraries(editorcore PUBLIC otformats Qt6::Quick "${LZMA_LIBRARY}")
 qt_add_executable(OTEditor src/main.cpp)
 qt_add_qml_module(OTEditor URI OTEditor VERSION 1.0 QML_FILES
     qml/Main.qml
