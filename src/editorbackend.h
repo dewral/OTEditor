@@ -100,6 +100,7 @@ public:
     Q_INVOKABLE bool openFolder(const QString &url, int version, bool alpha=false,
                                const QString &serverFolder=QString(), int spriteSizeOverride=0);
     Q_INVOKABLE QString localPath(const QString &url) const;
+    Q_INVOKABLE bool openNewWindow() const;
     Q_INVOKABLE int detectFolderVersion(const QString &url) const;
     Q_INVOKABLE QVariantMap inspectFolder(const QString &url, int version, bool alpha=false,
                                           const QString &serverFolder=QString(), int spriteSizeOverride=0);
@@ -170,6 +171,8 @@ public:
     Q_INVOKABLE int exportObjects(const QString &folderUrl, const QString &name,
                                  const QString &format, bool transparentBackground);
     Q_INVOKABLE QString defaultExportFolder() const;
+    Q_INVOKABLE QVariantMap preferences() const;
+    Q_INVOKABLE bool setPreferences(const QVariantMap &values);
     Q_INVOKABLE bool exportSprite(const QString &url, int id);
     Q_INVOKABLE void clearLog();
     QImage image(const QString &id);

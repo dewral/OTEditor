@@ -6,6 +6,7 @@
 #include <QPainter>
 #include <QRegularExpression>
 #include <QStandardPaths>
+#include <QSettings>
 #include <climits>
 
 bool EditorBackend::exportPng(const QString &url,bool sheet){
@@ -68,8 +69,27 @@ QImage EditorBackend::renderObjectAt(bool sheet,int row,int category){
     return output;
 }
 QString EditorBackend::defaultExportFolder() const {
+    const QString configured=QSettings().value("export/folder").toString();
+    if (!configured.isEmpty() && QDir(configured).exists()) return configured;
     const QString desktop=QStandardPaths::writableLocation(QStandardPaths::DesktopLocation);
     return desktop.isEmpty()?QDir::homePath():desktop;
+}
+QVariantMap EditorBackend::preferences() const {
+    QSettings settings;
+    return {{"exportFolder",defaultExportFolder()},
+            {"exportFormat",settings.value("export/format","png").toString()},
+            {"transparentBackground",settings.value("export/transparent",true).toBool()}};
+}
+bool EditorBackend::setPreferences(const QVariantMap &values) {
+    const QString folder=values.value("exportFolder").toString();
+    const QString format=values.value("exportFormat").toString().toLower();
+    if (!QDir(folder).exists() || !QStringList{"png","bmp","jpg"}.contains(format)) return false;
+    QSettings settings;
+    settings.setValue("export/folder",QDir(folder).absolutePath());
+    settings.setValue("export/format",format);
+    settings.setValue("export/transparent",values.value("transparentBackground",true).toBool());
+    settings.sync();
+    return settings.status()==QSettings::NoError;
 }
 int EditorBackend::exportObjects(const QString &folderUrl,const QString &name,
                                  const QString &format,bool transparentBackground){

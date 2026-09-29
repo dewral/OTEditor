@@ -25,7 +25,7 @@ qt_add_qml_module(OTEditor URI OTEditor VERSION 1.0 QML_FILES
     qml/SlicerWindow.qml
     qml/LookTypeDialog.qml qml/ObjectViewerDialog.qml qml/AnimationEditorDialog.qml
     qml/FrameDurationsOptimizerDialog.qml qml/FrameDurationsConverterDialog.qml qml/FrameGroupsConverterDialog.qml
-    qml/SpritesOptimizerDialog.qml qml/AboutDialog.qml
+    qml/SpritesOptimizerDialog.qml qml/PreferencesDialog.qml qml/AboutDialog.qml
     qml/FindObjectsDialog.qml qml/ImportClientObjectsDialog.qml qml/ReplaceItemDialog.qml
     qml/CreateAssetFilesDialog.qml qml/ExportObjectsDialog.qml qml/OpenAssetFilesDialog.qml
     qml/CompileProgressPopup.qml

@@ -17,9 +17,12 @@ Dialog {
     onOpened: {
         const categories = ["item", "outfit", "effect", "missile"];
         exportName.text = categories[backend.category];
-        exportFolder.text = backend.defaultExportFolder();
-        formatPng.checked = true;
-        transparentExport.checked = true;
+        const preferences=backend.preferences();
+        exportFolder.text = preferences.exportFolder;
+        formatPng.checked = preferences.exportFormat === "png";
+        formatBmp.checked = preferences.exportFormat === "bmp";
+        formatJpg.checked = preferences.exportFormat === "jpg";
+        transparentExport.checked = Boolean(preferences.transparentBackground);
         exportError = "";
     }
     ColumnLayout {

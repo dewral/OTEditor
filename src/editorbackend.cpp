@@ -9,6 +9,7 @@
 #include <QUrl>
 #include <QClipboard>
 #include <QGuiApplication>
+#include <QProcess>
 #include <QCoreApplication>
 #include <QEventLoop>
 #include <QtEndian>
@@ -280,6 +281,9 @@ QVariantMap EditorBackend::frameDuration(int category,int id,int group,int frame
             {"maximum",qFromLittleEndian<quint32>(bytes+4)},{"frames",frames},
             {"mode",quint8(data->at(0))},{"loopCount",qFromLittleEndian<quint32>(reinterpret_cast<const uchar *>(data->constData()+1))},
             {"startFrame",quint8(data->at(5))}};
+}
+bool EditorBackend::openNewWindow() const {
+    return QProcess::startDetached(QCoreApplication::applicationFilePath(),{});
 }
 bool EditorBackend::setFrameDuration(int category,int id,int group,int frame,int minimum,int maximum) {
     const int row=id-(category==0?100:1);

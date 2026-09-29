@@ -136,7 +136,7 @@ ApplicationWindow {
             }
             Action {
                 text: "New Window"
-                enabled: false
+                onTriggered: Backend.openNewWindow()
             }
             Action {
                 text: "Compile"
@@ -187,7 +187,7 @@ ApplicationWindow {
             Action {
                 text: "Preferences"
                 shortcut: "Ctrl+P"
-                enabled: false
+                onTriggered: preferencesDialog.open()
             }
             MenuSeparator {
                 implicitHeight: 7
@@ -839,6 +839,7 @@ ApplicationWindow {
         backend: Backend
         owner: win
     }
+    PreferencesDialog { id: preferencesDialog; backend: Backend }
     FolderDialog {
         id: allExportFolderDialog
         title: win.allExportMode === "sprites" ? "Export all sprites" : "Export all objects"
