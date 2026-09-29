@@ -34,6 +34,7 @@ Item {
     property var serverChanges: ({})
     property int tabIndex: 0
     property real textureZoom: 1
+    property bool editPixelsMode: false
     property int previewFrame: 0
     property int outfitGroup: 0
     property int outfitLayer: 0
@@ -337,7 +338,7 @@ Item {
                                 }
                                 RowLayout {
                                     Layout.alignment: Qt.AlignRight
-                                    Toggle { text: "Edit Pixels"; enabled: false; hoverEnabled: true; ToolTip.visible: hovered; ToolTip.text: "Pixel painting is not available yet." }
+                                    Toggle { text: "Edit Pixels"; enabled: Backend.loaded && Backend.selected>=0; checked: inspector.editPixelsMode; onClicked: inspector.editPixelsMode=checked; hoverEnabled: true; ToolTip.visible: hovered; ToolTip.text: "Choose a sprite cell in the preview to paint its pixels." }
                                     Toggle { text: "Film Roll"; checked: inspector.filmVisible; onClicked: inspector.filmVisible=checked }
                                 }
                             }
@@ -386,6 +387,22 @@ Item {
                                                     return parent.sourcePattern<inspector.savedPatternCount ? Backend.preview(Backend.selected,inspector.previewFrame,parent.sourcePattern,inspector.outfitGroup,inspector.isOutfit ? inspector.outfitLayer : -1) : ""
                                                 }
                                                 smooth: false; cache: false
+                                            }
+                                            MouseArea {
+                                                anchors.fill: parent
+                                                z: 3
+                                                enabled: inspector.editPixelsMode
+                                                cursorShape: Qt.CrossCursor
+                                                onClicked: function(mouse) {
+                                                    const cell=inspector.spriteSize*inspector.textureZoom
+                                                    const x=Math.floor(mouse.x/cell)
+                                                    const y=Math.floor(mouse.y/cell)
+                                                    if(Backend.beginPixelEdit(inspector.outfitGroup,inspector.previewFrame,parent.sourcePattern,
+                                                                              inspector.isOutfit ? inspector.outfitLayer : 0,x,y)) {
+                                                        inspector.editPixelsMode=false
+                                                        pixelEditor.open()
+                                                    }
+                                                }
                                             }
                                             Rectangle {
                                                 anchors.right: parent.right; anchors.bottom: parent.bottom
@@ -738,4 +755,5 @@ Item {
         owner: inspector
         anchors.centerIn: parent
     }
+    PixelEditorDialog { id: pixelEditor; backend: Backend; anchors.centerIn: parent }
 }

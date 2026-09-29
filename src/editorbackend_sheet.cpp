@@ -366,3 +366,84 @@ bool EditorBackend::importObjectImage(const QString &fileUrl, int groupIndex, in
                 .arg(detectedSize ? QStringLiteral(" (dimensions detected from image)") : QString()));
     return true;
 }
+
+bool EditorBackend::beginPixelEdit(int group,int frame,int pattern,int layer,int x,int y)
+{
+    if (!loaded() || m_selected<0) return false;
+    const ClientItem *item=m_project.dat()->objectAt(m_category,m_selected);
+    if (!item) return false;
+    ClientItem geometry=*item;
+    SheetGeometry shape;
+    if (!geometryFor(geometry,m_category,group,shape)) return false;
+    const int slot=spriteIndex(shape,frame,pattern,qMax(0,layer),x,y);
+    if (slot<0 || slot>=int(shape.spriteIds->size())) return false;
+    const int spriteId=int((*shape.spriteIds)[size_t(slot)]);
+    if (spriteId<0 || spriteId>spriteCount()) return false;
+    QImage source;
+    if (spriteId>0) source=m_project.sprites()->spriteImage(spriteId);
+    if (source.isNull()) {
+        source=QImage(m_project.spriteSize(),m_project.spriteSize(),QImage::Format_RGBA8888);
+        source.fill(Qt::transparent);
+    }
+    m_pixelEditImage=source.convertToFormat(QImage::Format_RGBA8888);
+    m_pixelEditOriginal=m_pixelEditImage;
+    m_pixelEditSpriteId=spriteId;
+    m_pixelEditSlot=slot;
+    m_pixelEditCategory=m_category;
+    m_pixelEditRow=m_selected;
+    m_pixelEditGroup=group;
+    ++m_pixelEditRevision; emit pixelEditChanged();
+    return true;
+}
+
+bool EditorBackend::paintPixel(int x,int y,const QColor &color)
+{
+    if (m_pixelEditImage.isNull() || x<0 || y<0 || x>=m_pixelEditImage.width() || y>=m_pixelEditImage.height() || !color.isValid()) return false;
+    m_pixelEditImage.setPixelColor(x,y,color);
+    ++m_pixelEditRevision;emit pixelEditChanged();
+    return true;
+}
+
+void EditorBackend::resetPixelEdit()
+{
+    if (m_pixelEditOriginal.isNull()) return;
+    m_pixelEditImage=m_pixelEditOriginal;
+    ++m_pixelEditRevision;emit pixelEditChanged();
+}
+
+void EditorBackend::cancelPixelEdit()
+{
+    m_pixelEditImage=QImage();m_pixelEditOriginal=QImage();m_pixelEditSpriteId=0;m_pixelEditSlot=-1;
+    m_pixelEditCategory=-1;m_pixelEditRow=-1;
+    ++m_pixelEditRevision;emit pixelEditChanged();
+}
+
+bool EditorBackend::savePixelEdit()
+{
+    if (m_pixelEditImage.isNull() || !loaded() || m_pixelEditSlot<0) return false;
+    const ClientItem *current=m_project.dat()->objectAt(m_pixelEditCategory,m_pixelEditRow);
+    if (!current) return false;
+    if (m_pixelEditSpriteId>0) {
+        if (!m_project.sprites()->replaceSprite(m_pixelEditSpriteId,m_pixelEditImage)) return false;
+    } else {
+        const int spriteId=m_project.sprites()->addSprite(m_pixelEditImage);
+        if (spriteId<1) return false;
+        const ClientItem before=*current;
+        ClientItem edited=before;
+        SheetGeometry shape;
+        if (!geometryFor(edited,m_pixelEditCategory,m_pixelEditGroup,shape) || m_pixelEditSlot>=int(shape.spriteIds->size())) return false;
+        (*shape.spriteIds)[size_t(m_pixelEditSlot)]=uint32_t(spriteId);
+        if (m_pixelEditCategory==1 && m_pixelEditGroup==0) syncDefaultGroup(edited);
+        edited.modified=true;
+        m_project.dat()->restoreObject(m_pixelEditCategory,m_pixelEditRow,edited);
+        if (m_category==m_pixelEditCategory && m_selected==m_pixelEditRow) {
+            stageTextureEdit(before);
+            m_textureImportedSprites[textureEditKey()].insert(quint32(spriteId));
+        }
+    }
+    const int savedId=m_pixelEditSpriteId;
+    cancelPixelEdit();
+    ++m_revision;emit changed();
+    message(QString("Edited pixels for sprite %1").arg(savedId>0?savedId:spriteCount()));
+    return true;
+}

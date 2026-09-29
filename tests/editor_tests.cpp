@@ -85,6 +85,33 @@ private slots:
     QCOMPARE(reopened.details().value("itemHeight").toInt(),2);
     QCOMPARE(reopened.details().value("spriteIds").toList().first().toInt(),1);
  }
+ void pixelEditorPaintsAndSavesSprite() {
+    QTemporaryDir dir; QVERIFY(dir.isValid()); fixture(dir.path());
+    EditorBackend backend; QVERIFY(backend.openFolder(dir.path(),860));
+    QVERIFY(backend.beginPixelEdit(0,0,0,0,0,0));
+    QCOMPARE(backend.pixelEditSpriteId(),1);
+    QVERIFY(backend.paintPixel(1,2,Qt::blue));
+    QCOMPARE(backend.image("pixel-editor").pixelColor(1,2),QColor(Qt::blue));
+    backend.resetPixelEdit();
+    QVERIFY(backend.image("pixel-editor").pixelColor(1,2)!=QColor(Qt::blue));
+    QVERIFY(backend.paintPixel(1,2,Qt::blue));
+    QVERIFY(backend.savePixelEdit());
+    QVERIFY(!backend.pixelEditActive());
+    QVERIFY2(backend.compile(),qPrintable(backend.status()));
+    EditorBackend reopened; QVERIFY(reopened.openFolder(dir.path(),860));
+    QCOMPARE(reopened.image(reopened.spriteSource(1).mid(QStringLiteral("image://itempreview/").size())).pixelColor(1,2),QColor(Qt::blue));
+    QVERIFY(reopened.assignSprite(0,0));
+    const int originalCount=reopened.spriteCount();
+    QVERIFY(reopened.beginPixelEdit(0,0,0,0,0,0));
+    QCOMPARE(reopened.pixelEditSpriteId(),0);
+    QVERIFY(reopened.paintPixel(0,0,Qt::green));
+    QVERIFY(reopened.savePixelEdit());
+    QCOMPARE(reopened.spriteCount(),originalCount+1);
+    QVERIFY(reopened.textureEditPending());
+    QVERIFY(reopened.resetTextureEdit());
+    QCOMPARE(reopened.spriteCount(),originalCount);
+    QCOMPARE(reopened.details().value("spriteIds").toList().first().toInt(),0);
+ }
  void droppedOutfitSheetPreservesOtherGroupsAndAcceptsCombinedSheet() {
     QTemporaryDir dir; QVERIFY(dir.isValid());
     quint32 signature=0;

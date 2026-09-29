@@ -72,6 +72,7 @@ QVariant EditorBackend::data(const QModelIndex &idx,int role) const {
 bool EditorBackend::openFolder(const QString &url,int version,bool alpha,const QString &serverFolder,int spriteSizeOverride) {
     QString error;
     if(!m_project.open(path(url),version,alpha,&error,path(serverFolder),spriteSizeOverride)){message(error);return false;}
+    cancelPixelEdit();
     beginResetModel();m_rows.clear();m_category=0;m_selected=m_project.dat()->itemCount()?0:-1;endResetModel();
     m_selectedRows.clear();if(m_selected>=0)m_selectedRows.insert(m_selected);m_selectionAnchor=m_selected;notifySelection();
     m_version=version;m_folder=m_project.folder();m_alpha=m_project.transparency();m_extended=m_project.extended();
@@ -380,6 +381,7 @@ QVariantMap EditorBackend::optimizeSprites(bool compactIds) {
 QString EditorBackend::spriteSource(int id) const {return loaded()?m_project.sprites()->spriteImageSource(id)+"?v="+QString::number(m_revision):QString();}
 QImage EditorBackend::image(const QString &id){
     const QString clean=id.section('?',0,0);
+    if(clean==QLatin1String("pixel-editor"))return m_pixelEditImage;
     if(clean==QLatin1String("slicer/source"))return m_slicerImage;
     if(clean.startsWith(QLatin1String("slicer/tile/"))){
         bool ok=false;const int index=clean.mid(12).toInt(&ok);

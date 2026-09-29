@@ -21,7 +21,7 @@ target_link_libraries(editorcore PUBLIC otformats Qt6::Quick)
 qt_add_executable(OTEditor src/main.cpp)
 qt_add_qml_module(OTEditor URI OTEditor VERSION 1.0 QML_FILES
     qml/Main.qml
-    qml/ItemInspector.qml qml/PaletteColorDialog.qml qml/Panel.qml qml/Tool.qml qml/Checker.qml qml/AssetToggle.qml
+    qml/ItemInspector.qml qml/PaletteColorDialog.qml qml/PixelEditorDialog.qml qml/Panel.qml qml/Tool.qml qml/Checker.qml qml/AssetToggle.qml
     qml/SlicerWindow.qml
     qml/LookTypeDialog.qml qml/ObjectViewerDialog.qml qml/AnimationEditorDialog.qml
     qml/FrameDurationsOptimizerDialog.qml qml/FrameDurationsConverterDialog.qml qml/FrameGroupsConverterDialog.qml

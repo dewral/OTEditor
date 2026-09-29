@@ -3,6 +3,7 @@
 #include <QAbstractListModel>
 #include <QQuickImageProvider>
 #include <QSet>
+#include <QColor>
 #include <memory>
 #include <optional>
 
@@ -36,6 +37,10 @@ class EditorBackend final : public QAbstractListModel {
     Q_PROPERTY(int slicerHeight READ slicerHeight NOTIFY slicerChanged)
     Q_PROPERTY(int slicerCount READ slicerCount NOTIFY slicerChanged)
     Q_PROPERTY(int slicerRevision READ slicerRevision NOTIFY slicerChanged)
+    Q_PROPERTY(bool pixelEditActive READ pixelEditActive NOTIFY pixelEditChanged)
+    Q_PROPERTY(int pixelEditRevision READ pixelEditRevision NOTIFY pixelEditChanged)
+    Q_PROPERTY(int pixelEditSpriteId READ pixelEditSpriteId NOTIFY pixelEditChanged)
+    Q_PROPERTY(int pixelEditSize READ pixelEditSize NOTIFY pixelEditChanged)
 public:
     enum Roles { ObjectId = Qt::UserRole+1, SourceRow, ImageSource, Description };
     explicit EditorBackend(QObject *parent=nullptr);
@@ -78,6 +83,10 @@ public:
     int slicerHeight() const { return m_slicerImage.height(); }
     int slicerCount() const { return m_slicerTiles.size(); }
     int slicerRevision() const { return m_slicerRevision; }
+    bool pixelEditActive() const { return !m_pixelEditImage.isNull(); }
+    int pixelEditRevision() const { return m_pixelEditRevision; }
+    int pixelEditSpriteId() const { return m_pixelEditSpriteId; }
+    int pixelEditSize() const { return m_pixelEditImage.width(); }
     Q_INVOKABLE bool copyObjectPart(const QString &part);
     Q_INVOKABLE bool pasteObjectPart(const QString &part);
     Q_INVOKABLE bool replaceObject(int clientId);
@@ -129,6 +138,11 @@ public:
     Q_INVOKABLE bool setValues(const QVariantMap &values);
     Q_INVOKABLE bool setTextureValue(int group, const QString &key, int value);
     Q_INVOKABLE bool setOutfitBones(bool enabled, int direction, int x, int y);
+    Q_INVOKABLE bool beginPixelEdit(int group, int frame, int pattern, int layer, int x, int y);
+    Q_INVOKABLE bool paintPixel(int x, int y, const QColor &color);
+    Q_INVOKABLE void resetPixelEdit();
+    Q_INVOKABLE bool savePixelEdit();
+    Q_INVOKABLE void cancelPixelEdit();
     Q_INVOKABLE bool assignSprite(int slot, int id);
     Q_INVOKABLE bool assignSpriteToCell(int group, int frame, int pattern, int layer,
                                        int tileX, int tileY, int spriteId);
@@ -194,6 +208,14 @@ private:
     QImage m_slicerImage;
     QVector<QImage> m_slicerTiles;
     int m_slicerRevision=0;
+    QImage m_pixelEditImage;
+    QImage m_pixelEditOriginal;
+    int m_pixelEditSpriteId=0;
+    int m_pixelEditSlot=-1;
+    int m_pixelEditCategory=-1;
+    int m_pixelEditRow=-1;
+    int m_pixelEditGroup=0;
+    int m_pixelEditRevision=0;
     QString m_slicerLastCut;
 signals:
     void changed();
@@ -201,6 +223,7 @@ signals:
     void logChanged();
     void compileProgressChanged();
     void slicerChanged();
+    void pixelEditChanged();
 };
 class EditorImageProvider final : public QQuickImageProvider {
 public:
