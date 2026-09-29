@@ -48,6 +48,7 @@ namespace CanonicalFlags {
     constexpr uint8_t CHANGER = 39;
     constexpr uint8_t PODIUM = 40;
     constexpr uint8_t USABLE = 41;
+    constexpr uint8_t HAS_BONES = 42;
 
     constexpr uint8_t FLOOR_CHANGE = 252;
     constexpr uint8_t NO_MOVE_ANIMATION = 253;

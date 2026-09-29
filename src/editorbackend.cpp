@@ -195,11 +195,17 @@ QVariantMap EditorBackend::details() const {
     if(groups.isEmpty())groups.append(QVariantMap{{"type",0},{"itemWidth",item->width},{"itemHeight",item->height},
         {"cropSize",item->exact_size},{"layers",item->layers},{"frames",item->frames},
         {"patternX",item->pattern_x},{"patternY",item->pattern_y},{"patternZ",item->pattern_z},{"spriteIds",ids}});
+    QVariantList boneX,boneY;
+    for (int direction=0;direction<4;++direction) {
+        boneX.append(item->bone_offset_x[size_t(direction)]);
+        boneY.append(item->bone_offset_y[size_t(direction)]);
+    }
     return {{"itemId",item->id},{"itemWidth",item->width},{"itemHeight",item->height},{"cropSize",item->exact_size},
         {"layers",item->layers},{"frames",item->frames},{"patternX",item->pattern_x},{"patternY",item->pattern_y},
         {"patternZ",item->pattern_z},{"spriteIds",ids},{"frameGroupCount",groups.size()},{"frameGroups",groups},
         {"hasLight",item->has_light},{"lightLevel",item->light_level},{"lightColor",item->light_color},
         {"hasOffset",item->has_offset},{"offsetX",item->offset_x},{"offsetY",item->offset_y},
+        {"hasBones",item->has_bones},{"boneOffsetX",boneX},{"boneOffsetY",boneY},
         {"animateAlways",item->animate_always}};
 }
 QVariantMap EditorBackend::info() const {
@@ -452,6 +458,13 @@ bool EditorBackend::setTextureValue(int groupIndex,const QString &key,int value)
     edited.modified=true;
     m_project.dat()->restoreObject(m_category,m_selected,edited);
     remember(before);
+    return true;
+}
+bool EditorBackend::setOutfitBones(bool enabled,int direction,int x,int y) {
+    if (!loaded() || m_category!=1 || m_selected<0) return false;
+    const ClientItem before=*m_project.dat()->objectAt(1,m_selected);
+    if (!m_project.dat()->setOutfitBones(m_selected,enabled,direction,x,y)) return false;
+    stageTextureEdit(before);
     return true;
 }
 bool EditorBackend::assignSprite(int slot,int id){

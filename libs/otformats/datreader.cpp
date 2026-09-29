@@ -54,6 +54,7 @@ QStringList collectDatFlags(const ClientItem &item)
     if (item.dont_hide) flags << QStringLiteral("Dont hide");
     if (item.is_translucent) flags << QStringLiteral("Translucent");
     if (item.has_offset) flags << QStringLiteral("Offset");
+    if (item.has_bones) flags << QStringLiteral("Bones");
     if (item.has_elevation) flags << QStringLiteral("Elevation");
     if (item.is_lying_object) flags << QStringLiteral("Lying object");
     if (item.animate_always) flags << QStringLiteral("Animate always");
@@ -68,6 +69,7 @@ QStringList collectDatFlags(const ClientItem &item)
 
 uint8_t DatReader::transformFlag(uint8_t raw) const
 {
+    if (raw == 0x27 && m_clientVersion >= 780) return HAS_BONES;
 
     if (m_clientVersion >= 1010) {
 
@@ -91,6 +93,7 @@ uint8_t DatReader::transformFlag(uint8_t raw) const
 
 uint8_t DatReader::encodeFlag(uint8_t flag) const
 {
+    if (flag == HAS_BONES) return 0x27;
     if (m_clientVersion >= 1010) {
         if (flag == USABLE) return 0xFE;
         if (flag == NO_MOVE_ANIMATION) return 16;
@@ -273,6 +276,12 @@ bool DatReader::saveFile(const QString &path)
         if (item.dont_hide) flag(DONT_HIDE);
         if (item.is_translucent) flag(TRANSLUCENT);
         if (item.has_offset) { flag(HAS_OFFSET); out << static_cast<quint16>(item.offset_x) << static_cast<quint16>(item.offset_y); }
+        if (item.has_bones) {
+            flag(HAS_BONES);
+            for (int direction=0;direction<4;++direction)
+                out << static_cast<quint16>(item.bone_offset_x[size_t(direction)])
+                    << static_cast<quint16>(item.bone_offset_y[size_t(direction)]);
+        }
         if (item.has_elevation) { flag(HAS_ELEVATION); out << static_cast<quint16>(item.elevation); }
         if (item.is_lying_object) flag(LYING_OBJECT);
         if (item.animate_always) flag(ANIMATE_ALWAYS);
@@ -389,6 +398,7 @@ void DatReader::readCategory(BinaryReader &reader,
 
 void DatReader::readItemFlags(ClientItem &item, BinaryReader &reader)
 {
+    const size_t flagsStart=reader.tell();
     while (true) {
         const size_t flagStart = reader.tell();
         const uint8_t rawFlag = reader.readU8();
@@ -476,6 +486,14 @@ void DatReader::readItemFlags(ClientItem &item, BinaryReader &reader)
             item.has_offset = true;
             item.offset_x = static_cast<int16_t>(reader.readU16());
             item.offset_y = static_cast<int16_t>(reader.readU16());
+            break;
+        case HAS_BONES:
+            item.has_bones=true;
+            item.bone_flag_offset=int(flagStart-flagsStart);
+            for (int direction=0;direction<4;++direction) {
+                item.bone_offset_x[size_t(direction)]=static_cast<int16_t>(reader.readU16());
+                item.bone_offset_y[size_t(direction)]=static_cast<int16_t>(reader.readU16());
+            }
             break;
         case HAS_ELEVATION:
             item.has_elevation = true;
@@ -746,6 +764,7 @@ QVariantMap DatReader::detailsAt(int row) const
     details.insert(QStringLiteral("dontHide"), item.dont_hide);
     details.insert(QStringLiteral("isTranslucent"), item.is_translucent);
     details.insert(QStringLiteral("hasOffset"), item.has_offset);
+    details.insert(QStringLiteral("hasBones"), item.has_bones);
     details.insert(QStringLiteral("offsetX"), item.offset_x);
     details.insert(QStringLiteral("offsetY"), item.offset_y);
     details.insert(QStringLiteral("hasElevation"), item.has_elevation);
@@ -1213,6 +1232,33 @@ bool DatReader::setAnimationSettings(int category,int row,int group,int mode,int
     item.modified=true;
     if (!m_dirty) { m_dirty=true;emit dirtyChanged(); }
     if (category==0) emit dataChanged(index(row),index(row));
+    return true;
+}
+bool DatReader::setOutfitBones(int row,bool enabled,int direction,int x,int y) {
+    if (!m_loaded || m_clientVersion<780 || row<0 || row>=int(m_outfits.size()) ||
+        direction<0 || direction>=4 || x<-32768 || x>32767 || y<-32768 || y>32767) return false;
+    auto &outfit=m_outfits[size_t(row)];
+    outfit.has_bones=enabled;
+    if (enabled) {
+        outfit.bone_offset_x[size_t(direction)]=int16_t(x);
+        outfit.bone_offset_y[size_t(direction)]=int16_t(y);
+    }
+    if (!outfit.raw_flags.isEmpty()) {
+        const int old=outfit.bone_flag_offset;
+        if (old>=0 && old+17<=outfit.raw_flags.size()) outfit.raw_flags.remove(old,17);
+        outfit.bone_flag_offset=-1;
+        if (enabled && outfit.raw_flags.endsWith(char(LAST))) {
+            QByteArray encoded;
+            QDataStream output(&encoded,QIODevice::WriteOnly); output.setByteOrder(QDataStream::LittleEndian);
+            output << quint8(encodeFlag(HAS_BONES));
+            for (int index=0;index<4;++index)
+                output << quint16(outfit.bone_offset_x[size_t(index)]) << quint16(outfit.bone_offset_y[size_t(index)]);
+            outfit.bone_flag_offset=int(outfit.raw_flags.size())-1;
+            outfit.raw_flags.insert(outfit.bone_flag_offset,encoded);
+        }
+    }
+    outfit.modified=true;
+    if (!m_dirty) { m_dirty=true;emit dirtyChanged(); }
     return true;
 }
 bool DatReader::duplicateFrame(int category,int row,int group,int frame) {

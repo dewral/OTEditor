@@ -128,6 +128,7 @@ public:
     Q_INVOKABLE bool setValue(const QString &key, const QVariant &value);
     Q_INVOKABLE bool setValues(const QVariantMap &values);
     Q_INVOKABLE bool setTextureValue(int group, const QString &key, int value);
+    Q_INVOKABLE bool setOutfitBones(bool enabled, int direction, int x, int y);
     Q_INVOKABLE bool assignSprite(int slot, int id);
     Q_INVOKABLE bool assignSpriteToCell(int group, int frame, int pattern, int layer,
                                        int tileX, int tileY, int spriteId);

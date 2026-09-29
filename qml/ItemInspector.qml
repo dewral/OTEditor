@@ -538,11 +538,37 @@ Item {
                     }
                     Section {
                         title: "Has Bones"
-                        visible: inspector.isOutfit
+                        visible: inspector.isOutfit && inspector.clientVersion >= 780
                         ColumnLayout { anchors.left: parent.left; anchors.right: parent.right
-                            Toggle { text: "Has Bones"; enabled: false; checked: false; hoverEnabled: true; ToolTip.visible: hovered; ToolTip.text: "Bone offsets are not supported by this DAT editor yet." }
-                            NumberField { caption: "Offset X"; field: "boneOffsetX"; available: false }
-                            NumberField { caption: "Offset Y"; field: "boneOffsetY"; available: false }
+                            Toggle {
+                                text: "Has Bones"
+                                checked: Boolean(Backend.details.hasBones)
+                                onClicked: Backend.setOutfitBones(checked,boneDirection.currentIndex,boneX.value,boneY.value)
+                            }
+                            RowLayout {
+                                Label { text: "Direction"; Layout.preferredWidth: 110 }
+                                ComboBox { id: boneDirection; model: ["North","South","East","West"]; Layout.fillWidth: true }
+                            }
+                            RowLayout {
+                                enabled: Boolean(Backend.details.hasBones)
+                                Label { text: "Offset X"; Layout.preferredWidth: 110 }
+                                SpinBox {
+                                    id: boneX
+                                    from: -32768; to: 32767; editable: true; Layout.fillWidth: true
+                                    value: Number((Backend.details.boneOffsetX || [0,0,0,0])[boneDirection.currentIndex] || 0)
+                                    onValueModified: Backend.setOutfitBones(true,boneDirection.currentIndex,value,boneY.value)
+                                }
+                            }
+                            RowLayout {
+                                enabled: Boolean(Backend.details.hasBones)
+                                Label { text: "Offset Y"; Layout.preferredWidth: 110 }
+                                SpinBox {
+                                    id: boneY
+                                    from: -32768; to: 32767; editable: true; Layout.fillWidth: true
+                                    value: Number((Backend.details.boneOffsetY || [0,0,0,0])[boneDirection.currentIndex] || 0)
+                                    onValueModified: Backend.setOutfitBones(true,boneDirection.currentIndex,boneX.value,value)
+                                }
+                            }
                         }
                     }
                     Section {

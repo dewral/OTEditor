@@ -12,6 +12,7 @@
 #include <QByteArray>
 #include <QtQml/qqmlregistration.h>
 #include <cstdint>
+#include <array>
 #include <vector>
 
 struct ClientFrameGroup {
@@ -73,6 +74,10 @@ struct ClientItem {
     bool dont_hide = false;
     bool is_translucent = false;
     bool has_offset = false;
+    bool has_bones = false;
+    std::array<int16_t,4> bone_offset_x{};
+    std::array<int16_t,4> bone_offset_y{};
+    int bone_flag_offset = -1;
     int16_t offset_x = 0;
     int16_t offset_y = 0;
     bool has_elevation = false;
@@ -190,6 +195,7 @@ public:
     bool setFrameDuration(int category, int row, int group, int frame, quint32 minimum, quint32 maximum);
     bool duplicateFrame(int category, int row, int group, int frame);
     bool setAnimationSettings(int category, int row, int group, int mode, int loopCount, int startFrame);
+    bool setOutfitBones(int row, bool enabled, int direction, int x, int y);
     bool deleteFrame(int category, int row, int group, int frame);
     int optimizeFrameDurations(bool items, bool outfits, bool effects, quint32 minimum, quint32 maximum);
     int convertFrameDurations(bool enabled, quint32 minimum, quint32 maximum);

@@ -207,6 +207,37 @@ private slots:
     QCOMPARE(reopened.details().value("frames").toInt(),2);
     QCOMPARE(reopened.details().value("spriteIds").toList().size(),16);
  }
+ void outfitBonesRoundTrip() {
+    QTemporaryDir dir; QVERIFY(dir.isValid()); fixture(dir.path());
+    QFile dat(dir.path()+"/Tibia.dat"); QVERIFY(dat.open(QIODevice::WriteOnly));
+    QDataStream out(&dat); out.setByteOrder(QDataStream::LittleEndian);
+    out<<quint32(0x12345678)<<quint16(99)<<quint16(1)<<quint16(0)<<quint16(0);
+    out<<quint8(5)<<quint8(0x27);
+    for(int direction=0;direction<4;++direction)out<<quint16(direction+1)<<quint16(direction+2);
+    out<<quint8(255);
+    for(int index=0;index<7;++index)out<<quint8(1);
+    out<<quint16(1);dat.close();
+    EditorBackend backend; QVERIFY2(backend.openFolder(dir.path(),860),qPrintable(backend.status()));
+    backend.setCategory(1);
+    QVERIFY(backend.details().value("hasBones").toBool());
+    QCOMPARE(backend.details().value("boneOffsetX").toList().at(2).toInt(),3);
+    QVERIFY(backend.setOutfitBones(true,2,-12,34));
+    QVERIFY(backend.textureEditPending());
+    QVERIFY(backend.resetTextureEdit());
+    QCOMPARE(backend.details().value("boneOffsetX").toList().at(2).toInt(),3);
+    QVERIFY(backend.setOutfitBones(true,2,-12,34));
+    QVERIFY(backend.saveTextureEdit());
+    QVERIFY2(backend.compile(),qPrintable(backend.status()));
+    EditorBackend reopened; QVERIFY2(reopened.openFolder(dir.path(),860),qPrintable(reopened.status()));
+    reopened.setCategory(1);
+    QCOMPARE(reopened.details().value("boneOffsetX").toList().at(2).toInt(),-12);
+    QCOMPARE(reopened.details().value("boneOffsetY").toList().at(2).toInt(),34);
+    QVERIFY(reopened.setOutfitBones(false,0,0,0));
+    QVERIFY(reopened.compile());
+    EditorBackend withoutBones; QVERIFY(withoutBones.openFolder(dir.path(),860));
+    withoutBones.setCategory(1);
+    QVERIFY(!withoutBones.details().value("hasBones").toBool());
+ }
  void outfitWalkingGroupTextureRoundTrip() {
     QTemporaryDir dir; QVERIFY(dir.isValid());
     EditorBackend created; QVERIFY(created.createAssetFiles(dir.path(),1098,true,false,true,true));
