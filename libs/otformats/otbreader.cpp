@@ -639,6 +639,18 @@ bool OtbReader::setValue(int row, const QString &key, const QVariant &value)
 {
     if (row < 0 || row >= static_cast<int>(m_items.size()))
         return false;
+    if (QStringList{"speed","maxReadWriteLength","maxReadLength","minimapColor","wareId"}.contains(key)) {
+        bool valid=false;const uint valueNumber=value.toUInt(&valid);
+        if (!valid || valueNumber>65535) return false;
+    }
+    if (key=="lightLevel" || key=="lightColor" || key=="groupId") {
+        bool valid=false;const uint valueNumber=value.toUInt(&valid);
+        if (!valid || valueNumber>(key=="groupId"?15u:255u)) return false;
+    }
+    if (key=="stackOrder") {
+        bool valid=false;const int valueNumber=value.toInt(&valid);
+        if (!valid || valueNumber<-128 || valueNumber>127) return false;
+    }
     if (key == "serverId" || key == "clientId") {
         bool valid = false;
         const uint32_t id = value.toUInt(&valid);
