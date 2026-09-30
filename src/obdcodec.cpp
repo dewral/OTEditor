@@ -4,6 +4,7 @@
 #include <QDataStream>
 #include <QtEndian>
 #include <lzma.h>
+#include <array>
 
 namespace {
 constexpr int kSpriteBytes = 32 * 32 * 4;
@@ -191,6 +192,15 @@ bool readFlags(QDataStream &in,ClientItem &item,qint64 textureOffset)
         case 36:item.extra_properties["wrappable"]=true;break;
         case 37:item.extra_properties["unwrappable"]=true;break;
         case 38:item.extra_properties["topEffect"]=true;break;
+        case 39:{
+            item.has_bones=true;
+            for (int direction=0;direction<4;++direction) {
+                quint16 x=0,y=0;in>>x>>y;
+                item.bone_offset_x[size_t(direction)]=int16_t(x);
+                item.bone_offset_y[size_t(direction)]=int16_t(y);
+            }
+            break;
+        }
         case 0xfc:item.extra_properties["chargeable"]=true;break;
         case 0xfd:item.floor_change=true;break;
         case 0xfe:item.extra_properties["usable"]=true;break;
@@ -198,6 +208,74 @@ bool readFlags(QDataStream &in,ClientItem &item,qint64 textureOffset)
         default:return false;
         }
         if (in.status()!=QDataStream::Ok || in.device()->pos()>textureOffset) return false;
+    }
+    return false;
+}
+
+int legacyFlag(int version,quint8 raw)
+{
+    if (raw==0xff) return 0xff;
+    if (raw>=0x24 && raw<=0x26 && (version<=750 || (version>=780 && version<=854 && raw<=0x25) || version>=987)) return int(raw);
+    if (raw==0x27 && version>=780) return 39;
+    if (raw==0xfe && version>=987) return 0xfe;
+    static constexpr std::array<int,33> first={
+        0,2,3,4,5,7,6,8,9,10,11,12,13,14,15,17,22,0xfd,31,26,25,-1,29,21,27,28,30
+    };
+    static constexpr std::array<int,33> second={
+        0,2,3,4,5,7,6,8,9,10,11,12,13,14,15,17,22,0xfd,31,26,25,-1,29,21,27,18,19,20,28,30
+    };
+    static constexpr std::array<int,33> third={
+        0,1,2,3,4,5,7,6,8,9,10,11,12,13,14,15,17,18,19,20,21,22,-1,0xfd,25,26,27,28,29,30,31
+    };
+    static constexpr std::array<int,33> fourth={
+        0,1,2,3,4,5,6,7,0xfc,8,9,10,11,12,13,14,15,17,18,19,20,21,22,23,0xfd,25,26,27,28,29,30,31,32
+    };
+    static constexpr std::array<int,35> fifth={
+        0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34
+    };
+    if (version<=730) return raw<=26?first[raw]:-1;
+    if (version<=750) return raw<=29?second[raw]:-1;
+    if (version<=772) return raw<=30?third[raw]:-1;
+    if (version<=854) return raw<=32?fourth[raw]:-1;
+    if (version<=986) return raw<=33?fifth[raw]:-1;
+    return raw<=38?raw:-1;
+}
+
+bool readLegacyFlags(QDataStream &input,ClientItem &item,int version)
+{
+    QByteArray normalized;
+    QDataStream output(&normalized,QIODevice::WriteOnly);
+    output.setByteOrder(QDataStream::LittleEndian);
+    for (int count=0;count<256;++count) {
+        quint8 raw=0;input>>raw;
+        if (input.status()!=QDataStream::Ok) return false;
+        const int flag=legacyFlag(version,raw);
+        if (flag<0) return false;
+        output<<quint8(flag);
+        if (flag==0xff) {
+            QBuffer buffer(&normalized);buffer.open(QIODevice::ReadOnly);
+            QDataStream decoded(&buffer);decoded.setByteOrder(QDataStream::LittleEndian);
+            return readFlags(decoded,item,normalized.size());
+        }
+        const int fixedBytes=(flag==0 || flag==8 || flag==9 || flag==26 || flag==29 || flag==30 || flag==33 || flag==35)
+            ? 2 : (flag==22 || flag==25 ? 4 : flag==39 ? 16 : 0);
+        if (flag==25 && version<=750) {
+            output<<quint16(8)<<quint16(8);
+            continue;
+        }
+        int payloadBytes=fixedBytes;
+        if (flag==34) {
+            const QByteArray prefix=input.device()->read(8);
+            if (prefix.size()!=8) return false;
+            output.writeRawData(prefix.constData(),prefix.size());
+            const quint16 nameLength=qFromLittleEndian<quint16>(reinterpret_cast<const uchar *>(prefix.constData()+6));
+            payloadBytes=int(nameLength)+4;
+        }
+        if (payloadBytes) {
+            const QByteArray payload=input.device()->read(payloadBytes);
+            if (payload.size()!=payloadBytes) return false;
+            output.writeRawData(payload.constData(),payload.size());
+        }
     }
     return false;
 }
@@ -242,9 +320,10 @@ bool writeGroup(QDataStream &out,int category,const ClientFrameGroup &group,SprR
     return out.status()==QDataStream::Ok;
 }
 
-bool readGroup(QDataStream &in,int category,bool v2,ClientFrameGroup &group,QVector<QImage> &sprites,QString *error)
+bool readGroup(QDataStream &in,int category,int version,ClientFrameGroup &group,QVector<QImage> &sprites,QString *error)
 {
-    if (category==1 && !v2) in>>group.type;
+    if (category==1 && version==300) in>>group.type;
+    else if (category==1) group.type=1;
     in>>group.width>>group.height;
     if (group.width>1 || group.height>1) in>>group.exact_size;
     in>>group.layers>>group.pattern_x>>group.pattern_y>>group.pattern_z>>group.frames;
@@ -252,7 +331,7 @@ bool readGroup(QDataStream &in,int category,bool v2,ClientFrameGroup &group,QVec
     if (in.status()!=QDataStream::Ok || total<1 || total>32768 || group.frames<1) {
         if(error)*error="Invalid OBD sprite dimensions";return false;
     }
-    if (group.frames>1) {
+    if (group.frames>1 && version>=200) {
         group.animation_data.resize(6+group.frames*8);
         if (in.readRawData(group.animation_data.data(),group.animation_data.size())!=group.animation_data.size()) return false;
     }
@@ -260,7 +339,7 @@ bool readGroup(QDataStream &in,int category,bool v2,ClientFrameGroup &group,QVec
     for (quint64 slot=0;slot<total;++slot) {
         quint32 id=0,length=kSpriteBytes;
         in>>id;
-        if (!v2) in>>length;
+        if (version!=200) in>>length;
         if (in.status()!=QDataStream::Ok || length>kSpriteBytes || in.device()->bytesAvailable()<length) {
             if(error)*error="Invalid OBD sprite data";return false;
         }
@@ -308,18 +387,39 @@ bool ObdCodec::decode(const QByteArray &fileData,ObdObject &object,QString *erro
     QBuffer buffer;buffer.setData(plain);buffer.open(QIODevice::ReadOnly);
     QDataStream in(&buffer);in.setByteOrder(QDataStream::LittleEndian);
     quint16 obdVersion=0,clientVersion=0;quint8 categoryValue=0;quint32 textureOffset=0;
-    in>>obdVersion>>clientVersion>>categoryValue>>textureOffset;
-    if ((obdVersion!=200 && obdVersion!=300) || categoryValue<1 || categoryValue>4 || textureOffset<9 || textureOffset>=quint32(plain.size())) {
-        if(error)*error="Unsupported or invalid OBD file (v2 and v3 are supported)";return false;
+    in>>obdVersion;
+    object={};
+    if (obdVersion>=710 && obdVersion<=1310) {
+        clientVersion=obdVersion;
+        obdVersion=100;
+        quint16 nameLength=0;in>>nameLength;
+        if (nameLength>7 || nameLength<4) nameLength=qbswap(nameLength);
+        if (nameLength<4 || nameLength>7 || in.device()->bytesAvailable()<nameLength) {
+            if(error)*error="Invalid OBD v1 category";return false;
+        }
+        QByteArray category(nameLength,'\0');
+        if (in.readRawData(category.data(),nameLength)!=nameLength) return false;
+        const int parsed=QStringList{"item","outfit","effect","missile"}.indexOf(QString::fromLatin1(category));
+        if (parsed<0) {if(error)*error="Invalid OBD v1 category";return false;}
+        object.category=parsed;
+        if (!readLegacyFlags(in,object.item,clientVersion)) {
+            if(error)*error="Invalid OBD v1 object properties";return false;
+        }
+    } else {
+        in>>clientVersion>>categoryValue>>textureOffset;
+        if ((obdVersion!=200 && obdVersion!=300) || categoryValue<1 || categoryValue>4 || textureOffset<9 || textureOffset>=quint32(plain.size())) {
+            if(error)*error="Unsupported or invalid OBD file";return false;
+        }
+        object.category=int(categoryValue)-1;
+        if (!readFlags(in,object.item,textureOffset)) {if(error)*error="Invalid OBD object properties";return false;}
     }
-    object={};object.category=int(categoryValue)-1;object.clientVersion=clientVersion;
-    if (!readFlags(in,object.item,textureOffset)) {if(error)*error="Invalid OBD object properties";return false;}
+    object.clientVersion=clientVersion;
     int groupCount=1;
     if (object.category==1 && obdVersion==300) {quint8 count=0;in>>count;groupCount=count;}
     if (groupCount<1 || groupCount>2) {if(error)*error="Invalid OBD frame groups";return false;}
     for (int index=0;index<groupCount;++index) {
         ClientFrameGroup group;
-        if (!readGroup(in,object.category,obdVersion==200,group,object.sprites,error)) return false;
+        if (!readGroup(in,object.category,obdVersion,group,object.sprites,error)) return false;
         if (index==0) {
             object.item.width=group.width;object.item.height=group.height;object.item.exact_size=group.exact_size;
             object.item.layers=group.layers;object.item.pattern_x=group.pattern_x;object.item.pattern_y=group.pattern_y;
