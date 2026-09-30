@@ -77,6 +77,9 @@ public:
     Q_INVOKABLE bool saveItemsXmlFile(const QString &fileUrl = QString());
     Q_INVOKABLE bool saveOtbAsFile(const QString &fileUrl);
     Q_INVOKABLE bool saveItemsXmlAsFile(const QString &fileUrl);
+    Q_INVOKABLE QVariantMap xmlAttributes() const;
+    Q_INVOKABLE bool setXmlAttribute(const QString &key,const QString &value);
+    Q_INVOKABLE bool removeXmlAttribute(const QString &key);
     Q_INVOKABLE bool reloadSelectedOtbItem();
     Q_INVOKABLE bool updateOtbVersion(int major, int minor, int build);
     Q_INVOKABLE QVariantMap compareOtbFile(const QString &fileUrl) const;
@@ -164,6 +167,7 @@ public:
     Q_INVOKABLE void redo();
     Q_INVOKABLE bool compile();
     Q_INVOKABLE bool compileAs(const QString &folderUrl);
+    Q_INVOKABLE bool convertProject(const QString &folderUrl,int targetVersion);
     Q_INVOKABLE bool save(const QString &url=QString());
     Q_INVOKABLE int createMissingOtbItems();
     Q_INVOKABLE int reloadItemAttributes();

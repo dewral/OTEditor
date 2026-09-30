@@ -21,7 +21,7 @@ target_include_directories(otformats PUBLIC libs/otformats)
 target_link_libraries(otformats PUBLIC Qt6::Core Qt6::Gui Qt6::Qml)
 add_library(editorcore STATIC
     src/editorbackend.cpp src/editorbackend.h
-    src/editorbackend_slicer.cpp src/editorbackend_export.cpp src/editorbackend_sheet.cpp src/editorbackend_merge.cpp
+    src/editorbackend_slicer.cpp src/editorbackend_export.cpp src/editorbackend_sheet.cpp src/editorbackend_merge.cpp src/editorbackend_convert.cpp
     src/obdcodec.cpp src/obdcodec.h src/editorbackend_obd.cpp
     src/projectmodel.cpp src/projectmodel.h)
 target_include_directories(editorcore PUBLIC src)
@@ -34,19 +34,19 @@ qt_add_qml_module(OTEditor URI OTEditor VERSION 1.0 QML_FILES
     qml/SlicerWindow.qml
     qml/LookTypeDialog.qml qml/ObjectViewerDialog.qml qml/AnimationEditorDialog.qml
     qml/FrameDurationsOptimizerDialog.qml qml/FrameDurationsConverterDialog.qml qml/FrameGroupsConverterDialog.qml
-    qml/SpritesOptimizerDialog.qml qml/PreferencesDialog.qml qml/MergeProjectDialog.qml qml/AboutDialog.qml
+    qml/SpritesOptimizerDialog.qml qml/PreferencesDialog.qml qml/MergeProjectDialog.qml qml/ConvertProjectDialog.qml qml/XmlAttributesDialog.qml qml/AboutDialog.qml
     qml/FindObjectsDialog.qml qml/ImportClientObjectsDialog.qml qml/ReplaceItemDialog.qml
     qml/CreateAssetFilesDialog.qml qml/ExportObjectsDialog.qml qml/OpenAssetFilesDialog.qml
     qml/CompileProgressPopup.qml
     qml/PreviewSidebar.qml qml/ObjectsBrowserPanel.qml qml/SpritesBrowserPanel.qml
     qml/EditorLogPanel.qml)
-qt_add_resources(OTEditor branding PREFIX "/" FILES assets/Midhem.png)
+qt_add_resources(OTEditor branding PREFIX "/" FILES assets/Midhem.png assets/ObjectBuilder-versions.xml)
 target_link_libraries(OTEditor PRIVATE editorcore Qt6::QuickControls2)
 set_target_properties(OTEditor PROPERTIES WIN32_EXECUTABLE TRUE RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 include(CTest)
 if(BUILD_TESTING)
     qt_add_executable(editor_tests tests/editor_tests.cpp)
-    qt_add_resources(editor_tests branding_test PREFIX "/" FILES assets/Midhem.png)
+    qt_add_resources(editor_tests branding_test PREFIX "/" FILES assets/Midhem.png assets/ObjectBuilder-versions.xml)
     target_link_libraries(editor_tests PRIVATE editorcore Qt6::Test Qt6::QuickControls2)
     set_target_properties(editor_tests PROPERTIES WIN32_EXECUTABLE FALSE)
     add_test(NAME editor_roundtrip COMMAND editor_tests)

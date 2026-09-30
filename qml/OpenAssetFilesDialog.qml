@@ -85,7 +85,7 @@ Dialog {
                 ComboBox {
                     id: loadVersion
                     Layout.fillWidth: true
-                    model: ["13.10", "12.00", "10.99", "10.98", "10.95", "10.94", "10.93", "10.57", "10.50", "10.10", "9.60", "8.60", "7.80", "7.72"]
+                    model: ["13.10", "12.00", "10.99", "10.98", "10.95", "10.94", "10.93", "10.57", "10.50", "10.10", "9.60", "8.60", "8.00", "7.80", "7.72"]
                     currentIndex: 3
                     readonly property int selectedVersion: Number(currentText.replace(".", ""))
                     onActivated: loadDialog.refreshPreview()
@@ -141,10 +141,18 @@ Dialog {
         GroupBox {
             title: "Options"
             Layout.fillWidth: true
-            GridLayout {
+            ColumnLayout {
                 anchors.fill: parent
-                columns: 2
-                columnSpacing: 18
+                Label {
+                    text: "Extended sprites, frame durations and frame groups are read from OTFI or the selected DAT version. Change them with the converters after opening."
+                    wrapMode: Text.Wrap
+                    Layout.fillWidth: true
+                    color: "#9db2c5"
+                }
+                GridLayout {
+                    Layout.fillWidth: true
+                    columns: 2
+                    columnSpacing: 18
                 AssetToggle {
                     text: "Extended"
                     checked: Boolean(loadDialog.previewData.extended)
@@ -166,6 +174,7 @@ Dialog {
                     text: "Frame Groups"
                     checked: Boolean(loadDialog.previewData.groups)
                     enabled: false
+                }
                 }
             }
         }

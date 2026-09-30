@@ -24,7 +24,7 @@ Dialog {
                 ComboBox {
                     id: newVersion
                     Layout.fillWidth: true
-                    model: ["13.10", "12.00", "10.99", "10.98", "10.95", "10.94", "10.93", "10.57", "10.50", "10.10", "9.60", "8.60", "7.80", "7.72"]
+                    model: ["13.10", "12.00", "10.99", "10.98", "10.95", "10.94", "10.93", "10.57", "10.50", "10.10", "9.60", "8.60", "8.00", "7.80", "7.72"]
                     currentIndex: 0
                     readonly property int selectedVersion: Number(currentText.replace(".", ""))
                     popup: Popup {
@@ -74,7 +74,7 @@ Dialog {
                     id: newExtended
                     text: "Extended"
                     checked: newVersion.selectedVersion >= 960
-                    enabled: false
+                    enabled: true
                 }
                 AssetToggle {
                     id: newTransparency
@@ -84,13 +84,13 @@ Dialog {
                     id: newAnimations
                     text: "Improved animations"
                     checked: newVersion.selectedVersion >= 1050
-                    enabled: false
+                    enabled: true
                 }
                 AssetToggle {
                     id: newFrameGroups
                     text: "Frame Groups"
                     checked: newVersion.selectedVersion >= 1057
-                    enabled: false
+                    enabled: true
                 }
             }
         }

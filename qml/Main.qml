@@ -182,6 +182,11 @@ ApplicationWindow {
                 enabled: Backend.loaded
                 onTriggered: mergeDialog.open()
             }
+            Action {
+                text: "Convert Project..."
+                enabled: Backend.loaded
+                onTriggered: convertProjectDialog.open()
+            }
             MenuSeparator {
                 implicitHeight: 7
             }
@@ -354,6 +359,11 @@ ApplicationWindow {
                 text: "Compare items.otb..."
                 enabled: Boolean(Backend.info.otb)
                 onTriggered: compareOtbDialog.open()
+            }
+            Action {
+                text: "Edit items.xml Attributes..."
+                enabled: Boolean(Backend.info.itemsXml) && Backend.serverId > 0
+                onTriggered: xmlAttributesDialog.open()
             }
         }
         CompactDropdown {
@@ -909,6 +919,8 @@ ApplicationWindow {
     }
     PreferencesDialog { id: preferencesDialog; backend: Backend }
     MergeProjectDialog { id: mergeDialog; backend: Backend }
+    ConvertProjectDialog { id: convertProjectDialog; backend: Backend }
+    XmlAttributesDialog { id: xmlAttributesDialog; backend: Backend }
     FolderDialog {
         id: allExportFolderDialog
         title: win.allExportMode === "sprites" ? "Export all sprites" : "Export all objects"

@@ -14,6 +14,7 @@
 #include <QEventLoop>
 #include <QtEndian>
 #include <QCryptographicHash>
+#include <QXmlStreamReader>
 #include <QRegularExpression>
 #include <algorithm>
 #include <climits>
@@ -36,22 +37,58 @@ int EditorBackend::detectFolderVersion(const QString &url) const {
         if (files.isEmpty()) return 0;
         datPath = files.constFirst().absoluteFilePath();
     }
-    const QList<int> versions = {1310,1200,1099,1098,1095,1094,1093,1057,1050,1010,960,860,780,772};
     QList<int> candidates;
     const QString name = folder.dirName();
-    for (const int version : versions) {
-        const QString digits = QString::number(version);
-        const QString pattern = QStringLiteral("(?<!\\d)%1[._-]?%2(?!\\d)")
-                                    .arg(digits.left(digits.size()-2), digits.right(2));
-        if (QRegularExpression(pattern).match(name).hasMatch()) candidates.append(version);
+    const QRegularExpression dotted(QStringLiteral("(?<!\\d)(\\d{1,2})[._-](\\d{2})(?!\\d)"));
+    auto dottedMatch=dotted.globalMatch(name);
+    while (dottedMatch.hasNext()) {
+        const auto match=dottedMatch.next();
+        const int version=match.captured(1).toInt()*100+match.captured(2).toInt();
+        if (version>=710 && version<=1310 && !candidates.contains(version)) candidates.append(version);
     }
-    for (const int version : versions) if (!candidates.contains(version)) candidates.append(version);
-    for (const int version : candidates) {
-        DatReader dat;
-        dat.setClientVersion(version);
-        dat.setOtfiOverrides(hasOtfi, hasOtfi && otfi.extended(),
-                             hasOtfi && otfi.frameDurations(), hasOtfi && otfi.frameGroups());
+    const QRegularExpression numeric(QStringLiteral("(?<!\\d)(\\d{3,4})(?!\\d)"));
+    auto numericMatch=numeric.globalMatch(name);
+    while (numericMatch.hasNext()) {
+        const int version=numericMatch.next().captured(1).toInt();
+        if (version>=710 && version<=1310 && !candidates.contains(version)) candidates.append(version);
+    }
+    for (const int version:candidates) {
+        DatReader dat;dat.setClientVersion(version);
+        dat.setOtfiOverrides(hasOtfi,hasOtfi && otfi.extended(),
+                             hasOtfi && otfi.frameDurations(),hasOtfi && otfi.frameGroups());
         if (dat.loadFile(datPath)) return version;
+    }
+    QString sprPath=folder.filePath(hasOtfi?otfi.spritesFile():QStringLiteral("Tibia.spr"));
+    if (!QFileInfo::exists(sprPath)) {
+        const auto files=folder.entryInfoList({QStringLiteral("*.spr")},QDir::Files,QDir::Name);
+        if (!files.isEmpty()) sprPath=files.constFirst().absoluteFilePath();
+    }
+    QFile datSignatureFile(datPath),sprSignatureFile(sprPath);
+    if (datSignatureFile.open(QIODevice::ReadOnly) && sprSignatureFile.open(QIODevice::ReadOnly)) {
+        const QByteArray datBytes=datSignatureFile.read(4),sprBytes=sprSignatureFile.read(4);
+        if (datBytes.size()==4 && sprBytes.size()==4) {
+            const quint32 datSignature=qFromLittleEndian<quint32>(reinterpret_cast<const uchar *>(datBytes.constData()));
+            const quint32 sprSignature=qFromLittleEndian<quint32>(reinterpret_cast<const uchar *>(sprBytes.constData()));
+            QFile catalog(QStringLiteral(":/assets/ObjectBuilder-versions.xml"));
+            if (catalog.open(QIODevice::ReadOnly)) {
+                QXmlStreamReader xml(&catalog);
+                while (!xml.atEnd()) {
+                    xml.readNext();
+                    if (!xml.isStartElement() || xml.name()!=QLatin1String("version")) continue;
+                    const auto attributes=xml.attributes();
+                    bool datOk=false,sprOk=false,versionOk=false;
+                    const quint32 knownDat=attributes.value(QLatin1String("dat")).toUInt(&datOk,16);
+                    const quint32 knownSpr=attributes.value(QLatin1String("spr")).toUInt(&sprOk,16);
+                    const int knownVersion=attributes.value(QLatin1String("value")).toInt(&versionOk);
+                    if (datOk && sprOk && versionOk && knownDat==datSignature && knownSpr==sprSignature) {
+                        DatReader dat;dat.setClientVersion(knownVersion);
+                        dat.setOtfiOverrides(hasOtfi,hasOtfi && otfi.extended(),
+                                             hasOtfi && otfi.frameDurations(),hasOtfi && otfi.frameGroups());
+                        if (dat.loadFile(datPath)) return knownVersion;
+                    }
+                }
+            }
+        }
     }
     return 0;
 }
@@ -630,6 +667,24 @@ bool EditorBackend::saveItemsXmlAsFile(const QString &fileUrl) {
     QString error;
     const bool ok=m_project.saveItemsXmlAs(target,&error);
     message(ok?QString("Saved items.xml as: %1").arg(target):error);
+    return ok;
+}
+QVariantMap EditorBackend::xmlAttributes() const {
+    return m_project.itemsXmlLoaded() && serverId()>0
+        ? m_project.itemsXml()->attributesForServerId(serverId()) : QVariantMap{};
+}
+bool EditorBackend::setXmlAttribute(const QString &key,const QString &value) {
+    if (!m_project.itemsXmlLoaded() || serverId()<=0 || m_compiling) return false;
+    const bool ok=m_project.itemsXml()->setAttributeForServerId(serverId(),key,value);
+    message(ok?QString("Updated items.xml attribute %1 for server ID %2").arg(key).arg(serverId())
+              :QStringLiteral("Choose a valid XML attribute key."));
+    return ok;
+}
+bool EditorBackend::removeXmlAttribute(const QString &key) {
+    if (!m_project.itemsXmlLoaded() || serverId()<=0 || m_compiling) return false;
+    const bool ok=m_project.itemsXml()->removeAttributeForServerId(serverId(),key);
+    message(ok?QString("Removed items.xml attribute %1 for server ID %2").arg(key).arg(serverId())
+              :QStringLiteral("This XML attribute cannot be removed from a ranged or missing item."));
     return ok;
 }
 bool EditorBackend::reloadSelectedOtbItem() {
