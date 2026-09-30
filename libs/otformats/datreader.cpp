@@ -979,15 +979,22 @@ int DatReader::duplicateItem(int row)
 bool DatReader::removeItem(int row)
 {
     if (row < 0 || row >= static_cast<int>(m_items.size())) return false;
-    beginRemoveRows(QModelIndex(), row, row);
-    m_items.erase(m_items.begin() + row);
-    for (size_t i = static_cast<size_t>(row); i < m_items.size(); ++i)
-        m_items[i].id = static_cast<uint16_t>(100 + i);
-    m_maxItemId = static_cast<uint16_t>(m_items.empty() ? 99 : 99 + m_items.size());
-    endRemoveRows();
-    if (row < static_cast<int>(m_items.size())) emit dataChanged(index(row), index(static_cast<int>(m_items.size()) - 1));
+    if (row == static_cast<int>(m_items.size()) - 1 && m_items.size() > 1) {
+        beginRemoveRows(QModelIndex(), row, row);
+        m_items.pop_back();
+        m_maxItemId = static_cast<uint16_t>(99 + m_items.size());
+        endRemoveRows();
+        emit itemCountChanged();
+    } else {
+        ClientItem empty;
+        empty.id = static_cast<uint16_t>(100 + row);
+        empty.sprite_ids = {0};
+        empty.modified = true;
+        m_items[static_cast<size_t>(row)] = std::move(empty);
+        emit dataChanged(index(row), index(row));
+    }
     m_dirty = true;
-    emit itemCountChanged(); emit dirtyChanged();
+    emit dirtyChanged();
     return true;
 }
 
@@ -1076,13 +1083,17 @@ bool DatReader::removeObject(int category, int row)
     if (!m_loaded || category < 1 || category > 3) return false;
     auto &objects = category == 1 ? m_outfits : category == 2 ? m_effects : m_missiles;
     if (row < 0 || row >= int(objects.size())) return false;
-    objects.erase(objects.begin() + row);
-    for (size_t index = size_t(row); index < objects.size(); ++index) {
-        objects[index].id = static_cast<uint16_t>(index + 1);
-        objects[index].modified = true;
-    }
     auto &maxId = category == 1 ? m_maxOutfitId : category == 2 ? m_maxEffectId : m_maxMissileId;
-    maxId = static_cast<uint16_t>(objects.size());
+    if (row == int(objects.size()) - 1 && objects.size() > 1) {
+        objects.pop_back();
+        maxId = static_cast<uint16_t>(objects.size());
+    } else {
+        ClientItem empty;
+        empty.id = static_cast<uint16_t>(row + 1);
+        empty.sprite_ids = {0};
+        empty.modified = true;
+        objects[size_t(row)] = std::move(empty);
+    }
     m_categoryStructureChanged = true;
     if (!m_dirty) { m_dirty = true; emit dirtyChanged(); }
     return true;

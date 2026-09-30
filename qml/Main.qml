@@ -841,6 +841,7 @@ ApplicationWindow {
     }
     Dialog {
         id: removeItemConfirm
+        objectName: "removeItemConfirm"
         title: "Remove object " + (win.d.itemId ?? "")
         anchors.centerIn: parent
         width: 490
@@ -850,8 +851,8 @@ ApplicationWindow {
             width: 440
             wrapMode: Text.WordWrap
             text: Backend.category === 0
-                  ? "Remove the selected item? Later client IDs will shift down by one.\nServer item mappings may need to be updated."
-                  : "Remove the selected object? Later IDs in this category will shift down by one."
+                  ? "Remove the selected item? Its server item mapping will also be removed. Other client IDs stay unchanged."
+                  : "Remove the selected object? Other IDs in this category stay unchanged."
         }
         onAccepted: Backend.removeObject()
     }

@@ -172,20 +172,39 @@ private slots:
     QCOMPARE(groups[0].toMap().value("spriteIds").toList(),QVariantList({0,0}));
     QCOMPARE(groups[1].toMap().value("spriteIds").toList(),walking);
  }
- void removeSelectedItemShiftsFollowingIds() {
+ void removeSelectedItemKeepsOtherIds() {
     QTemporaryDir dir;QVERIFY(dir.isValid());fixture(dir.path());
+    OtbReader otb;otb.newFile();
+    QVERIFY(otb.createItem(100)>=0);QVERIFY(otb.createItem(101)>=0);
+    QVERIFY(otb.saveFile(dir.path()+"/items.otb"));
     EditorBackend backend;QVERIFY(backend.openFolder(dir.path(),860));
     backend.select(1);QVERIFY(backend.setValue("isStackable",true));
     backend.select(0);QVERIFY(backend.removeObject());
-    QCOMPARE(backend.count(),1);
+    QCOMPARE(backend.count(),2);
     QCOMPARE(backend.details().value("itemId").toInt(),100);
+    QVERIFY(!backend.details().value("isStackable").toBool());
+    QCOMPARE(backend.details().value("spriteIds").toList(),QVariantList({0}));
+    QCOMPARE(backend.serverId(),-1);
+    backend.select(1);
+    QCOMPARE(backend.details().value("itemId").toInt(),101);
     QVERIFY(backend.details().value("isStackable").toBool());
+    QVERIFY(backend.serverId()>0);
     QVERIFY(!backend.canUndo());
     QVERIFY2(backend.compile(),qPrintable(backend.status()));
     EditorBackend reopened;QVERIFY2(reopened.openFolder(dir.path(),860),qPrintable(reopened.status()));
+    QCOMPARE(reopened.count(),2);
+    reopened.select(0);
+    QCOMPARE(reopened.details().value("itemId").toInt(),100);
+    QCOMPARE(reopened.details().value("spriteIds").toList(),QVariantList({0}));
+    reopened.select(1);
+    QCOMPARE(reopened.details().value("itemId").toInt(),101);
+    QVERIFY(reopened.details().value("isStackable").toBool());
+    QVERIFY(reopened.removeObject());
     QCOMPARE(reopened.count(),1);
     QCOMPARE(reopened.details().value("itemId").toInt(),100);
-    QVERIFY(reopened.details().value("isStackable").toBool());
+    QVERIFY(reopened.removeObject());
+    QCOMPARE(reopened.count(),1);
+    QCOMPARE(reopened.details().value("spriteIds").toList(),QVariantList({0}));
  }
  void categoryObjectsCreateDuplicateAndRemoveRoundTrip() {
     QTemporaryDir dir; QVERIFY(dir.isValid()); fixture(dir.path());
@@ -199,14 +218,15 @@ private slots:
         QCOMPARE(backend.details().value("itemId").toInt(),category==3?3:2);
         backend.select(category==3?1:0);
         QVERIFY(backend.removeObject());
-        QCOMPARE(backend.count(),category==3?2:1);
+        QCOMPARE(backend.count(),category==3?3:2);
         QCOMPARE(backend.details().value("itemId").toInt(),category==3?2:1);
+        QCOMPARE(backend.details().value("spriteIds").toList(),QVariantList({0}));
     }
     QVERIFY2(backend.compile(),qPrintable(backend.status()));
     EditorBackend reopened; QVERIFY2(reopened.openFolder(dir.path(),860),qPrintable(reopened.status()));
     for (int category=1; category<=3; ++category) {
         reopened.setCategory(category);
-        QCOMPARE(reopened.count(),category==3?2:1);
+        QCOMPARE(reopened.count(),category==3?3:2);
         QCOMPARE(reopened.details().value("itemId").toInt(),1);
     }
  }
@@ -1247,6 +1267,38 @@ private slots:
     QVERIFY(backend.isSelected(1500));
     QCOMPARE(updates.count(),1);
     QVERIFY2(timer.elapsed()<3000,"Selecting a 2000-object range took too long");
+ }
+ void removesObjectWithLargeQmlListOpen() {
+    QTemporaryDir dir;QVERIFY(dir.isValid());fixture(dir.path());
+    DatReader dat;dat.setClientVersion(860);QVERIFY(dat.loadFile(dir.path()+"/Tibia.dat"));
+    for(int i=0;i<2200;++i)QVERIFY(dat.createItem()>=0);
+    QVERIFY(dat.saveFile(dir.path()+"/Tibia.dat"));
+    EditorBackend backend;QVERIFY(backend.openFolder(dir.path(),860));
+    QAbstractItemModelTester modelTester(&backend,QAbstractItemModelTester::FailureReportingMode::QtTest);
+    QQmlApplicationEngine engine;
+    engine.rootContext()->setContextProperty("Backend",&backend);
+    engine.addImageProvider("itempreview",new EditorImageProvider(&backend));
+    engine.load(QUrl::fromLocalFile(QStringLiteral(QT_TESTCASE_SOURCEDIR "/qml/Main.qml")));
+    QVERIFY(!engine.rootObjects().isEmpty());
+    auto confirm=engine.rootObjects().first()->findChild<QObject *>("removeItemConfirm");
+    QVERIFY(confirm);
+    backend.select(1000);
+    QVERIFY(QMetaObject::invokeMethod(confirm,"open"));
+    QVERIFY(QMetaObject::invokeMethod(confirm,"accept"));
+    QCoreApplication::processEvents();
+    QCOMPARE(backend.count(),2202);
+    QCOMPARE(backend.details().value("itemId").toInt(),1100);
+    QCOMPARE(backend.details().value("spriteIds").toList(),QVariantList({0}));
+    backend.filter("",true);
+    QCOMPARE(backend.count(),2);
+    QVERIFY(backend.selected()!=1000);
+    backend.filter("",false);
+    backend.select(2201);
+    QVERIFY(QMetaObject::invokeMethod(confirm,"open"));
+    QVERIFY(QMetaObject::invokeMethod(confirm,"accept"));
+    QCoreApplication::processEvents();
+    QCOMPARE(backend.count(),2201);
+    QCOMPARE(backend.details().value("itemId").toInt(),2300);
  }
  void roundTripAndUndo() {
     QTemporaryDir dir;QTemporaryDir compiled;fixture(dir.path());EditorBackend backend;

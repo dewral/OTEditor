@@ -184,14 +184,18 @@ bool EditorBackend::createAssetFiles(const QString &folderUrl, int version, bool
     message(QString("Created empty %1 asset files in %2.").arg(version).arg(folder.absolutePath()));
     return true;
 }
-void EditorBackend::rebuild(){
-    beginResetModel();m_rows.clear();m_visiblePositions.clear();
+void EditorBackend::populateRows(){
+    m_rows.clear();m_visiblePositions.clear();
     if(loaded())for(int i=0;i<m_project.dat()->categoryCount(m_category);++i){
         auto item=m_project.dat()->objectAt(m_category,i);
+        if(!item)continue;
         if(m_hideEmpty&&std::all_of(item->sprite_ids.begin(),item->sprite_ids.end(),[](uint32_t s){return s==0;}))continue;
         if(!m_query.isEmpty()&&!QString::number(item->id).contains(m_query))continue;
         m_visiblePositions.insert(i,m_rows.size());m_rows.push_back(i);
     }
+}
+void EditorBackend::rebuild(){
+    beginResetModel();populateRows();
     endResetModel();emit changed();
 }
 void EditorBackend::notifySelection(){++m_selectionRevision;emit selectionChanged();}
@@ -529,16 +533,32 @@ void EditorBackend::clearObject(){
 bool EditorBackend::removeObject(){
     if(!loaded()||m_selected<0)return false;
     commitTextureEdits();
-    const int removedId=m_selected+(m_category==0?100:1);
-    if(!m_project.dat()->removeObject(m_category,m_selected))return false;
+    const int removedRow=m_selected;
+    const int removedId=removedRow+(m_category==0?100:1);
+    beginResetModel();
+    m_selected=-1;
+    m_selectedRows.clear();
+    if(!m_project.dat()->removeObject(m_category,removedRow)){
+        endResetModel();return false;
+    }
+    if(m_category==0 && m_project.otbLoaded()){
+        auto *otb=m_project.otb();
+        int row=otb->rowForClientId(removedId);
+        while(row>=0){
+            if(!otb->removeItem(row))break;
+            row=otb->rowForClientId(removedId);
+        }
+    }
     m_undo.clear();m_redo.clear();
     const int count=m_project.dat()->categoryCount(m_category);
-    m_selected=count>0 ? qMin(m_selected,count-1) : -1;
-    m_selectedRows.clear();if(m_selected>=0)m_selectedRows.insert(m_selected);m_selectionAnchor=m_selected;
-    refresh();
+    m_selected=count>0 ? qMin(removedRow,count-1) : -1;
+    populateRows();
+    endResetModel();
     if(!m_visiblePositions.contains(m_selected)){m_selected=m_rows.isEmpty() ? -1 : m_rows.front();m_selectedRows.clear();if(m_selected>=0)m_selectedRows.insert(m_selected);m_selectionAnchor=m_selected;}
+    else {m_selectedRows.insert(m_selected);m_selectionAnchor=m_selected;}
+    ++m_revision;
     notifySelection();emit changed();
-    message(QString("Removed object %1; later IDs shifted down by one.").arg(removedId));
+    message(QString("Removed object %1. Other IDs are unchanged.").arg(removedId));
     return true;
 }
 namespace {

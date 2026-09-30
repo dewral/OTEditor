@@ -192,6 +192,7 @@ private:
     static QString path(const QString &url);
     void refresh();
     void rebuild();
+    void populateRows();
     void notifySelection();
     void remember(const ClientItem &before);
     void stageTextureEdit(const ClientItem &before);
