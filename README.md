@@ -27,7 +27,7 @@ For the Windows release ZIP, extract the archive and run `OTEditor.exe` from the
 - Drag a sprite from the sprite browser onto a texture tile to assign it to that exact frame, pattern, layer, and position. Drop an image from the file manager onto the texture to import a single sprite or a complete sprite sheet. Use **Save** in the inspector to accept dropped texture changes or **Reset** to restore the object; compiling the project accepts pending drops. Matching sheets replace the selected animation group; a combined outfit sheet can replace all groups. For objects with one frame, layer, and pattern, the editor detects width and height from the image's tile dimensions. Images are limited to 16 million pixels and sheets to 4,096 sprites.
 - **Tools → Slicer** opens a sprite-sheet workspace with rulers, a checkerboard, rotation, mirroring, grid selection, and zoom. **Crop** collects tiles in column order, converts magenta to transparency, and skips empty sprites by default; **Import** adds the tiles to the open client's SPR.
 - Atomic DAT, SPR, OTB, XML, and OTFI writes through `QSaveFile`. Unchanged sprite blocks are copied without recompression.
-- **Export** saves object sheets as PNG, BMP, JPG, or ObjectBuilder OBD v3 (32×32 sprites). Outfit directions occupy columns; Idle and Walking frames continue in successive rows. Export supports a custom name and destination, multiple selected objects, and a transparent PNG background. Object context menus also import OBD v3 objects into the selected slot.
+- **Export** saves object sheets as PNG, BMP, JPG, or ObjectBuilder OBD v3 (32×32 sprites). Outfit directions occupy columns; Idle and Walking frames continue in successive rows. Export supports a custom name and destination, multiple selected objects, and a transparent PNG background. Object context menus import OBD v2 and v3 objects into the selected slot.
 - **File → Export All** writes objects, animation sheets, or sprites with progress. **File → Merge** appends DAT objects and sprites from a compatible client project. Export preferences are saved between sessions; **New Window** opens an independent editor.
 - **Tools → Save items.otb / items.xml** writes either server file separately; **Save As** changes that file's active path, while **Save Copy** exports a snapshot without changing the path or clearing pending edits. OTB tools also edit IDs and version data, reload selected entries, and compare another OTB file.
 - A warning before closing with unsaved changes, an activity log, and keyboard shortcuts.
@@ -42,11 +42,11 @@ The preview arranges Pattern X variants side by side and Pattern Y/Z variants in
 
 Properties groups DAT flags and values. Attributes exposes supported OTB fields, including names synchronized with `items.xml`. Other `items.xml` fields do not yet have editing controls. Use Compile to save project files.
 
-**Edit Pixels** paints individual sprite pixels. Outfit bone offsets can be edited on clients that support them. The separate **Useable** flag remains disabled. Action names other than None are currently shown as numbers. Available fields depend on the DAT version. Market names must fit the Latin-1 encoding used by the format.
+**Edit Pixels** paints individual sprite pixels. Outfit bone offsets can be edited on clients that support them. The separate **Useable** flag is available for clients that support it. Action names other than None are currently shown as numbers. Available fields depend on the DAT version. Market names must fit the Latin-1 encoding used by the format.
 
 ## Current limitations
 
-OTEditor is not yet a complete replacement for [ObjectBuilder](https://github.com/punkice3407/ObjectBuilder). OBD support currently covers v3 and 32×32 sprites; older OBD versions are not supported. Remaining gaps include editing every OTB/XML field and general client-version conversion.
+OTEditor is not yet a complete replacement for [ObjectBuilder](https://github.com/punkice3407/ObjectBuilder). OBD import covers v2 and v3 with 32×32 sprites; export writes v3. OBD v1 is not supported. Remaining gaps include editing every OTB/XML field and general client-version conversion.
 
 OTB and XML participate in loading and compilation, and OTB names are synchronized with `items.xml`. The slicer imports sprites from a selected sheet area. Preview playback uses frame durations from DAT. Real-client round trips have been checked with local 7.72 and 10.98 assets; other supported versions need broader validation.
 

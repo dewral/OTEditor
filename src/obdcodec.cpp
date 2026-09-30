@@ -242,9 +242,9 @@ bool writeGroup(QDataStream &out,int category,const ClientFrameGroup &group,SprR
     return out.status()==QDataStream::Ok;
 }
 
-bool readGroup(QDataStream &in,int category,ClientFrameGroup &group,QVector<QImage> &sprites,QString *error)
+bool readGroup(QDataStream &in,int category,bool v2,ClientFrameGroup &group,QVector<QImage> &sprites,QString *error)
 {
-    if (category==1) in>>group.type;
+    if (category==1 && !v2) in>>group.type;
     in>>group.width>>group.height;
     if (group.width>1 || group.height>1) in>>group.exact_size;
     in>>group.layers>>group.pattern_x>>group.pattern_y>>group.pattern_z>>group.frames;
@@ -258,7 +258,9 @@ bool readGroup(QDataStream &in,int category,ClientFrameGroup &group,QVector<QIma
     }
     group.sprite_ids.reserve(size_t(total));
     for (quint64 slot=0;slot<total;++slot) {
-        quint32 id=0,length=0;in>>id>>length;
+        quint32 id=0,length=kSpriteBytes;
+        in>>id;
+        if (!v2) in>>length;
         if (in.status()!=QDataStream::Ok || length>kSpriteBytes || in.device()->bytesAvailable()<length) {
             if(error)*error="Invalid OBD sprite data";return false;
         }
@@ -307,17 +309,17 @@ bool ObdCodec::decode(const QByteArray &fileData,ObdObject &object,QString *erro
     QDataStream in(&buffer);in.setByteOrder(QDataStream::LittleEndian);
     quint16 obdVersion=0,clientVersion=0;quint8 categoryValue=0;quint32 textureOffset=0;
     in>>obdVersion>>clientVersion>>categoryValue>>textureOffset;
-    if (obdVersion!=300 || categoryValue<1 || categoryValue>4 || textureOffset<9 || textureOffset>=quint32(plain.size())) {
-        if(error)*error="Unsupported or invalid OBD file (only v3 is supported)";return false;
+    if ((obdVersion!=200 && obdVersion!=300) || categoryValue<1 || categoryValue>4 || textureOffset<9 || textureOffset>=quint32(plain.size())) {
+        if(error)*error="Unsupported or invalid OBD file (v2 and v3 are supported)";return false;
     }
     object={};object.category=int(categoryValue)-1;object.clientVersion=clientVersion;
     if (!readFlags(in,object.item,textureOffset)) {if(error)*error="Invalid OBD object properties";return false;}
     int groupCount=1;
-    if (object.category==1) {quint8 count=0;in>>count;groupCount=count;}
+    if (object.category==1 && obdVersion==300) {quint8 count=0;in>>count;groupCount=count;}
     if (groupCount<1 || groupCount>2) {if(error)*error="Invalid OBD frame groups";return false;}
     for (int index=0;index<groupCount;++index) {
         ClientFrameGroup group;
-        if (!readGroup(in,object.category,group,object.sprites,error)) return false;
+        if (!readGroup(in,object.category,obdVersion==200,group,object.sprites,error)) return false;
         if (index==0) {
             object.item.width=group.width;object.item.height=group.height;object.item.exact_size=group.exact_size;
             object.item.layers=group.layers;object.item.pattern_x=group.pattern_x;object.item.pattern_y=group.pattern_y;

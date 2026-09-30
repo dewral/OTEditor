@@ -708,6 +708,20 @@ private slots:
     QVERIFY(reopened.serverId()>=0);
     QVERIFY(!reopened.createServerItem());
  }
+ void importsObjectBuilderV2Obd() {
+    QTemporaryDir dir; QVERIFY(dir.isValid()); fixture(dir.path());
+    const QByteArray sample=QByteArray::fromBase64(
+        "XQAAgAD//////////wBkAAT2PgfskHDfiK8f20IGZa4qkh9W1rEeLCltEYHuRiuxAz1rw9nmJh1w//kmwAA=");
+    const QString filePath=dir.path()+"/object-v2.obd";
+    QFile file(filePath); QVERIFY(file.open(QIODevice::WriteOnly));
+    QCOMPARE(file.write(sample),sample.size()); file.close();
+    EditorBackend backend; QVERIFY(backend.openFolder(dir.path(),860));
+    QVERIFY2(backend.importObd(filePath),qPrintable(backend.status()));
+    QCOMPARE(backend.spriteCount(),2);
+    QCOMPARE(backend.details().value("spriteIds").toList().first().toInt(),2);
+    const QImage preview=backend.image(backend.preview(0).mid(QStringLiteral("image://itempreview/").size()));
+    QCOMPARE(preview.pixelColor(0,0),QColor(220,40,10));
+ }
  void serverFileCopiesKeepActivePathsAndPendingChanges() {
     QTemporaryDir dir; QVERIFY(dir.isValid()); fixture(dir.path());
     OtbReader otb; otb.newFile();
