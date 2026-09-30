@@ -24,7 +24,7 @@ Popup {
         width: parent.width
         spacing: 12
         Label {
-            text: backend.compileStage.startsWith("Import:") ? "Importing objects" : backend.compileStage.startsWith("Creating OTB items") ? "Creating OTB items" : backend.compileStage.startsWith("Exporting") ? "Exporting selected objects" : backend.compileStage === "Optimizing sprites" ? "Optimizing sprites" : "Compiling project"
+            text: backend.compileStage.startsWith("Import:") ? "Importing objects" : backend.compileStage.startsWith("Converting") ? "Converting project" : backend.compileStage.startsWith("Creating OTB items") ? "Creating OTB items" : backend.compileStage.startsWith("Exporting") ? "Exporting selected objects" : backend.compileStage === "Optimizing sprites" ? "Optimizing sprites" : "Compiling project"
             font.bold: true
             font.pixelSize: 15
             color: "#dce5ee"
