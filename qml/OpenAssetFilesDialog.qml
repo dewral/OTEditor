@@ -77,6 +77,15 @@ Dialog {
             elide: Text.ElideMiddle
             Layout.fillWidth: true
         }
+        Label {
+            text: loadDialog.previewData.itemsXml
+                  ? "items.xml: " + loadDialog.previewData.itemsXmlPath
+                  : "items.xml: not found for the selected client version"
+            visible: Boolean(loadDialog.previewData.ok)
+            color: loadDialog.previewData.itemsXml ? "#91c8a7" : "#d5ae79"
+            elide: Text.ElideMiddle
+            Layout.fillWidth: true
+        }
         GroupBox {
             title: "Version"
             Layout.fillWidth: true

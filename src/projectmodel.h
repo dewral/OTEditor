@@ -63,7 +63,8 @@ signals:
 private:
     static QString findFile(const QDir &folder, const QString &preferred,
                             const QString &suffix);
-    static QString findRecursive(const QString &folder, const QString &fileName);
+    static QString findServerFile(const QString &folder, const QString &fileName,
+                                  int clientVersion);
     bool writeOtfi(const QString &targetPath, QString *error);
     void connectStateSignals();
 

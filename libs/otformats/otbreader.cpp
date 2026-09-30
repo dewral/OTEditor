@@ -554,6 +554,9 @@ QVariantMap OtbReader::detailsAt(int row) const
     details.insert(QStringLiteral("title"), title);
     details.insert(QStringLiteral("category"), QStringLiteral("Item"));
     details.insert(QStringLiteral("name"), name);
+    details.insert(QStringLiteral("nameSource"), item.name.isEmpty()
+                       ? (name.isEmpty() ? QString() : QStringLiteral("items.xml"))
+                       : QStringLiteral("items.otb"));
     details.insert(QStringLiteral("description"), item.description);
     details.insert(QStringLiteral("itemId"), item.server_id);
     details.insert(QStringLiteral("serverId"), item.server_id);

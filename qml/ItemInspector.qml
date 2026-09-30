@@ -711,6 +711,18 @@ Item {
                                     TextField { Layout.fillWidth: true; text: String(inspector.serverDraft[modelData[1]] ?? ""); onTextEdited: inspector.editServer(modelData[1],text) }
                                 }
                             }
+                            Label {
+                                visible: String(inspector.serverDraft.nameSource || "").length > 0
+                                text: "Name source: " + inspector.serverDraft.nameSource
+                                      + " · server ID " + Backend.serverId
+                                color: "#91a8bd"
+                                Layout.fillWidth: true
+                                ToolTip.visible: nameSourceArea.containsMouse
+                                ToolTip.text: inspector.serverDraft.nameSource === "items.xml"
+                                              ? String(Backend.info.itemsXmlPath || "")
+                                              : String(Backend.info.otbPath || "")
+                                MouseArea { id: nameSourceArea; anchors.fill: parent; hoverEnabled: true }
+                            }
                             RowLayout { Layout.fillWidth: true
                                 Label { text: "Group"; Layout.preferredWidth: 125 }
                                 ComboBox { Layout.fillWidth: true; model: ["None","Ground","Container","Weapon","Ammunition","Armor","Changes","Teleport","Magic Field","Writeable","Key","Splash","Fluid","Door","Deprecated","Podium"]; currentIndex: Number(inspector.serverDraft.groupId||0); onActivated: inspector.editServer("groupId",currentIndex) }

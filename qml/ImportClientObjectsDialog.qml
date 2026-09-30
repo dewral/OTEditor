@@ -29,7 +29,7 @@ Dialog {
         Label {
             Layout.fillWidth: true
             wrapMode: Text.Wrap
-            text: "Import complete DAT objects and their sprites. Source IDs map in order to target IDs. Missing target IDs are created automatically; unsupported flags from newer clients are omitted."
+            text: "Import DAT objects and their sprites. Source IDs map in order to target IDs. Missing target IDs are created automatically; unsupported flags from newer clients are omitted. Server IDs and names come from the selected Server Items Folder and are not changed by this import."
         }
         RowLayout {
             Layout.fillWidth: true

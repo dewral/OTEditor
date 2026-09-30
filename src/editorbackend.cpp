@@ -133,6 +133,10 @@ QVariantMap EditorBackend::inspectFolder(const QString &url,int version,bool alp
             {"extended",preview.extended()},{"transparency",preview.transparency()},
             {"durations",preview.frameDurations()},{"groups",preview.frameGroups()},
             {"attributeServer",preview.attributeServer()},
+            {"itemsXml",preview.itemsXmlLoaded()},
+            {"itemsXmlPath",preview.itemsXmlLoaded()?preview.itemsXml()->filePath():QString()},
+            {"otb",preview.otbLoaded()},
+            {"otbPath",preview.otbLoaded()?preview.otb()->filePath():QString()},
             {"datSignature",QString::number(preview.dat()->signature(),16).toUpper()},
             {"items",preview.dat()->categoryCount(0)},{"outfits",preview.dat()->categoryCount(1)},
             {"effects",preview.dat()->categoryCount(2)},{"missiles",preview.dat()->categoryCount(3)},
@@ -271,7 +275,10 @@ QVariantMap EditorBackend::info() const {
     {"metadataController",metadataController},
     {"signature",QString::number(m_project.dat()->signature(),16).toUpper()},{"items",m_project.dat()->categoryCount(0)},{"outfits",m_project.dat()->categoryCount(1)},{"effects",m_project.dat()->categoryCount(2)},{"missiles",m_project.dat()->categoryCount(3)},
     {"sprSignature",QString::number(m_project.sprites()->signature(),16).toUpper()},{"sprites",spriteCount()},{"extended",m_extended},{"alpha",m_alpha},{"durations",m_durations},{"groups",m_groups},
-    {"otb",m_project.otbLoaded()},{"itemsXml",m_project.itemsXmlLoaded()},{"datDirty",m_project.dat()->isDirty()},{"sprDirty",m_project.sprites()->isDirty()}};
+    {"otb",m_project.otbLoaded()},{"itemsXml",m_project.itemsXmlLoaded()},
+    {"otbPath",m_project.otbLoaded()?m_project.otb()->filePath():QString()},
+    {"itemsXmlPath",m_project.itemsXmlLoaded()?m_project.itemsXml()->filePath():QString()},
+    {"datDirty",m_project.dat()->isDirty()},{"sprDirty",m_project.sprites()->isDirty()}};
 }
 QString EditorBackend::preview(int row,int frame,int pattern,int groupIndex,int selectedLayer) const {
     return previewForCategory(m_category,row,frame,pattern,groupIndex,selectedLayer);

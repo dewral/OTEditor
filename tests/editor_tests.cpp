@@ -803,6 +803,66 @@ private slots:
     QCOMPARE(reopened.nameForServerId(100),name);
     QCOMPARE(reopened.attributesForServerId(100).value("oteditorTest").toString(),"ok");
  }
+ void xmlNamesFollowServerId() {
+    QTemporaryDir dir;QVERIFY(dir.isValid());fixture(dir.path());
+    QFile file(dir.path()+"/items.xml");QVERIFY(file.open(QIODevice::WriteOnly));
+    QVERIFY(file.write("<items><item id=\"100\" name=\"Wrong client ID name\"/>"
+                       "<item id=\"500\" name=\"Correct server ID name\"/></items>")>0);
+    file.close();
+    OtbReader otb;otb.newFile();
+    const int row=otb.createItem(100);QVERIFY(row>=0);
+    QVERIFY(otb.setValue(row,"serverId",500));
+    QVERIFY(otb.saveFile(dir.path()+"/items.otb"));
+    EditorBackend backend;QVERIFY2(backend.openFolder(dir.path(),860),qPrintable(backend.status()));
+    QCOMPARE(backend.serverId(),500);
+    QCOMPARE(backend.serverAttributes().value("name").toString(),"Correct server ID name");
+    QCOMPARE(backend.serverAttributes().value("nameSource").toString(),"items.xml");
+    QCOMPARE(backend.info().value("itemsXmlPath").toString(),file.fileName());
+ }
+ void realServerFolderNamesFollowOtbMapping() {
+    const QString client=qEnvironmentVariable("OTE_TEST_CLIENT");
+    const QString server=qEnvironmentVariable("OTE_TEST_SERVER_FOLDER");
+    if(client.isEmpty() || server.isEmpty())
+        QSKIP("Set OTE_TEST_CLIENT and OTE_TEST_SERVER_FOLDER for a real server-name test");
+    OtbReader otb;QVERIFY(otb.loadFile(server+"/items.otb"));
+    ItemsXmlReader xml;QVERIFY(xml.loadFile(server+"/items.xml"));
+    const int sourceRow=otb.rowForClientId(3989);QVERIFY(sourceRow>=0);
+    const int serverId=otb.detailsAt(sourceRow).value("serverId").toInt();
+    EditorBackend backend;QVERIFY2(backend.openFolder(client,772,false,server),qPrintable(backend.status()));
+    backend.jump(3989);
+    QCOMPARE(backend.serverId(),serverId);
+    QCOMPARE(backend.serverAttributes().value("name").toString(),xml.nameForServerId(serverId));
+ }
+ void serverFilesPreferMatchingClientVersion() {
+    QTemporaryDir client,server;QVERIFY(client.isValid());QVERIFY(server.isValid());
+    fixture(client.path());
+    for(const int version:{772,860}){
+        const QString folder=server.path()+"/"+QString::number(version);
+        QVERIFY(QDir().mkpath(folder));
+        QFile xml(folder+"/items.xml");QVERIFY(xml.open(QIODevice::WriteOnly));
+        const QByteArray contents=QString("<items><item id=\"101\" name=\"Version %1\"/></items>")
+                                      .arg(version).toUtf8();
+        QVERIFY(xml.write(contents)==contents.size());xml.close();
+        OtbReader otb;otb.newFile();QVERIFY(otb.createItem(100)>=0);
+        QVERIFY(otb.saveFile(folder+"/items.otb"));
+    }
+    EditorBackend backend;
+    QVERIFY2(backend.openFolder(client.path(),860,false,server.path()),qPrintable(backend.status()));
+    QCOMPARE(backend.serverAttributes().value("name").toString(),"Version 860");
+    QVERIFY(backend.info().value("itemsXmlPath").toString().endsWith("/860/items.xml"));
+    const auto preview=backend.inspectFolder(client.path(),860,false,server.path());
+    QCOMPARE(preview.value("itemsXmlPath").toString(),backend.info().value("itemsXmlPath").toString());
+    QTemporaryDir wrongVersion;QVERIFY(wrongVersion.isValid());
+    QVERIFY(QDir().mkpath(wrongVersion.path()+"/772"));
+    QVERIFY(QFile::copy(server.path()+"/772/items.xml",wrongVersion.path()+"/772/items.xml"));
+    auto wrongPreview=backend.inspectFolder(client.path(),860,false,wrongVersion.path());
+    QVERIFY(wrongPreview.value("ok").toBool());
+    QVERIFY(!wrongPreview.value("itemsXml").toBool());
+    QVERIFY(QDir().mkpath(wrongVersion.path()+"/800"));
+    QVERIFY(QFile::copy(server.path()+"/860/items.xml",wrongVersion.path()+"/800/items.xml"));
+    wrongPreview=backend.inspectFolder(client.path(),860,false,wrongVersion.path());
+    QVERIFY(!wrongPreview.value("itemsXml").toBool());
+ }
  void legacyObdFlagVersions() {
     struct Sample {int version;const char *base64;};
     const Sample samples[]={
