@@ -13,6 +13,7 @@
 #include <QtEndian>
 #include <algorithm>
 #include "editorbackend.h"
+#include "obdcodec.h"
 #include "otfireader.h"
 class EditorTests : public QObject {
  Q_OBJECT
@@ -650,6 +651,20 @@ private slots:
     EditorBackend backend;
     QCOMPARE(backend.detectFolderVersion(client),860);
     QVERIFY(backend.inspectFolder(client,backend.detectFolderVersion(client)).value("ok").toBool());
+    const QString unknown=dir.path()+"/client";
+    QVERIFY(QDir().mkpath(unknown));fixture(unknown);
+    QCOMPARE(backend.detectFolderVersion(unknown),0);
+    const QString official=dir.path()+"/official";
+    QVERIFY(QDir().mkpath(official));fixture(official);
+    QFile officialDat(official+"/Tibia.dat"),officialSpr(official+"/Tibia.spr");
+    QVERIFY(officialDat.open(QIODevice::ReadWrite));
+    QVERIFY(officialSpr.open(QIODevice::ReadWrite));
+    QDataStream datSignature(&officialDat),sprSignature(&officialSpr);
+    datSignature.setByteOrder(QDataStream::LittleEndian);
+    sprSignature.setByteOrder(QDataStream::LittleEndian);
+    datSignature<<quint32(0x4C28B721);sprSignature<<quint32(0x4C220594);
+    officialDat.close();officialSpr.close();
+    QCOMPARE(backend.detectFolderVersion(official),860);
     const QString realClient = qEnvironmentVariable("OTEDITOR_TEST_CLIENT_FOLDER");
     if (!realClient.isEmpty()) {
         const int detected = backend.detectFolderVersion(realClient);
@@ -678,6 +693,9 @@ private slots:
     QCOMPARE(backend.serverAttributes().value("speed").toInt(),321);
     QVERIFY(backend.serverAttributes().value("pickupable").toBool());
     QVERIFY(!backend.setServerAttributes({{"lightLevel",256}}));
+    QVERIFY(!backend.setServerAttributes({{"speed",65536}}));
+    QVERIFY(!backend.setServerAttributes({{"stackOrder",128}}));
+    QVERIFY(!backend.setServerAttributes({{"groupId",16}}));
     QVERIFY(!backend.setServerAttributes({{"serverId",65536}}));
     QVERIFY(!backend.setServerAttributes({{"clientId",99}}));
     const int originalServerId=backend.serverId();
@@ -722,6 +740,96 @@ private slots:
     const QImage preview=backend.image(backend.preview(0).mid(QStringLiteral("image://itempreview/").size()));
     QCOMPARE(preview.pixelColor(0,0),QColor(220,40,10));
  }
+ void importsObjectBuilderV1Obd() {
+    const QByteArray sample=QByteArray::fromBase64(
+        "XQAAgAD//////////wACANWw2d+FUxhtWBbCY8FZfFZDONmZmNWp4D5zuBrVOCJAQVq/ZKO3lm/E6Yarnmo3EtNNtCQy///SlQAA");
+    ObdObject parsed;QString error;
+    QVERIFY2(ObdCodec::decode(sample,parsed,&error),qPrintable(error));
+    QCOMPARE(parsed.clientVersion,772);
+    QCOMPARE(parsed.category,0);
+    QVERIFY(parsed.item.is_ground);
+    QCOMPARE(parsed.item.ground_speed,300);
+    QVERIFY(parsed.item.is_writable);
+    QCOMPARE(parsed.item.max_text_length,50);
+    QVERIFY(parsed.item.floor_change);
+    QCOMPARE(parsed.sprites.size(),1);
+    QCOMPARE(parsed.sprites.first().pixelColor(0,0),QColor(40,180,20));
+ }
+ void realObdFilesDecode() {
+    const QString folder=qEnvironmentVariable("OTE_TEST_OBD_FOLDER");
+    if (folder.isEmpty()) QSKIP("Set OTE_TEST_OBD_FOLDER for existing OBD files");
+    const QStringList names=QDir(folder).entryList({"*.obd"},QDir::Files,QDir::Name);
+    QVERIFY(!names.isEmpty());
+    for (const QString &name:names) {
+        QFile file(QDir(folder).filePath(name));QVERIFY(file.open(QIODevice::ReadOnly));
+        ObdObject parsed;QString error;
+        QVERIFY2(ObdCodec::decode(file.readAll(),parsed,&error),qPrintable(name+": "+error));
+        QVERIFY2(!parsed.sprites.isEmpty(),qPrintable(name));
+        QCOMPARE(parsed.item.sprite_ids.size(),size_t(parsed.sprites.size()));
+    }
+ }
+ void realItemsXmlPreservesOtherEntries() {
+    const QString source=qEnvironmentVariable("OTE_TEST_XML_FILE");
+    if (source.isEmpty()) QSKIP("Set OTE_TEST_XML_FILE for a real items.xml test");
+    QTemporaryDir output;QVERIFY(output.isValid());
+    ItemsXmlReader xml;QVERIFY(xml.loadFile(source));
+    const int originalCount=xml.count();
+    const QString name=xml.nameForServerId(100);
+    QVERIFY(xml.setAttributeForServerId(100,"oteditorTest","ok"));
+    const QString copy=output.path()+"/items.xml";
+    QVERIFY(xml.saveCopy(copy));
+    ItemsXmlReader reopened;QVERIFY(reopened.loadFile(copy));
+    QCOMPARE(reopened.count(),originalCount);
+    QCOMPARE(reopened.nameForServerId(100),name);
+    QCOMPARE(reopened.attributesForServerId(100).value("oteditorTest").toString(),"ok");
+ }
+ void legacyObdFlagVersions() {
+    struct Sample {int version;const char *base64;};
+    const Sample samples[]={
+        {720,"XQAAgAD//////////wBoAHx8A8O/lIv0Q/GmPR+qLWhTgtfdBr+dCmxtmbhHv+sHehOwI3m0uvPu9D+pmOX//WnQAA=="},
+        {740,"XQAAgAD//////////wByAHx8A8O/lIv4CUK6ufQkzGxr6khUO23O29ppE2VgYhYszWTLyOinQqbq6p2R/r7/+/PAAA=="},
+        {772,"XQAAgAD//////////wACANWw2d+FUxiVFpuDWMvK84m3X9SLOIBHypvXRvB9o76eRApSEL0sFkwHemTJL///5dyQAA=="},
+        {800,"XQAAgAD//////////wAQALyD4IPpgE3MQ0exKpSyjmlXsmvNEz2pP8YWa/iUjLz5rWt8ObU0ilLcJH2sI0SgVXg5f//a72AA"},
+        {960,"XQAAgAD//////////wBgALx8A8O/lIv87XZwA3lBPgKDrFqORqzKJO6NwVah6AeU34rA6XP++7I8BlbtSocV9P/7L0QA"},
+        {1098,"XQAAgAD//////////wAlASwAbInHEFctOcutUmgNSg6nkKydCkJchUIww6wip0k1eg+rvKjjdlhGw/zUYH//0zpAAA=="}
+    };
+    for (const auto &sample:samples) {
+        ObdObject parsed;QString error;
+        QVERIFY2(ObdCodec::decode(QByteArray::fromBase64(sample.base64),parsed,&error),qPrintable(error));
+        QCOMPARE(parsed.clientVersion,sample.version);
+        QCOMPARE(parsed.sprites.size(),1);
+        if (sample.version==720) {QVERIFY(parsed.item.has_offset);QCOMPARE(parsed.item.offset_x,8);}
+        if (sample.version==740) QVERIFY(parsed.item.is_hangable);
+        if (sample.version==772) QVERIFY(parsed.item.floor_change);
+        if (sample.version==800) {QVERIFY(parsed.item.extra_properties.value("chargeable").toBool());QCOMPARE(parsed.item.offset_y,-2);}
+        if (sample.version==960) QCOMPARE(parsed.item.extra_properties.value("clothSlot").toInt(),7);
+        if (sample.version==1098) QVERIFY(parsed.item.extra_properties.value("noMoveAnimation").toBool());
+    }
+ }
+ void convertsProjectsAcrossClientVersions() {
+    QTemporaryDir sourceDir,targetDir,backDir;
+    QVERIFY(sourceDir.isValid());QVERIFY(targetDir.isValid());QVERIFY(backDir.isValid());
+    fixture(sourceDir.path());
+    EditorBackend source;QVERIFY(source.openFolder(sourceDir.path(),860));
+    QImage replacement(32,32,QImage::Format_RGBA8888);
+    replacement.fill(QColor(17,143,201));
+    const QString replacementPath=sourceDir.path()+"/replacement.png";
+    QVERIFY(replacement.save(replacementPath));
+    QVERIFY(source.replaceSprite(1,replacementPath));
+    QVERIFY2(source.convertProject(targetDir.path(),1098),qPrintable(source.status()));
+    EditorBackend modern;QVERIFY2(modern.openFolder(targetDir.path(),1098),qPrintable(modern.status()));
+    QCOMPARE(modern.count(),source.count());
+    QCOMPARE(modern.details().value("itemId").toInt(),100);
+    QCOMPARE(modern.spriteCount(),1);
+    QCOMPARE(modern.image(modern.spriteSource(1).mid(QStringLiteral("image://itempreview/").size())).pixelColor(0,0),QColor(17,143,201));
+    QVERIFY2(modern.convertProject(backDir.path(),772),qPrintable(modern.status()));
+    EditorBackend legacy;QVERIFY2(legacy.openFolder(backDir.path(),772),qPrintable(legacy.status()));
+    QCOMPARE(legacy.count(),source.count());
+    QCOMPARE(legacy.spriteCount(),1);
+    QCOMPARE(legacy.details().value("itemId").toInt(),100);
+    QVERIFY(!source.convertProject(sourceDir.path(),1098));
+    QVERIFY(!source.convertProject(targetDir.path(),1098));
+ }
  void serverFileCopiesKeepActivePathsAndPendingChanges() {
     QTemporaryDir dir; QVERIFY(dir.isValid()); fixture(dir.path());
     OtbReader otb; otb.newFile();
@@ -762,6 +870,31 @@ private slots:
     QVERIFY(project.compile());
     QVERIFY(QFile::exists(activeOtb));
     QVERIFY(QFile::exists(activeXml));
+ }
+ void editsXmlAttributesWithoutChangingOtherItems() {
+    QTemporaryDir dir;QVERIFY(dir.isValid());
+    const QString source=dir.path()+"/items.xml";
+    QFile file(source);QVERIFY(file.open(QIODevice::WriteOnly));
+    QVERIFY(file.write("<items><item id=\"100\" name=\"Sword\" article=\"a\"><attribute key=\"type\" value=\"weapon\"/><attribute key=\"weight\" value=\"30\"/></item><item fromid=\"200\" toid=\"202\" name=\"Stone\"><attribute key=\"type\" value=\"ground\"/></item></items>")>0);
+    file.close();
+    ItemsXmlReader xml;QVERIFY(xml.loadFile(source));
+    QCOMPARE(xml.attributesForServerId(100).value("weight").toString(),"30");
+    QVERIFY(xml.setAttributeForServerId(100,"weight","45"));
+    QVERIFY(xml.setAttributeForServerId(100,"@article","the"));
+    QVERIFY(xml.removeAttributeForServerId(100,"type"));
+    QVERIFY(xml.setAttributeForServerId(100,"@plural","Swords"));
+    QVERIFY(xml.setAttributeForServerId(201,"speed","2"));
+    const QString copy=dir.path()+"/copy.xml";
+    QVERIFY(xml.saveCopy(copy));QVERIFY(xml.dirty());
+    ItemsXmlReader reopened;QVERIFY(reopened.loadFile(copy));
+    QCOMPARE(reopened.attributesForServerId(100).value("weight").toString(),"45");
+    QCOMPARE(reopened.attributesForServerId(100).value("@article").toString(),"the");
+    QCOMPARE(reopened.attributesForServerId(100).value("@plural").toString(),"Swords");
+    QVERIFY(!reopened.attributesForServerId(100).contains("type"));
+    QCOMPARE(reopened.attributesForServerId(200).value("type").toString(),"ground");
+    QCOMPARE(reopened.attributesForServerId(201).value("speed").toString(),"2");
+    QCOMPARE(reopened.attributesForServerId(202).value("type").toString(),"ground");
+    QVERIFY(!xml.removeAttributeForServerId(201,"type"));
  }
  void createOtbWhenMissing() {
     QTemporaryDir client; QTemporaryDir server;
@@ -804,6 +937,19 @@ private slots:
     QVERIFY(localReopened.serverId()>=0);
  }
  void createAssetFiles() {
+    {
+        QTemporaryDir custom;QVERIFY(custom.isValid());
+        EditorBackend backend;
+        QVERIFY(backend.createAssetFiles(custom.path(),800,true,false,true,true));
+        QVERIFY(backend.info().value("extended").toBool());
+        QVERIFY(backend.info().value("durations").toBool());
+        QVERIFY(backend.info().value("groups").toBool());
+        QVERIFY(backend.compile());
+        EditorBackend reopened;QVERIFY(reopened.openFolder(custom.path(),800));
+        QVERIFY(reopened.info().value("extended").toBool());
+        QVERIFY(reopened.info().value("durations").toBool());
+        QVERIFY(reopened.info().value("groups").toBool());
+    }
     for (const int version : {772, 1310}) {
         QTemporaryDir dir; QVERIFY(dir.isValid());
         EditorBackend backend;
@@ -1336,6 +1482,19 @@ private slots:
         EditorBackend converted;QVERIFY2(converted.openFolder(output.path(),772),qPrintable(converted.status()));
         QVERIFY(!converted.info().value("groups").toBool());
     }
+ }
+ void realClientConversion() {
+    const QString source=qEnvironmentVariable("OTE_TEST_CLIENT");
+    if (source.isEmpty()) QSKIP("Set OTE_TEST_CLIENT for a real 7.72 conversion test");
+    QTemporaryDir output;QVERIFY(output.isValid());
+    EditorBackend backend;QVERIFY2(backend.openFolder(source,772),qPrintable(backend.status()));
+    const int items=backend.count();const int sprites=backend.spriteCount();
+    QVERIFY2(backend.convertProject(output.path(),1098),qPrintable(backend.status()));
+    EditorBackend reopened;QVERIFY2(reopened.openFolder(output.path(),1098),qPrintable(reopened.status()));
+    QCOMPARE(reopened.count(),items);
+    QVERIFY(reopened.spriteCount()>0);
+    QVERIFY(reopened.spriteCount()<=sprites);
+    QCOMPARE(reopened.details().value("itemId").toInt(),100);
  }
  void spriteWriterRoundTrip() {
     QTemporaryDir source;fixture(source.path());
