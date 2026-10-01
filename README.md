@@ -7,7 +7,7 @@ OTEditor is a desktop Tibia object editor built with **Qt 6, QML, and C++17**. I
 For the Windows release ZIP, extract the archive and run `OTEditor.exe` from the extracted `OTEditor` folder. Keep the entire folder together; the executable alone does not include the required Qt files. For a local build, run `dist/OTEditor.exe`.
 
 1. Choose **File → Open** (`Ctrl+O`) and select a folder containing DAT and SPR files.
-2. When available, the editor also loads `items.otb`, `items.xml`, and OTFI from the project folder or their usual nearby locations.
+2. The **Server Files Folder** is optional. Select the folder containing `items.otb` and `items.xml` to load server data. Leave it empty to open only client files and hide server attributes. Server files are read directly from the selected folder; parent folders and subfolders are not searched. OTFI is read from the client folder.
 3. Select the DAT format version, such as 772, 860, or 1098. OTFI settings take precedence for extended sprites, transparency, frame durations, and frame groups. A custom client's protocol version may differ from its DAT format version.
 4. Select an object to inspect it. Double-click an object to open its properties, or double-click a sprite to assign it to an object slot.
 5. Press `Ctrl+S` to compile the current project. `Ctrl+Shift+S` compiles the complete project into a new folder, including DAT, SPR, OTFI, and any loaded `items.otb` and `items.xml` files.

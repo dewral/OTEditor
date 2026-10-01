@@ -14,6 +14,7 @@ Item {
     readonly property int spriteSize: Number(String(Backend.info.spriteDimension || "32x32").split("x")[0]) || 32
     function showProperties() { tabIndex=1; forceActiveFocus() }
     function syncSelection() {
+        if (tabIndex === 2 && (!isItem || !Boolean(Backend.info.otb))) tabIndex = 0
         let folder=String(Backend.info.folder||"")
         if(folder!==projectKey) { projectKey=folder; selectedKey=""; pendingDrafts=({}); changes=({}) }
         let key=Backend.category+":"+(Backend.details.itemId ?? "")
@@ -299,7 +300,7 @@ Item {
         RowLayout {
             spacing: 3
             Repeater { model: ["Texture","Properties","Attributes"]
-                Tool { required property int index; required property string modelData; text: modelData; checked: inspector.tabIndex===index; implicitWidth: 96; implicitHeight: 28; onClicked: inspector.tabIndex=index }
+                Tool { required property int index; required property string modelData; objectName: index === 2 ? "serverAttributesTab" : "inspectorTab" + index; text: modelData; visible: index !== 2 || (inspector.isItem && Boolean(Backend.info.otb)); checked: inspector.tabIndex===index; implicitWidth: 96; implicitHeight: 28; onClicked: inspector.tabIndex=index }
             }
             Item { Layout.fillWidth: true }
         }

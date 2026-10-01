@@ -55,13 +55,15 @@ Dialog {
             }
         }
         Label {
-            text: "Server Items Folder (optional):"
+            text: "Server Files Folder (optional):"
         }
         RowLayout {
             Layout.fillWidth: true
             TextField {
                 id: serverFolderPath
+                objectName: "serverFilesFolder"
                 Layout.fillWidth: true
+                placeholderText: "Folder containing items.otb and items.xml"
                 selectByMouse: true
                 onEditingFinished: loadDialog.refreshPreview()
             }
@@ -69,20 +71,24 @@ Dialog {
                 text: "Browse"
                 onClicked: serverFolderDialog.open()
             }
+            Button {
+                text: "Clear"
+                enabled: serverFolderPath.text.length > 0
+                onClicked: { serverFolderPath.text = ""; loadDialog.refreshPreview() }
+            }
         }
         Label {
-            text: serverFolderPath.text.length ? serverFolderPath.text : "No folder selected"
+            text: serverFolderPath.text.length ? serverFolderPath.text : "Client files only — server attributes will be hidden"
             color: "#91a8bd"
             font.pixelSize: 11
             elide: Text.ElideMiddle
             Layout.fillWidth: true
         }
         Label {
-            text: loadDialog.previewData.itemsXml
-                  ? "items.xml: " + loadDialog.previewData.itemsXmlPath
-                  : "items.xml: not found for the selected client version"
-            visible: Boolean(loadDialog.previewData.ok)
-            color: loadDialog.previewData.itemsXml ? "#91c8a7" : "#d5ae79"
+            text: "items.otb: " + (loadDialog.previewData.otb ? "found" : "not found")
+                  + " · items.xml: " + (loadDialog.previewData.itemsXml ? "found" : "not found")
+            visible: Boolean(loadDialog.previewData.ok) && serverFolderPath.text.length > 0
+            color: loadDialog.previewData.otb || loadDialog.previewData.itemsXml ? "#91c8a7" : "#d5ae79"
             elide: Text.ElideMiddle
             Layout.fillWidth: true
         }
@@ -130,6 +136,7 @@ Dialog {
                 }
                 Label {
                     text: "Attribute Server:"
+                    visible: Boolean(loadDialog.previewData.otb)
                 }
                 ComboBox {
                     id: loadDimension
@@ -143,6 +150,7 @@ Dialog {
                 ComboBox {
                     Layout.fillWidth: true
                     model: [loadDialog.previewData.attributeServer || "TFS 1.4"]
+                    visible: Boolean(loadDialog.previewData.otb)
                     enabled: false
                 }
             }
@@ -295,7 +303,7 @@ Dialog {
     }
     FolderDialog {
         id: serverFolderDialog
-        title: "Select server items folder"
+        title: "Select folder containing items.otb and items.xml"
         onAccepted: {
             serverFolderPath.text = backend.localPath(selectedFolder.toString());
             loadDialog.refreshPreview();

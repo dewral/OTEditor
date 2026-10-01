@@ -1,7 +1,6 @@
 #include "projectmodel.h"
 #include "otfireader.h"
 
-#include <QDirIterator>
 #include <QFile>
 #include <QFileInfo>
 #include <QSaveFile>
@@ -25,32 +24,11 @@ QString ProjectModel::findFile(const QDir &folder, const QString &preferred,
     return files.isEmpty() ? QString() : files.constFirst().absoluteFilePath();
 }
 
-QString ProjectModel::findServerFile(const QString &folder, const QString &fileName,
-                                     int clientVersion)
+QString ProjectModel::findServerFile(const QString &folder, const QString &fileName)
 {
+    if (folder.isEmpty()) return {};
     const QString direct=QDir(folder).filePath(fileName);
-    if(QFileInfo::exists(direct))return QFileInfo(direct).absoluteFilePath();
-    QDirIterator iterator(folder, {fileName}, QDir::Files, QDirIterator::Subdirectories);
-    QStringList matches;
-    while(iterator.hasNext())matches.append(QFileInfo(iterator.next()).absoluteFilePath());
-    const QString numeric=QString::number(clientVersion);
-    const QString dotted=QString::number(clientVersion/100)+"."
-                         +QString::number(clientVersion%100).rightJustified(2,'0');
-    if(matches.size()==1){
-        const QString parentName=QFileInfo(matches.constFirst()).dir().dirName();
-        const QRegularExpression versionFolder(QStringLiteral("^(?:\\d{3,5}|\\d{1,2}[._]\\d{2})$"));
-        if(versionFolder.match(parentName).hasMatch() && parentName!=numeric && parentName!=dotted)
-            return {};
-        return matches.constFirst();
-    }
-    QStringList versionMatches;
-    for(const QString &candidate:matches){
-        const QStringList parts=QDir::fromNativeSeparators(QFileInfo(candidate).absolutePath()).split('/');
-        if(parts.contains(numeric,Qt::CaseInsensitive) || parts.contains(dotted,Qt::CaseInsensitive))
-            versionMatches.append(candidate);
-    }
-    if(versionMatches.size()==1)return versionMatches.constFirst();
-    return {};
+    return QFileInfo(direct).isFile() ? QFileInfo(direct).absoluteFilePath() : QString();
 }
 
 bool ProjectModel::dirty() const
@@ -155,17 +133,14 @@ bool ProjectModel::open(const QString &folder, int clientVersion, bool alphaWith
     }
 
     auto itemsXml = std::make_unique<ItemsXmlReader>();
-    const QString itemsXmlPath = findServerFile(serverFolder.isEmpty() ? directory.absolutePath() : serverFolder,
-                                                QStringLiteral("items.xml"),clientVersion);
+    if (!serverFolder.isEmpty() && !QDir(serverFolder).exists()) {
+        if (error) *error = QStringLiteral("The selected server files folder does not exist");
+        return false;
+    }
+    const QString itemsXmlPath = findServerFile(serverFolder, QStringLiteral("items.xml"));
     if (!itemsXmlPath.isEmpty()) itemsXml->loadFile(itemsXmlPath);
 
-    QString otbPath = serverFolder.isEmpty()
-        ? findFile(directory, QStringLiteral("items.otb"), QStringLiteral("otb"))
-        : findServerFile(serverFolder, QStringLiteral("items.otb"),clientVersion);
-    if (otbPath.isEmpty() && serverFolder.isEmpty()) {
-        const QDir parent(directory.absolutePath() + QStringLiteral("/.."));
-        otbPath = findFile(parent, QStringLiteral("items.otb"), QStringLiteral("otb"));
-    }
+    const QString otbPath = findServerFile(serverFolder, QStringLiteral("items.otb"));
     auto otb = std::make_unique<OtbReader>();
     otb->setDatReader(dat.get());
     otb->setItemsXml(itemsXml.get());

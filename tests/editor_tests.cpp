@@ -177,7 +177,7 @@ private slots:
     OtbReader otb;otb.newFile();
     QVERIFY(otb.createItem(100)>=0);QVERIFY(otb.createItem(101)>=0);
     QVERIFY(otb.saveFile(dir.path()+"/items.otb"));
-    EditorBackend backend;QVERIFY(backend.openFolder(dir.path(),860));
+    EditorBackend backend;QVERIFY(backend.openFolder(dir.path(),860,false,dir.path()));
     backend.select(1);QVERIFY(backend.setValue("isStackable",true));
     backend.select(0);QVERIFY(backend.removeObject());
     QCOMPARE(backend.count(),2);
@@ -191,7 +191,7 @@ private slots:
     QVERIFY(backend.serverId()>0);
     QVERIFY(!backend.canUndo());
     QVERIFY2(backend.compile(),qPrintable(backend.status()));
-    EditorBackend reopened;QVERIFY2(reopened.openFolder(dir.path(),860),qPrintable(reopened.status()));
+    EditorBackend reopened;QVERIFY2(reopened.openFolder(dir.path(),860,false,dir.path()),qPrintable(reopened.status()));
     QCOMPARE(reopened.count(),2);
     reopened.select(0);
     QCOMPARE(reopened.details().value("itemId").toInt(),100);
@@ -699,7 +699,7 @@ private slots:
     QTemporaryDir dir; QVERIFY(dir.isValid()); fixture(dir.path());
     OtbReader otb; otb.newFile();
     QVERIFY(otb.saveFile(dir.path()+"/items.otb"));
-    EditorBackend backend; QVERIFY(backend.openFolder(dir.path(),860));
+    EditorBackend backend; QVERIFY(backend.openFolder(dir.path(),860,false,dir.path()));
     QVERIFY(backend.info().value("otb").toBool());
     QCOMPARE(backend.createMissingOtbItems(),1);
     QCOMPARE(backend.createMissingOtbItems(),0);
@@ -737,7 +737,7 @@ private slots:
     QVERIFY(comparison.value("changed").toInt()>0);
     QVERIFY(backend.saveOtbFile());
     QVERIFY(backend.compile());
-    EditorBackend reopened; QVERIFY(reopened.openFolder(dir.path(),860));
+    EditorBackend reopened; QVERIFY(reopened.openFolder(dir.path(),860,false,dir.path()));
     QCOMPARE(reopened.serverAttributes().value("name").toString(),QStringLiteral("Test Sword"));
     QCOMPARE(reopened.serverAttributes().value("speed").toInt(),321);
     reopened.create();
@@ -813,7 +813,7 @@ private slots:
     const int row=otb.createItem(100);QVERIFY(row>=0);
     QVERIFY(otb.setValue(row,"serverId",500));
     QVERIFY(otb.saveFile(dir.path()+"/items.otb"));
-    EditorBackend backend;QVERIFY2(backend.openFolder(dir.path(),860),qPrintable(backend.status()));
+    EditorBackend backend;QVERIFY2(backend.openFolder(dir.path(),860,false,dir.path()),qPrintable(backend.status()));
     QCOMPARE(backend.serverId(),500);
     QCOMPARE(backend.serverAttributes().value("name").toString(),"Correct server ID name");
     QCOMPARE(backend.serverAttributes().value("nameSource").toString(),"items.xml");
@@ -833,7 +833,7 @@ private slots:
     QCOMPARE(backend.serverId(),serverId);
     QCOMPARE(backend.serverAttributes().value("name").toString(),xml.nameForServerId(serverId));
  }
- void serverFilesPreferMatchingClientVersion() {
+ void serverFilesRequireExplicitContainingFolder() {
     QTemporaryDir client,server;QVERIFY(client.isValid());QVERIFY(server.isValid());
     fixture(client.path());
     for(const int version:{772,860}){
@@ -847,11 +847,19 @@ private slots:
         QVERIFY(otb.saveFile(folder+"/items.otb"));
     }
     EditorBackend backend;
-    QVERIFY2(backend.openFolder(client.path(),860,false,server.path()),qPrintable(backend.status()));
+    QVERIFY2(backend.openFolder(client.path(),860,false,server.path()+"/860"),qPrintable(backend.status()));
     QCOMPARE(backend.serverAttributes().value("name").toString(),"Version 860");
     QVERIFY(backend.info().value("itemsXmlPath").toString().endsWith("/860/items.xml"));
-    const auto preview=backend.inspectFolder(client.path(),860,false,server.path());
+    const auto preview=backend.inspectFolder(client.path(),860,false,server.path()+"/860");
     QCOMPARE(preview.value("itemsXmlPath").toString(),backend.info().value("itemsXmlPath").toString());
+    const auto parentPreview=backend.inspectFolder(client.path(),860,false,server.path());
+    QVERIFY(parentPreview.value("ok").toBool());
+    QVERIFY(!parentPreview.value("otb").toBool());
+    QVERIFY(!parentPreview.value("itemsXml").toBool());
+    QVERIFY(backend.openFolder(client.path(),860));
+    QVERIFY(!backend.info().value("otb").toBool());
+    QVERIFY(!backend.info().value("itemsXml").toBool());
+    QVERIFY(backend.serverAttributes().isEmpty());
     QTemporaryDir wrongVersion;QVERIFY(wrongVersion.isValid());
     QVERIFY(QDir().mkpath(wrongVersion.path()+"/772"));
     QVERIFY(QFile::copy(server.path()+"/772/items.xml",wrongVersion.path()+"/772/items.xml"));
@@ -862,6 +870,26 @@ private slots:
     QVERIFY(QFile::copy(server.path()+"/860/items.xml",wrongVersion.path()+"/800/items.xml"));
     wrongPreview=backend.inspectFolder(client.path(),860,false,wrongVersion.path());
     QVERIFY(!wrongPreview.value("itemsXml").toBool());
+ }
+ void clientOnlyIgnoresNearbyServerFiles() {
+    QTemporaryDir root; QVERIFY(root.isValid());
+    const QString client = root.filePath("client"); QVERIFY(QDir().mkpath(client)); fixture(client);
+    for (const QString &folder : {client, root.path()}) {
+        QFile otb(folder+"/items.otb"); QVERIFY(otb.open(QIODevice::WriteOnly)); otb.write("invalid OTB");
+        QFile xml(folder+"/items.xml"); QVERIFY(xml.open(QIODevice::WriteOnly)); xml.write("invalid XML");
+    }
+    EditorBackend backend;
+    const auto preview = backend.inspectFolder(client,860);
+    QVERIFY(preview.value("ok").toBool());
+    QVERIFY(!preview.value("otb").toBool()); QVERIFY(!preview.value("itemsXml").toBool());
+    QVERIFY2(backend.openFolder(client,860),qPrintable(backend.status()));
+    QVERIFY(!backend.info().value("otb").toBool()); QVERIFY(!backend.info().value("itemsXml").toBool());
+    QCOMPARE(backend.serverId(),-1); QVERIFY(backend.serverAttributes().isEmpty());
+    QVERIFY(backend.setValue("isStackable",true)); QVERIFY(backend.compile());
+    QVERIFY(!backend.openFolder(client,860,false,client));
+    QVERIFY(backend.loaded()); QVERIFY(backend.details().value("isStackable").toBool());
+    QVERIFY(!backend.openFolder(client,860,false,root.filePath("missing")));
+    QVERIFY(backend.loaded());
  }
  void legacyObdFlagVersions() {
     struct Sample {int version;const char *base64;};
@@ -940,7 +968,7 @@ private slots:
     QVERIFY(!xml.dirty());
 
     ProjectModel project;
-    QVERIFY(project.open(dir.path(),860,false));
+    QVERIFY(project.open(dir.path(),860,false,nullptr,dir.path()));
     const QString activeOtb=dir.path()+"/renamed.otb";
     QVERIFY(project.saveOtbAs(activeOtb));
     QCOMPARE(project.otb()->filePath(),activeOtb);
@@ -1012,7 +1040,7 @@ private slots:
     QVERIFY(!local.compiling());
     QVERIFY(local.compile());
     EditorBackend localReopened;
-    QVERIFY(localReopened.openFolder(clientOnly.path(),860));
+    QVERIFY(localReopened.openFolder(clientOnly.path(),860,false,clientOnly.path()));
     localReopened.jump(701);
     QVERIFY(localReopened.serverId()>=0);
  }
@@ -1385,6 +1413,8 @@ private slots:
     connect(&engine,&QQmlEngine::warnings,this,[&](const QList<QQmlError> &errors){for(const auto &e:errors)warnings<<e.toString();});
     engine.load(QUrl::fromLocalFile(QStringLiteral(QT_TESTCASE_SOURCEDIR "/qml/Main.qml")));
     QVERIFY(!engine.rootObjects().isEmpty());auto root=engine.rootObjects().first();
+    auto serverTab = visualItem(qobject_cast<QQuickWindow *>(root)->contentItem(),"serverAttributesTab"); QVERIFY(serverTab);
+    QVERIFY(!serverTab->property("visible").toBool());
     auto aboutDialog=root->findChild<QObject *>("aboutDialog"); QVERIFY(aboutDialog);
     auto supportLogo=root->findChild<QObject *>("midhemSupportLogo"); QVERIFY(supportLogo);
     QVERIFY(QMetaObject::invokeMethod(aboutDialog,"open"));
