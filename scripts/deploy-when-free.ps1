@@ -4,6 +4,17 @@ $staged = Join-Path $root 'dist\OTEditor.next.exe'
 $target = Join-Path $root 'dist\OTEditor.exe'
 $log = Join-Path $root 'build\deferred-deploy.log'
 
+function Get-ExecutableHash([string] $path) {
+    $stream = [System.IO.File]::OpenRead($path)
+    $sha256 = [System.Security.Cryptography.SHA256]::Create()
+    try {
+        return [System.BitConverter]::ToString($sha256.ComputeHash($stream)).Replace('-', '')
+    } finally {
+        $sha256.Dispose()
+        $stream.Dispose()
+    }
+}
+
 "Waiting for OTEditor to close" | Set-Content -LiteralPath $log
 while (Get-Process OTEditor -ErrorAction SilentlyContinue | Where-Object { $_.Path -eq $target }) {
     Start-Sleep -Seconds 5
@@ -11,8 +22,8 @@ while (Get-Process OTEditor -ErrorAction SilentlyContinue | Where-Object { $_.Pa
 for ($attempt = 0; $attempt -lt 300; $attempt++) {
     try {
         Copy-Item -LiteralPath $staged -Destination $target -Force -ErrorAction Stop
-        $expected = (Get-FileHash -LiteralPath $staged -Algorithm SHA256).Hash
-        $installed = (Get-FileHash -LiteralPath $target -Algorithm SHA256).Hash
+        $expected = Get-ExecutableHash $staged
+        $installed = Get-ExecutableHash $target
         if ($expected -eq $installed) {
             Remove-Item -LiteralPath $staged -Force
             "Installed $installed at $(Get-Date -Format o)" | Set-Content -LiteralPath $log
