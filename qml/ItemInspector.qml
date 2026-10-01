@@ -698,54 +698,20 @@ Item {
                     Label { text: Backend.info.otb ? (Backend.serverId>=0 ? "Server ID: "+Backend.serverId+"  ·  Client ID: "+(inspector.draft.itemId||"") : "No OTB entry for this item") : "No items.otb in this project"; color: "#a9bdcf"; wrapMode: Text.Wrap; Layout.fillWidth: true }
                     Button { text: "Create items.otb"; visible: Backend.loaded && inspector.isItem && !Boolean(Backend.info.otb); onClicked: Backend.createOtbFile() }
                     Button { text: "Create server item"; visible: inspector.isItem && Boolean(Backend.info.otb) && Backend.serverId<0; enabled: inspector.editable && Number(inspector.draft.itemId||0)<=65535; onClicked: Backend.createServerItem() }
-                    Section { title: "Identity"; visible: Backend.serverId>=0
-                        ColumnLayout { anchors.left: parent.left; anchors.right: parent.right
-                            Repeater { model: [["Server ID","serverId",1],["Client ID","clientId",100]]
-                                RowLayout { required property var modelData; Layout.fillWidth: true
-                                    Label { text: modelData[0]; Layout.preferredWidth: 125 }
-                                    SpinBox { Layout.fillWidth: true; from: modelData[2]; to: 65535; value: Number(inspector.serverDraft[modelData[1]]||modelData[2]); editable: true; onValueModified: inspector.editServer(modelData[1],value) }
-                                }
-                            }
-                            Repeater { model: [["Name","name"],["Description","description"]]
-                                RowLayout { required property var modelData; Layout.fillWidth: true
-                                    Label { text: modelData[0]; Layout.preferredWidth: 125 }
-                                    TextField { Layout.fillWidth: true; text: String(inspector.serverDraft[modelData[1]] ?? ""); onTextEdited: inspector.editServer(modelData[1],text) }
-                                }
-                            }
-                            Label {
-                                visible: String(inspector.serverDraft.nameSource || "").length > 0
-                                text: "Name source: " + inspector.serverDraft.nameSource
-                                      + " · server ID " + Backend.serverId
-                                color: "#91a8bd"
-                                Layout.fillWidth: true
-                                ToolTip.visible: nameSourceArea.containsMouse
-                                ToolTip.text: inspector.serverDraft.nameSource === "items.xml"
-                                              ? String(Backend.info.itemsXmlPath || "")
-                                              : String(Backend.info.otbPath || "")
-                                MouseArea { id: nameSourceArea; anchors.fill: parent; hoverEnabled: true }
-                            }
-                            RowLayout { Layout.fillWidth: true
-                                Label { text: "Group"; Layout.preferredWidth: 125 }
-                                ComboBox { Layout.fillWidth: true; model: ["None","Ground","Container","Weapon","Ammunition","Armor","Changes","Teleport","Magic Field","Writeable","Key","Splash","Fluid","Door","Deprecated","Podium"]; currentIndex: Number(inspector.serverDraft.groupId||0); onActivated: inspector.editServer("groupId",currentIndex) }
-                            }
-                        }
+                    ServerAttributesPanel {
+                        Layout.fillWidth: true
+                        visible: Backend.serverId >= 0
+                        editor: inspector
                     }
-                    Section { title: "Values"; visible: Backend.serverId>=0
-                        ColumnLayout { anchors.left: parent.left; anchors.right: parent.right
-                            Repeater { model: [["Ground speed","speed",0,65535],["Read/write length","maxReadWriteLength",0,65535],["Read length","maxReadLength",0,65535],["Minimap color","minimapColor",0,65535],["Ware ID","wareId",0,65535],["Light level","lightLevel",0,255],["Light color","lightColor",0,255],["Stack order","stackOrder",-128,127]]
-                                RowLayout { required property var modelData; Layout.fillWidth: true
-                                    Label { text: modelData[0]; Layout.fillWidth: true }
-                                    SpinBox { from: modelData[2]; to: modelData[3]; value: Number(inspector.serverDraft[modelData[1]]||0); editable: true; onValueModified: inspector.editServer(modelData[1],value) }
-                                }
-                            }
-                        }
-                    }
-                    Section { title: "Flags"; visible: Backend.serverId>=0
-                        GridLayout { anchors.left: parent.left; anchors.right: parent.right; columns: width<440 ? 1 : 2
-                            Repeater { model: [["Unpassable","unpassable"],["Block missiles","blockMissiles"],["Block pathfinder","blockPathfinder"],["Elevation","hasElevation"],["Useable","useable"],["Pickupable","pickupable"],["Moveable","moveable"],["Stackable","stackable"],["Always on top","alwaysOnTop"],["Readable","readable"],["Rotatable","rotatable"],["Hangable","hangable"],["Hook east","hookEast"],["Hook south","hookSouth"],["Distance read","allowDistRead"],["Client duration","clientDuration"],["Client charges","clientCharges"],["Ignore look","ignoreLook"],["Animation","animation"],["Full ground","fullGround"],["Force use","forceUse"]]
-                                CheckBox { required property var modelData; text: modelData[0]; checked: Boolean(inspector.serverDraft[modelData[1]]); onClicked: inspector.editServer(modelData[1],checked) }
-                            }
-                        }
+                    Label {
+                        visible: Backend.serverId >= 0 && String(inspector.serverDraft.nameSource || "").length > 0
+                        text: "Name source: " + inspector.serverDraft.nameSource + " · server ID " + Backend.serverId
+                        color: "#91a8bd"
+                        Layout.fillWidth: true
+                        wrapMode: Text.Wrap
+                        ToolTip.visible: nameSourceArea.containsMouse
+                        ToolTip.text: inspector.serverDraft.nameSource === "items.xml" ? String(Backend.info.itemsXmlPath || "") : String(Backend.info.otbPath || "")
+                        MouseArea { id: nameSourceArea; anchors.fill: parent; hoverEnabled: true }
                     }
                 }
             }

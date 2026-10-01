@@ -698,6 +698,51 @@ private slots:
                  qPrintable(QStringLiteral("Detected DAT format %1 could not open %2").arg(detected).arg(realClient)));
     }
  }
+ void serverAttributeControlsRoundTrip() {
+    QTemporaryDir dir; QVERIFY(dir.isValid()); fixture(dir.path());
+    OtbReader otb; otb.newFile(); QVERIFY(otb.createItem(100)>=0);
+    QVERIFY(otb.saveFile(dir.filePath("items.otb")));
+    EditorBackend backend; QVERIFY(backend.openFolder(dir.path(),860,false,dir.path()));
+    QVERIFY(backend.setServerAttributes({{"useable",true},{"forceUse",false},{"stackOrder",2},
+                                        {"alwaysOnTop",true},{"name","Server name"},{"groupId",2}}));
+    QQmlApplicationEngine engine;
+    engine.rootContext()->setContextProperty("Backend",&backend);
+    engine.rootContext()->setContextProperty("AiSprites",new AiSpriteService(AiSpriteService::Timing{},false,&engine));
+    engine.addImageProvider("itempreview",new EditorImageProvider(&backend));
+    engine.load(QUrl::fromLocalFile(QStringLiteral(QT_TESTCASE_SOURCEDIR "/qml/Main.qml")));
+    QVERIFY(!engine.rootObjects().isEmpty());
+    auto root=engine.rootObjects().first();
+    auto inspector=root->findChild<QObject *>("objectInspector"); QVERIFY(inspector);
+    inspector->setProperty("tabIndex",2);
+    QVERIFY(QMetaObject::invokeMethod(inspector,"resetServer"));
+    auto content=qobject_cast<QQuickWindow *>(root)->contentItem();
+    auto multi=visualItem(content,"serverFlag_useable"); QVERIFY(multi);
+    auto force=visualItem(content,"serverFlag_forceUse"); QVERIFY(force);
+    QCOMPARE(multi->property("text").toString(),QString("Multi Use"));
+    QVERIFY(multi->property("checked").toBool()); QVERIFY(!force->property("checked").toBool());
+    const QString capture=qEnvironmentVariable("OTEDITOR_SERVER_PANEL_SCREENSHOT");
+    if(!capture.isEmpty()) {
+        QTest::qWait(250);
+        QVERIFY(qobject_cast<QQuickWindow *>(root)->grabWindow().save(capture));
+    }
+    force->setProperty("checked",true); QVERIFY(QMetaObject::invokeMethod(force,"clicked"));
+    auto stack=visualItem(content,"serverStackOrder"); QVERIFY(stack);
+    QCOMPARE(stack->property("currentIndex").toInt(),2);
+    stack->setProperty("currentIndex",0);
+    QVERIFY(QMetaObject::invokeMethod(stack,"activated",Q_ARG(int,0)));
+    QVERIFY(QMetaObject::invokeMethod(inspector,"saveServer"));
+    QVERIFY(backend.serverAttributes().value("forceUse").toBool());
+    QVERIFY(backend.serverAttributes().value("useable").toBool());
+    QCOMPARE(backend.serverAttributes().value("stackOrder").toInt(),0);
+    QVERIFY(!backend.serverAttributes().value("alwaysOnTop").toBool());
+    QVERIFY(backend.compile());
+    EditorBackend reopened; QVERIFY(reopened.openFolder(dir.path(),860,false,dir.path()));
+    QCOMPARE(reopened.serverAttributes().value("name").toString(),QString("Server name"));
+    QCOMPARE(reopened.serverAttributes().value("groupId").toInt(),2);
+    QVERIFY(reopened.serverAttributes().value("forceUse").toBool());
+    QVERIFY(reopened.serverAttributes().value("useable").toBool());
+    QVERIFY(!reopened.serverAttributes().value("alwaysOnTop").toBool());
+ }
  void otbTools() {
     QTemporaryDir dir; QVERIFY(dir.isValid()); fixture(dir.path());
     OtbReader otb; otb.newFile();

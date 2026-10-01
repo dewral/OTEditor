@@ -33,7 +33,7 @@ target_include_directories(aispritecore PUBLIC src)
 target_link_libraries(aispritecore PUBLIC Qt6::Gui Qt6::Network)
 qt_add_qml_module(OTEditor URI OTEditor VERSION 1.0 QML_FILES
     qml/Main.qml
-    qml/ItemInspector.qml qml/PaletteColorDialog.qml qml/PixelEditorDialog.qml qml/Panel.qml qml/Tool.qml qml/Checker.qml qml/AssetToggle.qml
+    qml/ItemInspector.qml qml/ServerAttributesPanel.qml qml/PaletteColorDialog.qml qml/PixelEditorDialog.qml qml/Panel.qml qml/Tool.qml qml/Checker.qml qml/AssetToggle.qml
     qml/SlicerWindow.qml
     qml/LookTypeDialog.qml qml/ObjectViewerDialog.qml qml/AnimationEditorDialog.qml
     qml/FrameDurationsOptimizerDialog.qml qml/FrameDurationsConverterDialog.qml qml/FrameGroupsConverterDialog.qml

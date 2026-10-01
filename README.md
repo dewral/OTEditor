@@ -47,7 +47,7 @@ The central **Object Editor** has **Texture**, **Properties**, and **Attributes*
 
 The preview arranges Pattern X variants side by side and Pattern Y/Z variants in subsequent rows, up to 256 visible patterns. Outfit, effect, and missile dimensions, layers, patterns, and frame counts can be changed in Texture. These changes update the DAT model immediately, support undo/redo, and are saved during Compile.
 
-Properties groups DAT flags and values. Attributes exposes supported OTB fields, including names synchronized with `items.xml`. Use Compile to save project files.
+Properties groups DAT flags and values. Attributes places OTB flags beside item values, Name, Type, and a named Stack Order selector. Multi Use and Force Use are separate flags. Identity and additional flags are available in an expandable section; names are synchronized with `items.xml`. Use Compile to save project files.
 The Tools menu also opens a generic `items.xml` key/value attribute editor for the selected server item. It preserves unrelated XML entries and can override individual IDs from a ranged entry. Removing an attribute from a ranged entry is blocked because that could silently change the whole range.
 
 **Edit Pixels** paints individual sprite pixels. Outfit bone offsets can be edited on clients that support them. The separate **Useable** flag is available for clients that support it. Action names other than None are currently shown as numbers. Available fields depend on the DAT version. Market names must fit the Latin-1 encoding used by the format.
