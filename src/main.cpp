@@ -1,4 +1,5 @@
 #include <QGuiApplication>
+#include <QIcon>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QQuickStyle>
@@ -13,6 +14,7 @@ int main(int argc,char **argv){
     QLocale::setDefault(QLocale(QLocale::English, QLocale::UnitedStates));
     app.setOrganizationName("Dewral");app.setApplicationName("OTEditor");
     app.setApplicationVersion(QStringLiteral(OTEDITOR_VERSION));
+    app.setWindowIcon(QIcon(QStringLiteral(":/assets/icons/oteditor.ico")));
     QQuickStyle::setStyle("Basic");
     EditorBackend backend;AiSpriteService aiSprites;QQmlApplicationEngine engine;
     engine.addImageProvider("itempreview",new EditorImageProvider(&backend));

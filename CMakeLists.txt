@@ -43,10 +43,13 @@ qt_add_qml_module(OTEditor URI OTEditor VERSION 1.0 QML_FILES
     qml/CompileProgressPopup.qml qml/AiSpriteGeneratorDialog.qml
     qml/PreviewSidebar.qml qml/ObjectsBrowserPanel.qml qml/SpritesBrowserPanel.qml
     qml/EditorLogPanel.qml)
-qt_add_resources(OTEditor branding PREFIX "/" FILES assets/Midhem.png assets/ObjectBuilder-versions.xml)
+qt_add_resources(OTEditor branding PREFIX "/" FILES assets/Midhem.png assets/ObjectBuilder-versions.xml assets/icons/oteditor.ico)
 target_link_libraries(OTEditor PRIVATE editorcore aispritecore Qt6::QuickControls2)
 target_compile_definitions(OTEditor PRIVATE OTEDITOR_VERSION="${PROJECT_VERSION}")
 set_target_properties(OTEditor PROPERTIES WIN32_EXECUTABLE TRUE RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+if(WIN32)
+    target_sources(OTEditor PRIVATE assets/oteditor.rc)
+endif()
 include(CTest)
 if(BUILD_TESTING)
     qt_add_executable(editor_tests tests/editor_tests.cpp)
