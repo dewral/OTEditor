@@ -16,31 +16,31 @@ ColumnLayout {
         checked: Boolean(panel.draft[field])
         onClicked: panel.editor.editServer(field, checked)
         padding: 0
-        spacing: 5
-        implicitHeight: 24
-        font.pixelSize: 11
+        spacing: 7
+        implicitHeight: 28
+        font.pixelSize: 12
         indicator: Rectangle {
-            width: 13; height: 13
+            width: 16; height: 16
             y: (flagControl.height - height) / 2
             color: flagControl.checked ? "#17679d" : "#20252b"
             border.color: "#9aabb9"
-            Label { anchors.centerIn: parent; text: "✓"; font.pixelSize: 12; visible: flagControl.checked; color: "#ffffff" }
+            Label { anchors.centerIn: parent; text: "✓"; font.pixelSize: 14; visible: flagControl.checked; color: "#ffffff" }
         }
     }
 
     GroupBox {
         title: "Attributes"
         Layout.fillWidth: true
-        padding: 10
+        padding: 12
         GridLayout {
             anchors.fill: parent
-            columns: panel.width >= 500 ? 2 : 1
-            columnSpacing: 12
+            columns: panel.width >= 560 ? 2 : 1
+            columnSpacing: 18
             rowSpacing: 12
 
             RowLayout {
                 Layout.alignment: Qt.AlignTop
-                spacing: 12
+                spacing: 18
                 ColumnLayout {
                     spacing: 0
                     Repeater {
@@ -69,7 +69,7 @@ ColumnLayout {
                 Layout.alignment: Qt.AlignTop
                 columns: 2
                 columnSpacing: 6
-                rowSpacing: 5
+                rowSpacing: 6
                 Repeater {
                     model: [["Ground Speed", "speed", 65535], ["Minimap Color", "minimapColor", 65535],
                             ["Light Level", "lightLevel", 255], ["Light Color", "lightColor", 255],
@@ -80,24 +80,25 @@ ColumnLayout {
                         Layout.columnSpan: 2
                         Layout.fillWidth: true
                         spacing: 6
-                        Label { text: modelData[0] + ":"; Layout.fillWidth: true; horizontalAlignment: Text.AlignRight; font.pixelSize: 11 }
+                        Label { text: modelData[0] + ":"; Layout.fillWidth: true; horizontalAlignment: Text.AlignRight; font.pixelSize: 12 }
                         SpinBox {
                             objectName: "serverValue_" + modelData[1]
-                            Layout.preferredWidth: 100
-                            implicitHeight: 26
+                            Layout.minimumWidth: 132
+                            Layout.preferredWidth: 132
+                            implicitHeight: 30
                             from: 0; to: modelData[2]; editable: true
                             value: Number(panel.draft[modelData[1]] || 0)
                             onValueModified: panel.editor.editServer(modelData[1], value)
                         }
                     }
                 }
-                Label { text: "Stack Order:"; Layout.fillWidth: true; horizontalAlignment: Text.AlignRight; font.pixelSize: 11 }
+                Label { text: "Stack Order:"; Layout.fillWidth: true; horizontalAlignment: Text.AlignRight; font.pixelSize: 12 }
                 ComboBox {
                     id: stackOrder
                     objectName: "serverStackOrder"
                     Layout.preferredWidth: 100
                     Layout.fillWidth: true
-                    implicitHeight: 26
+                    implicitHeight: 30
                     model: ["None", "Border", "Bottom", "Top"]
                     currentIndex: Number(panel.draft.stackOrder || 0)
                     onActivated: {
@@ -105,22 +106,22 @@ ColumnLayout {
                         panel.editor.editServer("alwaysOnTop", currentIndex !== 0)
                     }
                 }
-                Label { text: "Name:"; Layout.fillWidth: true; horizontalAlignment: Text.AlignRight; font.pixelSize: 11 }
+                Label { text: "Name:"; Layout.fillWidth: true; horizontalAlignment: Text.AlignRight; font.pixelSize: 12 }
                 TextField {
                     objectName: "serverItemName"
                     Layout.preferredWidth: 100
                     Layout.fillWidth: true
-                    implicitHeight: 26
+                    implicitHeight: 30
                     text: String(panel.draft.name || "")
                     selectByMouse: true
                     onTextEdited: panel.editor.editServer("name", text)
                 }
-                Label { text: "Type:"; Layout.fillWidth: true; horizontalAlignment: Text.AlignRight; font.pixelSize: 11 }
+                Label { text: "Type:"; Layout.fillWidth: true; horizontalAlignment: Text.AlignRight; font.pixelSize: 12 }
                 ComboBox {
                     objectName: "serverItemType"
                     Layout.preferredWidth: 100
                     Layout.fillWidth: true
-                    implicitHeight: 26
+                    implicitHeight: 30
                     model: ["None", "Ground", "Container", "Weapon", "Ammunition", "Armor", "Changes",
                             "Teleport", "Magic Field", "Writeable", "Key", "Splash", "Fluid", "Door", "Deprecated", "Podium"]
                     currentIndex: Number(panel.draft.groupId || 0)
