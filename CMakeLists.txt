@@ -3,7 +3,7 @@ project(OTEditor VERSION 0.1.0 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_AUTOMOC ON)
-find_package(Qt6 6.5 REQUIRED COMPONENTS Core Gui Qml Quick QuickControls2 Test)
+find_package(Qt6 6.5 REQUIRED COMPONENTS Core Gui Qml Quick QuickControls2 Network Test)
 get_filename_component(TOOLCHAIN_BIN_DIR "${CMAKE_CXX_COMPILER}" DIRECTORY)
 get_filename_component(TOOLCHAIN_ROOT "${TOOLCHAIN_BIN_DIR}" DIRECTORY)
 find_path(LZMA_INCLUDE_DIR lzma.h HINTS "${TOOLCHAIN_ROOT}/opt/include")
@@ -28,6 +28,9 @@ target_include_directories(editorcore PUBLIC src)
 target_include_directories(editorcore PRIVATE "${LZMA_INCLUDE_DIR}")
 target_link_libraries(editorcore PUBLIC otformats Qt6::Quick "${LZMA_LIBRARY}")
 qt_add_executable(OTEditor src/main.cpp)
+add_library(aispritecore STATIC src/aispriteservice.cpp src/aispriteservice.h)
+target_include_directories(aispritecore PUBLIC src)
+target_link_libraries(aispritecore PUBLIC Qt6::Gui Qt6::Network)
 qt_add_qml_module(OTEditor URI OTEditor VERSION 1.0 QML_FILES
     qml/Main.qml
     qml/ItemInspector.qml qml/PaletteColorDialog.qml qml/PixelEditorDialog.qml qml/Panel.qml qml/Tool.qml qml/Checker.qml qml/AssetToggle.qml
@@ -37,18 +40,27 @@ qt_add_qml_module(OTEditor URI OTEditor VERSION 1.0 QML_FILES
     qml/SpritesOptimizerDialog.qml qml/PreferencesDialog.qml qml/MergeProjectDialog.qml qml/ConvertProjectDialog.qml qml/XmlAttributesDialog.qml qml/AboutDialog.qml
     qml/FindObjectsDialog.qml qml/ImportClientObjectsDialog.qml qml/ReplaceItemDialog.qml
     qml/CreateAssetFilesDialog.qml qml/ExportObjectsDialog.qml qml/OpenAssetFilesDialog.qml
-    qml/CompileProgressPopup.qml
+    qml/CompileProgressPopup.qml qml/AiSpriteGeneratorDialog.qml
     qml/PreviewSidebar.qml qml/ObjectsBrowserPanel.qml qml/SpritesBrowserPanel.qml
     qml/EditorLogPanel.qml)
 qt_add_resources(OTEditor branding PREFIX "/" FILES assets/Midhem.png assets/ObjectBuilder-versions.xml)
-target_link_libraries(OTEditor PRIVATE editorcore Qt6::QuickControls2)
+target_link_libraries(OTEditor PRIVATE editorcore aispritecore Qt6::QuickControls2)
+target_compile_definitions(OTEditor PRIVATE OTEDITOR_VERSION="${PROJECT_VERSION}")
 set_target_properties(OTEditor PROPERTIES WIN32_EXECUTABLE TRUE RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 include(CTest)
 if(BUILD_TESTING)
     qt_add_executable(editor_tests tests/editor_tests.cpp)
     qt_add_resources(editor_tests branding_test PREFIX "/" FILES assets/Midhem.png assets/ObjectBuilder-versions.xml)
-    target_link_libraries(editor_tests PRIVATE editorcore Qt6::Test Qt6::QuickControls2)
+    target_link_libraries(editor_tests PRIVATE editorcore aispritecore Qt6::Test Qt6::QuickControls2)
     set_target_properties(editor_tests PROPERTIES WIN32_EXECUTABLE FALSE)
-    add_test(NAME editor_roundtrip COMMAND editor_tests)
+    add_test(NAME editor_roundtrip COMMAND editor_tests -o "${CMAKE_BINARY_DIR}/editor-test-results.txt,txt")
+    qt_add_executable(ai_sprite_tests tests/ai_sprite_tests.cpp)
+    target_link_libraries(ai_sprite_tests PRIVATE aispritecore editorcore Qt6::Test)
+    set_target_properties(ai_sprite_tests PROPERTIES WIN32_EXECUTABLE FALSE)
+    add_test(NAME ai_sprite_generator COMMAND ai_sprite_tests -o "${CMAKE_BINARY_DIR}/ai-test-results.txt,txt")
+    if(WIN32)
+        set_tests_properties(editor_roundtrip ai_sprite_generator PROPERTIES
+            ENVIRONMENT_MODIFICATION "PATH=path_list_prepend:$<TARGET_FILE_DIR:Qt6::Core>")
+    endif()
 endif()
 install(TARGETS OTEditor RUNTIME DESTINATION .)

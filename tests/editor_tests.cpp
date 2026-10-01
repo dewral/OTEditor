@@ -13,6 +13,7 @@
 #include <QtEndian>
 #include <algorithm>
 #include "editorbackend.h"
+#include "aispriteservice.h"
 #include "obdcodec.h"
 #include "otfireader.h"
 class EditorTests : public QObject {
@@ -318,6 +319,7 @@ private slots:
     QCOMPARE(groups.size(),2);
     QCOMPARE(groups[1].toMap().value("patternX").toInt(),5);
     QQmlApplicationEngine engine; engine.rootContext()->setContextProperty("Backend",&reopened);
+    engine.rootContext()->setContextProperty("AiSprites", new AiSpriteService(AiSpriteService::Timing{}, false, &engine));
     engine.addImageProvider("itempreview",new EditorImageProvider(&reopened));
     engine.load(QUrl::fromLocalFile(QStringLiteral(QT_TESTCASE_SOURCEDIR "/qml/Main.qml")));
     QVERIFY(!engine.rootObjects().isEmpty());
@@ -424,6 +426,7 @@ private slots:
     QCOMPARE(backend.details().value("frames").toInt(),3);
     QVERIFY(backend.setFrameDuration(2,1,0,1,120,240));
     QQmlApplicationEngine engine; engine.rootContext()->setContextProperty("Backend",&backend);
+    engine.rootContext()->setContextProperty("AiSprites", new AiSpriteService(AiSpriteService::Timing{}, false, &engine));
     engine.addImageProvider("itempreview",new EditorImageProvider(&backend));
     engine.load(QUrl::fromLocalFile(QStringLiteral(QT_TESTCASE_SOURCEDIR "/qml/Main.qml")));
     QVERIFY(!engine.rootObjects().isEmpty());
@@ -1322,6 +1325,7 @@ private slots:
     QVERIFY(QFileInfo(output.path()+"/batch_100.obd").size()>0);
     QQmlApplicationEngine engine;
     engine.rootContext()->setContextProperty("Backend",&backend);
+    engine.rootContext()->setContextProperty("AiSprites", new AiSpriteService(AiSpriteService::Timing{}, false, &engine));
     engine.addImageProvider("itempreview",new EditorImageProvider(&backend));
     engine.load(QUrl::fromLocalFile(QStringLiteral(QT_TESTCASE_SOURCEDIR "/qml/Main.qml")));
     QVERIFY(!engine.rootObjects().isEmpty());
@@ -1344,6 +1348,7 @@ private slots:
     backend.select(0);
     QQmlApplicationEngine engine;
     engine.rootContext()->setContextProperty("Backend",&backend);
+    engine.rootContext()->setContextProperty("AiSprites", new AiSpriteService(AiSpriteService::Timing{}, false, &engine));
     engine.addImageProvider("itempreview",new EditorImageProvider(&backend));
     engine.load(QUrl::fromLocalFile(QStringLiteral(QT_TESTCASE_SOURCEDIR "/qml/Main.qml")));
     QVERIFY(!engine.rootObjects().isEmpty());
@@ -1365,6 +1370,7 @@ private slots:
     QAbstractItemModelTester modelTester(&backend,QAbstractItemModelTester::FailureReportingMode::QtTest);
     QQmlApplicationEngine engine;
     engine.rootContext()->setContextProperty("Backend",&backend);
+    engine.rootContext()->setContextProperty("AiSprites", new AiSpriteService(AiSpriteService::Timing{}, false, &engine));
     engine.addImageProvider("itempreview",new EditorImageProvider(&backend));
     engine.load(QUrl::fromLocalFile(QStringLiteral(QT_TESTCASE_SOURCEDIR "/qml/Main.qml")));
     QVERIFY(!engine.rootObjects().isEmpty());
@@ -1408,6 +1414,7 @@ private slots:
  void qmlWindowAndDialogs() {
     QTemporaryDir dir;fixture(dir.path());EditorBackend backend;
     QQmlApplicationEngine engine;engine.rootContext()->setContextProperty("Backend",&backend);
+    engine.rootContext()->setContextProperty("AiSprites", new AiSpriteService(AiSpriteService::Timing{}, false, &engine));
     engine.addImageProvider("itempreview",new EditorImageProvider(&backend));
     QStringList warnings;
     connect(&engine,&QQmlEngine::warnings,this,[&](const QList<QQmlError> &errors){for(const auto &e:errors)warnings<<e.toString();});
@@ -1415,6 +1422,17 @@ private slots:
     QVERIFY(!engine.rootObjects().isEmpty());auto root=engine.rootObjects().first();
     auto serverTab = visualItem(qobject_cast<QQuickWindow *>(root)->contentItem(),"serverAttributesTab"); QVERIFY(serverTab);
     QVERIFY(!serverTab->property("visible").toBool());
+    auto aiDialog = root->findChild<QObject *>("aiSpriteGeneratorDialog"); QVERIFY(aiDialog);
+    QVERIFY(QMetaObject::invokeMethod(aiDialog, "open"));
+    QTRY_VERIFY(aiDialog->property("visible").toBool());
+    QImage generated(32, 32, QImage::Format_ARGB32); generated.fill(Qt::transparent);
+    const QString generatedPath = dir.filePath("generated.png"); QVERIFY(generated.save(generatedPath));
+    QVERIFY(QMetaObject::invokeMethod(aiDialog, "slicerRequested", Q_ARG(QUrl, QUrl::fromLocalFile(generatedPath))));
+    QCOMPARE(backend.slicerWidth(), 32);
+    auto generatorSlicer = root->findChild<QObject *>("slicerDialog"); QVERIFY(generatorSlicer);
+    QTRY_VERIFY(generatorSlicer->property("visible").toBool());
+    QVERIFY(QMetaObject::invokeMethod(generatorSlicer, "close"));
+    QVERIFY(QMetaObject::invokeMethod(aiDialog, "close"));
     auto aboutDialog=root->findChild<QObject *>("aboutDialog"); QVERIFY(aboutDialog);
     auto supportLogo=root->findChild<QObject *>("midhemSupportLogo"); QVERIFY(supportLogo);
     QVERIFY(QMetaObject::invokeMethod(aboutDialog,"open"));

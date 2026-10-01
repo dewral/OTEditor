@@ -257,6 +257,10 @@ ApplicationWindow {
                 onTriggered: lookTypeDialog.open()
             }
             Action {
+                text: "AI Sprite Generator"
+                onTriggered: aiSpriteDialog.open()
+            }
+            Action {
                 text: "Object Viewer"
                 enabled: Backend.loaded
                 onTriggered: objectViewer.open()
@@ -1057,5 +1061,12 @@ ApplicationWindow {
     }
     AboutDialog {
         id: about
+    }
+    AiSpriteGeneratorDialog {
+        id: aiSpriteDialog
+        service: AiSprites
+        onSlicerRequested: imageUrl => {
+            if (slicerDialog.openImage(imageUrl.toString())) slicerDialog.open()
+        }
     }
 }

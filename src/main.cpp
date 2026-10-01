@@ -7,18 +7,25 @@
 #include <QDir>
 #include <QLocale>
 #include "editorbackend.h"
+#include "aispriteservice.h"
 int main(int argc,char **argv){
     QGuiApplication app(argc,argv);
     QLocale::setDefault(QLocale(QLocale::English, QLocale::UnitedStates));
     app.setOrganizationName("Dewral");app.setApplicationName("OTEditor");
+    app.setApplicationVersion(QStringLiteral(OTEDITOR_VERSION));
     QQuickStyle::setStyle("Basic");
-    EditorBackend backend;QQmlApplicationEngine engine;
+    EditorBackend backend;AiSpriteService aiSprites;QQmlApplicationEngine engine;
     engine.addImageProvider("itempreview",new EditorImageProvider(&backend));
     engine.rootContext()->setContextProperty("Backend",&backend);
+    engine.rootContext()->setContextProperty("AiSprites",&aiSprites);
     const auto args=app.arguments();
     int folder=args.indexOf("--folder");int version=args.indexOf("--version");
     if(folder>=0&&folder+1<args.size())backend.openFolder(args[folder+1],version>=0&&version+1<args.size()?args[version+1].toInt():1098);
     engine.loadFromModule("OTEditor","Main");if(engine.rootObjects().isEmpty())return 1;
+    if (args.contains("--ai-generator")) {
+        if (auto dialog = engine.rootObjects().first()->findChild<QObject *>("aiSpriteGeneratorDialog"))
+            QMetaObject::invokeMethod(dialog, "open");
+    }
     int category=args.indexOf("--category");
     if(category>=0&&category+1<args.size())backend.setCategory(args[category+1].toInt());
     int selectId=args.indexOf("--select-id");
