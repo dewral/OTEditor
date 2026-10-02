@@ -1,6 +1,6 @@
 # OTEditor
 
-OTEditor is a desktop Tibia object editor built with **Qt 6, QML, and C++17**. Its workspace has an information and preview sidebar, an object browser, an object editor, a sprite browser, and a log panel. Panel widths are adjustable.
+OTEditor is a desktop Tibia object editor built with **Qt 6, QML, and C++20**. Its workspace has an information and preview sidebar, an object browser, an object editor, a sprite browser, and a log panel. Panel widths are adjustable.
 
 ## Getting started
 
@@ -60,7 +60,7 @@ OTB and XML participate in loading and compilation, and OTB names are synchroniz
 
 ## Building on Windows
 
-Requirements: Qt 6.5+ (Core, Gui, Qml, Quick, QuickControls2, Test), liblzma, CMake 3.24+, Ninja, and a compiler compatible with your Qt installation. The script's defaults target a local Qt 6.10.2 / MinGW 13.1 installation.
+Requirements: Qt 6.5+ (Core, Gui, Qml, Quick, QuickControls2, Network, Test), liblzma, CMake 3.24+, Ninja, and a C++20 compiler compatible with your Qt installation. The script's defaults target a local Qt 6.10.2 / MinGW 13.1 installation.
 
 ```powershell
 ./scripts/build.ps1 -Deploy
@@ -77,6 +77,8 @@ ctest --test-dir build --output-on-failure
 ```
 
 Tests generate small DAT and SPR fixtures in a temporary directory. They cover parsing, undo/redo, complete compilation, preservation of unchanged SPR blocks, RGB/RGBA RLE writing, standard and extended counters, reloading, additional flags and animation data, malformed categories, PNG export, duplication, and sprite validation.
+
+The application and its local `otformats` library use C++20. The project builds with MinGW GCC 13.1, and both test suites pass.
 
 Diagnostic launch options:
 
