@@ -986,6 +986,40 @@ private slots:
     QVERIFY(!source.convertProject(sourceDir.path(),1098));
     QVERIFY(!source.convertProject(targetDir.path(),1098));
  }
+ void compileAsWritesSelectedAssetOptions() {
+    QTemporaryDir sourceDir,customDir,plainDir;
+    QVERIFY(sourceDir.isValid());QVERIFY(customDir.isValid());QVERIFY(plainDir.isValid());
+    fixture(sourceDir.path());
+    OtbReader otb;otb.newFile();QVERIFY(otb.saveFile(sourceDir.path()+"/items.otb"));
+    EditorBackend source;
+    QVERIFY2(source.openFolder(sourceDir.path(),860,false,sourceDir.path()),qPrintable(source.status()));
+    QVERIFY(!source.compileAsOptions(customDir.path(),"../bad",1098,true,true,true,true,true));
+    QVERIFY2(source.compileAsOptions(customDir.path(),"Custom",1098,true,true,true,true,true),qPrintable(source.status()));
+    QVERIFY(QFileInfo::exists(customDir.path()+"/Custom.dat"));
+    QVERIFY(QFileInfo::exists(customDir.path()+"/Custom.spr"));
+    QVERIFY(QFileInfo::exists(customDir.path()+"/Custom.otfi"));
+    QVERIFY(QFileInfo::exists(customDir.path()+"/items.otb"));
+    OtfiReader customSettings;QVERIFY(customSettings.loadFromFolder(customDir.path()));
+    QCOMPARE(customSettings.metadataFile(),QString("Custom.dat"));
+    QCOMPARE(customSettings.spritesFile(),QString("Custom.spr"));
+    QVERIFY(customSettings.extended());QVERIFY(customSettings.transparency());
+    QVERIFY(customSettings.frameDurations());QVERIFY(customSettings.frameGroups());
+    EditorBackend custom;
+    QVERIFY2(custom.openFolder(customDir.path(),1098,true,customDir.path()),qPrintable(custom.status()));
+    QCOMPARE(custom.count(),source.count());QCOMPARE(custom.spriteCount(),1);
+    QVERIFY(custom.info().value("extended").toBool());QVERIFY(custom.info().value("alpha").toBool());
+    QVERIFY(!source.compileAsOptions(customDir.path(),"Custom",1098,true,true,true,true,true));
+    const QString plainFolder=plainDir.path()+"/created";
+    QVERIFY2(source.compileAsOptions(plainFolder,"Plain",1098,false,false,false,false,false),qPrintable(source.status()));
+    QVERIFY(!QFileInfo::exists(plainFolder+"/items.otb"));
+    OtfiReader plainSettings;QVERIFY(plainSettings.loadFromFolder(plainFolder));
+    QVERIFY(!plainSettings.extended());QVERIFY(!plainSettings.transparency());
+    QVERIFY(!plainSettings.frameDurations());QVERIFY(!plainSettings.frameGroups());
+    EditorBackend plain;QVERIFY2(plain.openFolder(plainFolder,1098),qPrintable(plain.status()));
+    QCOMPARE(plain.count(),source.count());QCOMPARE(plain.spriteCount(),1);
+    QCOMPARE(source.info().value("version").toString(),QString("8.60"));
+    QVERIFY(!source.compileAsOptions(sourceDir.path(),"Source",1098,true,true,true,true,false));
+ }
  void serverFileCopiesKeepActivePathsAndPendingChanges() {
     QTemporaryDir dir; QVERIFY(dir.isValid()); fixture(dir.path());
     OtbReader otb; otb.newFile();
@@ -1531,6 +1565,20 @@ private slots:
     auto dialog=root->findChild<QObject *>("loadDialog");QVERIFY(dialog);QVERIFY(dialog->property("visible").toBool());
     QMetaObject::invokeMethod(dialog,"close");
     QVERIFY(backend.openFolder(dir.path(),860));
+    auto compileDialog=root->findChild<QObject *>("compileAssetFilesDialog");QVERIFY(compileDialog);
+    QVERIFY(QMetaObject::invokeMethod(compileDialog,"open"));
+    QTRY_VERIFY(compileDialog->property("visible").toBool());
+    QCOMPARE(root->findChild<QObject *>("compileAssetName")->property("text").toString(),QString("Tibia"));
+    auto versionCombo=root->findChild<QObject *>("compileAssetVersion");QVERIFY(versionCombo);
+    QCOMPARE(versionCombo->property("currentText").toString(),QString("8.60"));
+    auto versionPopup=qvariant_cast<QObject *>(versionCombo->property("popup"));QVERIFY(versionPopup);
+    QVERIFY(QMetaObject::invokeMethod(versionPopup,"open"));
+    QTRY_VERIFY(versionPopup->property("visible").toBool());
+    QVERIFY(versionPopup->property("height").toReal()<=240.0);
+    QVERIFY(QMetaObject::invokeMethod(versionPopup,"close"));
+    const QString compileCapture=qEnvironmentVariable("OTE_CAPTURE_COMPILE");
+    if(!compileCapture.isEmpty())QVERIFY(qobject_cast<QQuickWindow *>(root)->grabWindow().save(compileCapture));
+    QVERIFY(QMetaObject::invokeMethod(compileDialog,"close"));
     auto patternPreview=root->findChild<QObject *>("patternPreviewRepeater"); QVERIFY(patternPreview);
     auto patternSurface=root->findChild<QQuickItem *>("patternPreviewSurface"); QVERIFY(patternSurface);
     QVERIFY(backend.setValue("patternX",4));

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.24)
-project(OTEditor VERSION 0.1.3 LANGUAGES CXX)
+project(OTEditor VERSION 0.1 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_AUTOMOC ON)
@@ -41,6 +41,7 @@ qt_add_qml_module(OTEditor URI OTEditor VERSION 1.0 QML_FILES
     qml/FindObjectsDialog.qml qml/ImportClientObjectsDialog.qml qml/ReplaceItemDialog.qml
     qml/CreateAssetFilesDialog.qml qml/ExportObjectsDialog.qml qml/OpenAssetFilesDialog.qml
     qml/CompileProgressPopup.qml qml/AiSpriteGeneratorDialog.qml
+    qml/CompileAssetFilesDialog.qml
     qml/PreviewSidebar.qml qml/ObjectsBrowserPanel.qml qml/SpritesBrowserPanel.qml
     qml/EditorLogPanel.qml)
 qt_add_resources(OTEditor branding PREFIX "/" FILES assets/Midhem.png assets/ObjectBuilder-versions.xml assets/icons/oteditor.ico)

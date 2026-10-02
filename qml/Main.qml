@@ -148,7 +148,7 @@ ApplicationWindow {
                 text: "Compile As..."
                 shortcut: StandardKey.SaveAs
                 enabled: Backend.loaded
-                onTriggered: compileFolderDialog.open()
+                onTriggered: compileAssetDialog.open()
             }
             Action {
                 text: "Export All Objects..."
@@ -702,11 +702,7 @@ ApplicationWindow {
         backend: Backend
         owner: win
     }
-    FolderDialog {
-        id: compileFolderDialog
-        title: "Compile complete project to folder"
-        onAccepted: Backend.compileAs(selectedFolder.toString())
-    }
+    CompileAssetFilesDialog { id: compileAssetDialog; backend: Backend }
     FileDialog {
         id: spriteExportDialog
         title: "Export sprite PNG"

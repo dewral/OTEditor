@@ -167,6 +167,9 @@ public:
     Q_INVOKABLE void redo();
     Q_INVOKABLE bool compile();
     Q_INVOKABLE bool compileAs(const QString &folderUrl);
+    Q_INVOKABLE bool compileAsOptions(const QString &folderUrl, const QString &baseName,
+                                    int targetVersion, bool extended, bool transparency,
+                                    bool durations, bool groups, bool exportServer);
     Q_INVOKABLE bool convertProject(const QString &folderUrl,int targetVersion);
     Q_INVOKABLE bool save(const QString &url=QString());
     Q_INVOKABLE int createMissingOtbItems();
@@ -188,6 +191,12 @@ public:
     QImage image(const QString &id);
     void message(const QString &text);
 private:
+    bool createNamedAssetFiles(const QString &folderUrl, int version, bool extended,
+                               bool transparency, bool durations, bool groups, int spriteSize,
+                               const QString &baseName);
+    bool convertProjectTo(const QString &folderUrl, const QString &baseName, int targetVersion,
+                          bool extended, bool transparency, bool durations, bool groups,
+                          bool exportServer, bool compileAsRequest);
     struct Edit { int category; int row; ClientItem before, after; };
     static QString path(const QString &url);
     void refresh();

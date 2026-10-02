@@ -145,11 +145,20 @@ QVariantMap EditorBackend::inspectFolder(const QString &url,int version,bool alp
 }
 bool EditorBackend::createAssetFiles(const QString &folderUrl, int version, bool extended,
                                      bool transparency, bool durations, bool groups, int spriteSize) {
+    return createNamedAssetFiles(folderUrl,version,extended,transparency,durations,groups,
+                                 spriteSize,QStringLiteral("Tibia"));
+}
+bool EditorBackend::createNamedAssetFiles(const QString &folderUrl, int version, bool extended,
+                                          bool transparency, bool durations, bool groups,
+                                          int spriteSize, const QString &baseName) {
+    if (!QRegularExpression(QStringLiteral("^[A-Za-z0-9_-]{1,64}$")).match(baseName).hasMatch()) {
+        message("Asset name may contain only letters, numbers, hyphens, and underscores."); return false;
+    }
     const QDir folder(path(folderUrl));
     if (!folder.exists()) { message("Selected folder does not exist."); return false; }
-    const QString datPath=folder.filePath("Tibia.dat");
-    const QString sprPath=folder.filePath("Tibia.spr");
-    const QString otfiPath=folder.filePath("Tibia.otfi");
+    const QString datPath=folder.filePath(baseName+".dat");
+    const QString sprPath=folder.filePath(baseName+".spr");
+    const QString otfiPath=folder.filePath(baseName+".otfi");
     if (QFileInfo::exists(datPath) || QFileInfo::exists(sprPath) || QFileInfo::exists(otfiPath)) {
         message("The selected folder already contains Tibia asset files."); return false;
     }
@@ -175,10 +184,10 @@ bool EditorBackend::createAssetFiles(const QString &folderUrl, int version, bool
     if (!otfi.open(QIODevice::WriteOnly)) {
         QFile::remove(datPath); QFile::remove(sprPath); message("Cannot create Tibia.otfi."); return false;
     }
-    const QByteArray settings=QString("DatSpr\n  extended: %1\n  transparency: %2\n  frame-durations: %3\n  frame-groups: %4\n  metadata-controller: default\n  attribute-server: tfs1.4\n  metadata-file: Tibia.dat\n  sprites-file: Tibia.spr\n  sprite-size: %5\n  sprite-data-size: %6\n")
+    const QByteArray settings=QString("DatSpr\n  extended: %1\n  transparency: %2\n  frame-durations: %3\n  frame-groups: %4\n  metadata-controller: default\n  attribute-server: tfs1.4\n  metadata-file: %7.dat\n  sprites-file: %7.spr\n  sprite-size: %5\n  sprite-data-size: %6\n")
         .arg(extended?"true":"false", transparency?"true":"false",
              durations?"true":"false", groups?"true":"false",
-             QString::number(spriteSize), QString::number(spriteSize*spriteSize*(transparency?4:3))).toUtf8();
+             QString::number(spriteSize), QString::number(spriteSize*spriteSize*(transparency?4:3)),baseName).toUtf8();
     if (otfi.write(settings)!=settings.size() || !otfi.commit()) {
         QFile::remove(datPath); QFile::remove(sprPath); message("Cannot write Tibia.otfi."); return false;
     }

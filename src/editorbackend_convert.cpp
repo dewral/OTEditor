@@ -7,6 +7,7 @@
 #include <QFileInfo>
 #include <QSaveFile>
 #include <QTemporaryDir>
+#include <QRegularExpression>
 
 #include <algorithm>
 
@@ -45,16 +46,42 @@ bool copyFileAtomically(const QString &source,const QString &target)
 
 bool EditorBackend::convertProject(const QString &folderUrl,int targetVersion)
 {
+    return convertProjectTo(folderUrl,QStringLiteral("Tibia"),targetVersion,
+                            targetVersion>=960,m_project.transparency(),targetVersion>=1050,
+                            targetVersion>=1057,true,false);
+}
+
+bool EditorBackend::compileAsOptions(const QString &folderUrl,const QString &baseName,
+                                     int targetVersion,bool extended,bool transparency,
+                                     bool durations,bool groups,bool exportServer)
+{
+    return convertProjectTo(folderUrl,baseName,targetVersion,extended,transparency,
+                            durations,groups,exportServer,true);
+}
+
+bool EditorBackend::convertProjectTo(const QString &folderUrl,const QString &baseName,
+                                     int targetVersion,bool extended,bool transparency,
+                                     bool durations,bool groups,bool exportServer,bool compileAsRequest)
+{
     if (!loaded() || m_compiling) return false;
-    static const QList<int> supported={772,780,800,860,960,1010,1050,1057,1098,1200,1310};
-    if (!supported.contains(targetVersion)) {
+    static const QList<int> supported={772,780,800,860,960,1010,1050,1057,1093,1094,1095,1098,1099,1200,1310};
+    if (!supported.contains(targetVersion) && targetVersion!=m_version) {
         message("Choose a supported target DAT version (7.72 through 13.10).");return false;
     }
-    const QDir output(path(folderUrl));
-    if (!output.exists() || output.canonicalPath()==QDir(m_project.folder()).canonicalPath()) {
-        message("Choose an existing output folder different from the open project.");return false;
+    if (!QRegularExpression(QStringLiteral("^[A-Za-z0-9_-]{1,64}$")).match(baseName).hasMatch()) {
+        message("Asset name may contain only letters, numbers, hyphens, and underscores.");return false;
     }
-    const QStringList names={"Tibia.dat","Tibia.spr","Tibia.otfi","items.otb","items.xml"};
+    const QString outputPath=path(folderUrl).trimmed();
+    if (outputPath.isEmpty()) { message("Choose an output folder.");return false; }
+    const QDir output(outputPath);
+    if (!output.exists() && (!compileAsRequest || !QDir().mkpath(output.absolutePath()))) {
+        message(compileAsRequest ? "Could not create output folder." : "Choose an existing output folder.");return false;
+    }
+    if (output.canonicalPath()==QDir(m_project.folder()).canonicalPath()) {
+        message("Choose an output folder different from the open project.");return false;
+    }
+    QStringList names={baseName+".dat",baseName+".spr",baseName+".otfi"};
+    if(exportServer)names << "items.otb" << "items.xml";
     for (const QString &name:names) if (QFileInfo::exists(output.filePath(name))) {
         message("Output folder already contains "+name);return false;
     }
@@ -62,7 +89,6 @@ bool EditorBackend::convertProject(const QString &folderUrl,int targetVersion)
     if (!sourceIds.isEmpty() && *std::max_element(sourceIds.cbegin(),sourceIds.cend())>quint32(spriteCount())) {
         message("Source DAT references a missing sprite.");return false;
     }
-    const bool extended=targetVersion>=960;
     int populatedSprites=0;
     for (quint32 id:sourceIds) if (m_project.sprites()->hasSpriteData(id)) ++populatedSprites;
     if (!extended && populatedSprites>65535) {
@@ -71,8 +97,8 @@ bool EditorBackend::convertProject(const QString &folderUrl,int targetVersion)
     QTemporaryDir staging(output.filePath(".oteditor-convert-XXXXXX"));
     if (!staging.isValid()) {message("Could not create temporary conversion folder.");return false;}
     EditorBackend converted;
-    if (!converted.createAssetFiles(staging.path(),targetVersion,extended,m_project.transparency(),
-                                    targetVersion>=1050,targetVersion>=1057,m_project.spriteSize())) {
+    if (!converted.createNamedAssetFiles(staging.path(),targetVersion,extended,transparency,
+                                         durations,groups,m_project.spriteSize(),baseName)) {
         message("Could not initialize target project: "+converted.status());return false;
     }
     commitTextureEdits();
@@ -122,12 +148,12 @@ bool EditorBackend::convertProject(const QString &folderUrl,int targetVersion)
         for (int row=0;row<count;++row) {
             ClientItem item=*m_project.dat()->objectAt(category,row);
             if (category==1) {
-                if (targetVersion<1057) {
+                if (!groups) {
                     if (!item.frame_groups.empty()) selectGroup(item,item.frame_groups.front());
                     item.frame_groups.clear();
                 } else if (item.frame_groups.empty()) item.frame_groups.push_back(singleGroup(item));
             }
-            if (targetVersion<1050) {
+            if (!durations) {
                 item.animation_data.clear();
                 for (auto &group:item.frame_groups) group.animation_data.clear();
             }
@@ -150,9 +176,9 @@ bool EditorBackend::convertProject(const QString &folderUrl,int targetVersion)
         }
     }
     if (!converted.m_project.compile()) return fail("Could not save converted DAT/SPR project.");
-    if (m_project.otbLoaded() && !m_project.otb()->saveCopy(QDir(staging.path()).filePath("items.otb")))
+    if (exportServer && m_project.otbLoaded() && !m_project.otb()->saveCopy(QDir(staging.path()).filePath("items.otb")))
         return fail(m_project.otb()->errorString());
-    if (m_project.itemsXmlLoaded() && !m_project.itemsXml()->saveCopy(QDir(staging.path()).filePath("items.xml")))
+    if (exportServer && m_project.itemsXmlLoaded() && !m_project.itemsXml()->saveCopy(QDir(staging.path()).filePath("items.xml")))
         return fail("Could not copy items.xml.");
     QStringList copied;
     for (const QString &name:names) {
@@ -166,7 +192,9 @@ bool EditorBackend::convertProject(const QString &folderUrl,int targetVersion)
     }
     m_compileProgress=100;m_compileStage="Conversion complete";
     m_compiling=false;emit compileProgressChanged();
-    message(QString("Converted %1 objects and %2 sprites to client %3 in %4. The open project is unchanged.")
+    message(QString(compileAsRequest
+                    ? "Compiled %1 objects and %2 sprites as client %3 in %4. The open project is unchanged."
+                    : "Converted %1 objects and %2 sprites to client %3 in %4. The open project is unchanged.")
             .arg(total).arg(mapping.size()).arg(targetVersion).arg(output.absolutePath()));
     return true;
 }

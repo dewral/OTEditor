@@ -10,7 +10,7 @@ For the Windows release ZIP, extract the archive and run `OTEditor.exe` from the
 2. The **Server Files Folder** is optional. Select the folder containing `items.otb` and `items.xml` to load server data. Leave it empty to open only client files and hide server attributes. Server files are read directly from the selected folder; parent folders and subfolders are not searched. OTFI is read from the client folder.
 3. Select the DAT format version, such as 772, 860, or 1098. OTFI settings take precedence for extended sprites, transparency, frame durations, and frame groups. A custom client's protocol version may differ from its DAT format version.
 4. Select an object to inspect it. Double-click an object to open its properties, or double-click a sprite to assign it to an object slot.
-5. Press `Ctrl+S` to compile the current project. `Ctrl+Shift+S` compiles the complete project into a new folder, including DAT, SPR, OTFI, and any loaded `items.otb` and `items.xml` files.
+5. Press `Ctrl+S` to compile the current project. `Ctrl+Shift+S` opens **Compile As**, where you choose the output folder, asset name, DAT version, Extended, Transparency, Improved animations, Frame Groups, and whether to export loaded server files. It writes a separate DAT/SPR/OTFI project and leaves the open project unchanged.
 
 ## Features
 
@@ -22,7 +22,7 @@ For the Windows release ZIP, extract the archive and run `OTEditor.exe` from the
 - Editing of item flags and dimensions, animation frames, layers, patterns, and sprite assignments.
 - Creating, duplicating, and removing objects in all four DAT categories while preserving later IDs.
 - Undo/redo for attribute edits, sprite assignments, and clearing (up to 100 operations). Creating or duplicating an item starts a new undo history.
-- **Compile** and **Compile As** save the full project. Existing OTFI settings are preserved; projects without OTFI receive a compatible metadata file.
+- **Compile** saves the open project. **Compile As** converts it to a separate named DAT/SPR/OTFI set using the selected format options, with optional `items.otb` and `items.xml` export. Existing OTFI settings are preserved when compiling the current project; projects without OTFI receive a compatible metadata file.
 - SPR editing: replace a sprite with a PNG of the configured sprite size, add sprites, or clear a slot without shifting IDs. The writer supports RLE, standard and extended IDs, RGB, and alpha.
 - Drag a sprite from the sprite browser onto a texture tile to assign it to that exact frame, pattern, layer, and position. Drop an image from the file manager onto the texture to import a single sprite or a complete sprite sheet. Use **Save** in the inspector to accept dropped texture changes or **Reset** to restore the object; compiling the project accepts pending drops. Matching sheets replace the selected animation group; a combined outfit sheet can replace all groups. For objects with one frame, layer, and pattern, the editor detects width and height from the image's tile dimensions. Images are limited to 16 million pixels and sheets to 4,096 sprites.
 - **Tools → Slicer** opens a sprite-sheet workspace with rulers, a checkerboard, rotation, mirroring, grid selection, and zoom. **Crop** collects tiles in column order, converts magenta to transparency, and skips empty sprites by default; **Import** adds the tiles to the open client's SPR.
