@@ -14,6 +14,7 @@
 #include <algorithm>
 #include "editorbackend.h"
 #include "aispriteservice.h"
+#include "updateservice.h"
 #include "obdcodec.h"
 #include "otfireader.h"
 class EditorTests : public QObject {
@@ -321,6 +322,7 @@ private slots:
     QQmlApplicationEngine engine; engine.rootContext()->setContextProperty("Backend",&reopened);
     engine.rootContext()->setContextProperty("AiSprites", new AiSpriteService(AiSpriteService::Timing{}, false, &engine));
     engine.addImageProvider("itempreview",new EditorImageProvider(&reopened));
+    engine.rootContext()->setContextProperty("Updater", new UpdateService(&reopened, &engine));
     engine.load(QUrl::fromLocalFile(QStringLiteral(QT_TESTCASE_SOURCEDIR "/qml/Main.qml")));
     QVERIFY(!engine.rootObjects().isEmpty());
     auto inspector=engine.rootObjects().first()->findChild<QObject *>("objectInspector"); QVERIFY(inspector);
@@ -428,6 +430,7 @@ private slots:
     QQmlApplicationEngine engine; engine.rootContext()->setContextProperty("Backend",&backend);
     engine.rootContext()->setContextProperty("AiSprites", new AiSpriteService(AiSpriteService::Timing{}, false, &engine));
     engine.addImageProvider("itempreview",new EditorImageProvider(&backend));
+    engine.rootContext()->setContextProperty("Updater", new UpdateService(&backend, &engine));
     engine.load(QUrl::fromLocalFile(QStringLiteral(QT_TESTCASE_SOURCEDIR "/qml/Main.qml")));
     QVERIFY(!engine.rootObjects().isEmpty());
     auto inspector=engine.rootObjects().first()->findChild<QObject *>("objectInspector"); QVERIFY(inspector);
@@ -709,6 +712,7 @@ private slots:
     engine.rootContext()->setContextProperty("Backend",&backend);
     engine.rootContext()->setContextProperty("AiSprites",new AiSpriteService(AiSpriteService::Timing{},false,&engine));
     engine.addImageProvider("itempreview",new EditorImageProvider(&backend));
+    engine.rootContext()->setContextProperty("Updater", new UpdateService(&backend, &engine));
     engine.load(QUrl::fromLocalFile(QStringLiteral(QT_TESTCASE_SOURCEDIR "/qml/Main.qml")));
     QVERIFY(!engine.rootObjects().isEmpty());
     auto root=engine.rootObjects().first();
@@ -1406,6 +1410,7 @@ private slots:
     engine.rootContext()->setContextProperty("Backend",&backend);
     engine.rootContext()->setContextProperty("AiSprites", new AiSpriteService(AiSpriteService::Timing{}, false, &engine));
     engine.addImageProvider("itempreview",new EditorImageProvider(&backend));
+    engine.rootContext()->setContextProperty("Updater", new UpdateService(&backend, &engine));
     engine.load(QUrl::fromLocalFile(QStringLiteral(QT_TESTCASE_SOURCEDIR "/qml/Main.qml")));
     QVERIFY(!engine.rootObjects().isEmpty());
     auto *dialog=engine.rootObjects().first()->findChild<QObject *>("objectExportDialog");
@@ -1429,6 +1434,7 @@ private slots:
     engine.rootContext()->setContextProperty("Backend",&backend);
     engine.rootContext()->setContextProperty("AiSprites", new AiSpriteService(AiSpriteService::Timing{}, false, &engine));
     engine.addImageProvider("itempreview",new EditorImageProvider(&backend));
+    engine.rootContext()->setContextProperty("Updater", new UpdateService(&backend, &engine));
     engine.load(QUrl::fromLocalFile(QStringLiteral(QT_TESTCASE_SOURCEDIR "/qml/Main.qml")));
     QVERIFY(!engine.rootObjects().isEmpty());
     QSignalSpy updates(&backend,&EditorBackend::selectionChanged);
@@ -1451,6 +1457,7 @@ private slots:
     engine.rootContext()->setContextProperty("Backend",&backend);
     engine.rootContext()->setContextProperty("AiSprites", new AiSpriteService(AiSpriteService::Timing{}, false, &engine));
     engine.addImageProvider("itempreview",new EditorImageProvider(&backend));
+    engine.rootContext()->setContextProperty("Updater", new UpdateService(&backend, &engine));
     engine.load(QUrl::fromLocalFile(QStringLiteral(QT_TESTCASE_SOURCEDIR "/qml/Main.qml")));
     QVERIFY(!engine.rootObjects().isEmpty());
     auto confirm=engine.rootObjects().first()->findChild<QObject *>("removeItemConfirm");
@@ -1494,6 +1501,7 @@ private slots:
     QTemporaryDir dir;fixture(dir.path());EditorBackend backend;
     QQmlApplicationEngine engine;engine.rootContext()->setContextProperty("Backend",&backend);
     engine.rootContext()->setContextProperty("AiSprites", new AiSpriteService(AiSpriteService::Timing{}, false, &engine));
+    engine.rootContext()->setContextProperty("Updater", new UpdateService(&backend, &engine));
     engine.addImageProvider("itempreview",new EditorImageProvider(&backend));
     QStringList warnings;
     connect(&engine,&QQmlEngine::warnings,this,[&](const QList<QQmlError> &errors){for(const auto &e:errors)warnings<<e.toString();});

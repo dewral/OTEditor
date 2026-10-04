@@ -8,6 +8,7 @@
 #include <QDir>
 #include <QLocale>
 #include "editorbackend.h"
+#include "updateservice.h"
 #include "aispriteservice.h"
 int main(int argc,char **argv){
     QGuiApplication app(argc,argv);
@@ -16,9 +17,10 @@ int main(int argc,char **argv){
     app.setApplicationVersion(QStringLiteral(OTEDITOR_VERSION));
     app.setWindowIcon(QIcon(QStringLiteral(":/assets/icons/oteditor.ico")));
     QQuickStyle::setStyle("Basic");
-    EditorBackend backend;AiSpriteService aiSprites;QQmlApplicationEngine engine;
+    EditorBackend backend;UpdateService updater(&backend);AiSpriteService aiSprites;QQmlApplicationEngine engine;
     engine.addImageProvider("itempreview",new EditorImageProvider(&backend));
     engine.rootContext()->setContextProperty("Backend",&backend);
+    engine.rootContext()->setContextProperty("Updater",&updater);
     engine.rootContext()->setContextProperty("AiSprites",&aiSprites);
     const auto args=app.arguments();
     int folder=args.indexOf("--folder");int version=args.indexOf("--version");

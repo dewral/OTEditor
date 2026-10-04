@@ -343,8 +343,69 @@ ApplicationWindow {
         CompactDropdown {
             title: "Help"
             Action {
+                text: "Check for Updates..."
+                onTriggered: {
+                    updateDialog.open()
+                    Updater.checkForUpdates()
+                }
+            }
+            Action {
                 text: "About OTEditor"
                 onTriggered: about.open()
+            }
+        }
+    }
+    Dialog {
+        id: updateDialog
+        title: "OTEditor Update"
+        width: 440
+        anchors.centerIn: parent
+        modal: true
+        standardButtons: Dialog.NoButton
+        ColumnLayout {
+            anchors.fill: parent
+            spacing: 12
+            Label {
+                Layout.fillWidth: true
+                wrapMode: Text.Wrap
+                text: Updater.state === "checking" ? "Checking for updates..."
+                    : Updater.state === "downloading" ? "Downloading version " + Updater.latestVersion + "..."
+                    : Updater.state === "installing" ? "Preparing installation..."
+                    : Updater.state === "available" ? "Version " + Updater.latestVersion + " is available."
+                    : Updater.state === "error" ? Updater.errorString
+                    : "OTEditor is up to date (version " + Updater.currentVersion + ")."
+            }
+            ProgressBar {
+                Layout.fillWidth: true
+                visible: Updater.state === "downloading"
+                value: Updater.downloadProgress
+            }
+            Label {
+                Layout.fillWidth: true
+                visible: Updater.state === "available" && Updater.releaseNotes.length > 0
+                text: Updater.releaseNotes
+                wrapMode: Text.Wrap
+            }
+            RowLayout {
+                Layout.alignment: Qt.AlignRight
+                Button {
+                    text: "Open Release"
+                    visible: Updater.releasePageUrl.toString().length > 0
+                    onClicked: Updater.openReleasePage()
+                }
+                Button {
+                    text: "Install Update"
+                    visible: Updater.updateAvailable
+                    enabled: !Updater.busy && !Backend.dirty
+                    onClicked: Updater.downloadAndInstall()
+                }
+                Button {
+                    text: Updater.busy ? "Cancel" : "Close"
+                    onClicked: {
+                        if (Updater.busy) Updater.cancel()
+                        updateDialog.close()
+                    }
+                }
             }
         }
     }

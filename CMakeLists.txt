@@ -3,7 +3,7 @@ project(OTEditor VERSION 0.1 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_AUTOMOC ON)
-find_package(Qt6 6.5 REQUIRED COMPONENTS Core Gui Qml Quick QuickControls2 Network Test)
+find_package(Qt6 6.5 REQUIRED COMPONENTS Core Gui Qml Quick QuickControls2 Network Widgets Test)
 get_filename_component(TOOLCHAIN_BIN_DIR "${CMAKE_CXX_COMPILER}" DIRECTORY)
 get_filename_component(TOOLCHAIN_ROOT "${TOOLCHAIN_BIN_DIR}" DIRECTORY)
 find_path(LZMA_INCLUDE_DIR lzma.h HINTS "${TOOLCHAIN_ROOT}/opt/include")
@@ -23,10 +23,11 @@ add_library(editorcore STATIC
     src/editorbackend.cpp src/editorbackend.h
     src/editorbackend_slicer.cpp src/editorbackend_export.cpp src/editorbackend_sheet.cpp src/editorbackend_merge.cpp src/editorbackend_convert.cpp
     src/obdcodec.cpp src/obdcodec.h src/editorbackend_obd.cpp
-    src/projectmodel.cpp src/projectmodel.h)
+    src/projectmodel.cpp src/projectmodel.h
+    src/updateservice.cpp src/updateservice.h src/updateversion.cpp src/updateversion.h)
 target_include_directories(editorcore PUBLIC src)
 target_include_directories(editorcore PRIVATE "${LZMA_INCLUDE_DIR}")
-target_link_libraries(editorcore PUBLIC otformats Qt6::Quick "${LZMA_LIBRARY}")
+target_link_libraries(editorcore PUBLIC otformats Qt6::Quick Qt6::Network "${LZMA_LIBRARY}")
 qt_add_executable(OTEditor src/main.cpp)
 add_library(aispritecore STATIC src/aispriteservice.cpp src/aispriteservice.h)
 target_include_directories(aispritecore PUBLIC src)
@@ -50,6 +51,10 @@ target_compile_definitions(OTEditor PRIVATE OTEDITOR_VERSION="${PROJECT_VERSION}
 set_target_properties(OTEditor PROPERTIES WIN32_EXECUTABLE TRUE RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 if(WIN32)
     target_sources(OTEditor PRIVATE assets/oteditor.rc)
+    qt_add_executable(OTEditorUpdater src/updater/main.cpp)
+    target_link_libraries(OTEditorUpdater PRIVATE Qt6::Widgets)
+    set_target_properties(OTEditorUpdater PROPERTIES WIN32_EXECUTABLE TRUE RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+    install(TARGETS OTEditorUpdater RUNTIME DESTINATION .)
 endif()
 include(CTest)
 if(BUILD_TESTING)

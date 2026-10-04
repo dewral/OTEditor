@@ -11,6 +11,10 @@ ctest --test-dir "$root\build" --output-on-failure
 if ($LASTEXITCODE) { exit $LASTEXITCODE }
 if ($Deploy) {
     New-Item -ItemType Directory -Force "$root\dist" | Out-Null
+    $updater = Join-Path $root 'dist\OTEditorUpdater.exe'
+    Copy-Item -LiteralPath (Join-Path $root 'build\bin\OTEditorUpdater.exe') -Destination $updater -Force
+    & "$qt\bin\windeployqt.exe" --release $updater | Out-Null
+    if ($LASTEXITCODE) { exit $LASTEXITCODE }
     $target = Join-Path $root 'dist\OTEditor.exe'
     $staged = Join-Path $root 'dist\OTEditor.next.exe'
     $source = Join-Path $root 'build\bin\OTEditor.exe'

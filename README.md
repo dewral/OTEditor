@@ -60,7 +60,7 @@ OTB and XML participate in loading and compilation, and OTB names are synchroniz
 
 ## Building on Windows
 
-Requirements: Qt 6.5+ (Core, Gui, Qml, Quick, QuickControls2, Network, Test), liblzma, CMake 3.24+, Ninja, and a C++20 compiler compatible with your Qt installation. The script's defaults target a local Qt 6.10.2 / MinGW 13.1 installation.
+Requirements: Qt 6.5+ (Core, Gui, Qml, Quick, QuickControls2, Network, Widgets, Test), liblzma, CMake 3.24+, Ninja, and a C++20 compiler compatible with your Qt installation. The script's defaults target a local Qt 6.10.2 / MinGW 13.1 installation.
 
 ```powershell
 ./scripts/build.ps1 -Deploy
