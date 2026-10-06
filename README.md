@@ -14,6 +14,8 @@ For the Windows release ZIP, extract the archive and run `OTEditor.exe` from the
 
 ## Features
 
+- A consistent dark workspace with flat controls, outlined toolbar icons, subtle panel borders, and underlined active tabs.
+
 - One project session for DAT, editable SPR, OTFI, `items.otb`, and `items.xml`, backed by the local `otformats` library.
 - Creation of a missing `items.otb` from the Attributes tab or Tools menu. The file is saved to the selected server folder, or to the client folder if no server folder is selected. **Create Missing OTB Items** adds remaining entries from DAT in batches and shows progress.
 - Virtualized browsers for items, outfits, effects, missiles, and sprites, with list and grid views, ID filtering, and an option to hide objects without assigned sprites.
@@ -96,3 +98,7 @@ Diagnostic launch options:
 - `tests/`: format and backend regression tests.
 
 ObjectBuilder was used as a functional reference; its code was not copied. Its official client-signature catalog is included as `assets/ObjectBuilder-versions.xml` under the accompanying `assets/ObjectBuilder-LICENSE.txt` (MIT). Client graphics are not included in the distribution.
+
+## OTB compatibility verification
+
+The 2026-10-04 corpus check covered 37 real OTB files and 765,403 item records across OTB major versions 1, 2, and 3. All 44 selected checks passed. This verifies OTEditor save/reload preservation; direct loading of the outputs in TFS, RME, and Object Builder was not tested. See [the test report](docs/testing/otb-compatibility.md) for coverage and reproduction.
