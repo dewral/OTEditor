@@ -17,6 +17,7 @@
 #include "updateservice.h"
 #include "obdcodec.h"
 #include "otfireader.h"
+#include "nodefilereader.h"
 class EditorTests : public QObject {
  Q_OBJECT
 private:
@@ -746,6 +747,63 @@ private slots:
     QVERIFY(reopened.serverAttributes().value("forceUse").toBool());
     QVERIFY(reopened.serverAttributes().value("useable").toBool());
     QVERIFY(!reopened.serverAttributes().value("alwaysOnTop").toBool());
+ }
+ void realOtbCompatibility_data() {
+    QTest::addColumn<QString>("source");
+    const QStringList paths = qEnvironmentVariable("OTE_TEST_OTB_FILES").split(';', Qt::SkipEmptyParts);
+    for (int i = 0; i < paths.size(); ++i)
+        QTest::newRow(qPrintable(QString("file-%1").arg(i))) << paths[i];
+    if (paths.isEmpty()) QTest::newRow("not-configured") << QString();
+ }
+ void realOtbCompatibility() {
+    QFETCH(QString, source);
+    if (source.isEmpty()) QSKIP("Set OTE_TEST_OTB_FILES to a semicolon-separated OTB corpus");
+    QTemporaryDir output;
+    QVERIFY(output.isValid());
+    OtbReader original;
+    QVERIFY2(original.loadFile(source), qPrintable(source + ": " + original.errorString()));
+    QVector<QVariantMap> expected;
+    for (int row = 0; row < original.itemCount(); ++row) expected.append(original.detailsAt(row));
+    const QString saved = output.filePath("roundtrip.otb");
+    QVERIFY2(original.saveCopy(saved), qPrintable(original.errorString()));
+    OtbReader reopened;
+    QVERIFY2(reopened.loadFile(saved), qPrintable(reopened.errorString()));
+    QCOMPARE(reopened.majorVersion(), original.majorVersion());
+    QCOMPARE(reopened.minorVersion(), original.minorVersion());
+    QCOMPARE(reopened.buildNumber(), original.buildNumber());
+    QCOMPARE(reopened.itemCount(), expected.size());
+    for (int row = 0; row < expected.size(); ++row) QCOMPARE(reopened.detailsAt(row), expected[row]);
+
+    // Inspect decoded binary nodes too: public properties do not expose opaque attributes.
+    NodeFileReader before, after;
+    const QVector<QByteArray> identifiers{QByteArray(4, '\0'), QByteArray("OTBI", 4)};
+    QVERIFY2(before.loadFile(source, identifiers), qPrintable(before.errorString()));
+    QVERIFY2(after.loadFile(saved, identifiers), qPrintable(after.errorString()));
+    QCOMPARE(after.rootNode().rawData(), before.rootNode().rawData());
+    const auto &oldNodes = before.rootNode().children();
+    const auto &newNodes = after.rootNode().children();
+    QCOMPARE(newNodes.size(), oldNodes.size());
+    auto opaqueAttributes = [](BinaryNode node) {
+        QVector<QPair<quint8, QByteArray>> attributes;
+        node.skip(5);
+        while (node.bytesRemaining()) {
+            uint8_t type; uint16_t size; QByteArray payload;
+            if (!node.getU8(type) || !node.getU16(size) || !node.readBytes(size, payload))
+                return QVector<QPair<quint8, QByteArray>>{{0, QByteArray("malformed")}};
+            switch (type) {
+            case 0x10: case 0x11: case 0x12: case 0x13: case 0x14:
+            case 0x21: case 0x22: case 0x23: case 0x2a: case 0x2b: case 0x2d: break;
+            default: attributes.append(qMakePair(type, payload));
+            }
+        }
+        return attributes;
+    };
+    for (int row = 0; row < oldNodes.size(); ++row) {
+        QCOMPARE(newNodes[row].rawData().left(5), oldNodes[row].rawData().left(5));
+        QCOMPARE(opaqueAttributes(newNodes[row]), opaqueAttributes(oldNodes[row]));
+    }
+    qInfo().noquote() << source << "items:" << reopened.itemCount()
+                     << "OTB:" << reopened.majorVersion() << reopened.minorVersion() << reopened.buildNumber();
  }
  void otbTools() {
     QTemporaryDir dir; QVERIFY(dir.isValid()); fixture(dir.path());
