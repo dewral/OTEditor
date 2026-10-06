@@ -35,7 +35,7 @@ Dialog {
                 height: 18
                 color: owner.paletteColor(index)
                 border.width: picker.selectedIndex === index ? 2 : 1
-                border.color: picker.selectedIndex === index ? "#ffffff" : "#55616c"
+                border.color: picker.selectedIndex === index ? "#ffffff" : "#707a81"
                 MouseArea {
                     anchors.fill: parent
                     cursorShape: Qt.PointingHandCursor
@@ -50,7 +50,7 @@ Dialog {
                 width: 24
                 height: 20
                 color: owner.paletteColor(picker.selectedIndex)
-                border.color: "#718294"
+                border.color: "#8e9ba4"
             }
             Label {
                 text: "Color index: " + picker.selectedIndex

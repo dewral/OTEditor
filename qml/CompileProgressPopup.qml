@@ -17,7 +17,7 @@ Popup {
     visible: backend.compiling
     background: Rectangle {
         color: "#252c33"
-        border.color: "#536171"
+        border.color: "#737d84"
         radius: 4
     }
     ColumnLayout {
@@ -27,7 +27,7 @@ Popup {
             text: backend.compileStage.startsWith("Import:") ? "Importing objects" : backend.compileStage.startsWith("Converting") ? "Converting project" : backend.compileStage.startsWith("Creating OTB items") ? "Creating OTB items" : backend.compileStage.startsWith("Exporting") ? "Exporting selected objects" : backend.compileStage === "Optimizing sprites" ? "Optimizing sprites" : "Compiling project"
             font.bold: true
             font.pixelSize: 15
-            color: "#dce5ee"
+            color: "#e0e5e8"
         }
         Label {
             text: backend.compileStage

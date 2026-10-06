@@ -12,13 +12,13 @@ Dialog {
     modal: true
     padding: 0
     standardButtons: Dialog.NoButton
-    background: Rectangle { color: "#24292f"; border.color: "#3b424b"; radius: 3 }
+    background: Rectangle { color: "#202426"; border.color: "#343a3e"; radius: 3 }
     header: Rectangle {
-        implicitHeight: 32; color: "#2c333b"; border.color: "#3b424b"
+        implicitHeight: 32; color: "#282d30"; border.color: "#343a3e"
         Label { anchors.left: parent.left; anchors.leftMargin: 12; anchors.verticalCenter: parent.verticalCenter; text: "Slicer"; font.bold: true; color: "#e5eaf1" }
     }
     footer: Rectangle {
-        implicitHeight: 40; color: "#2c333b"; border.color: "#3b424b"
+        implicitHeight: 40; color: "#282d30"; border.color: "#343a3e"
         Tool { anchors.right: parent.right; anchors.rightMargin: 8; anchors.verticalCenter: parent.verticalCenter; width: 88; text: "Close"; onClicked: slicer.close() }
     }
     property var backend
@@ -34,8 +34,8 @@ Dialog {
         indicator: Rectangle {
             implicitWidth: 24; implicitHeight: 12
             x: 0; y: (toggle.height-height)/2; radius: 6
-            color: toggle.checked ? "#168bd0" : "#37414b"
-            border.color: toggle.checked ? "#4cb6ed" : "#55616c"
+            color: toggle.checked ? "#399ee8" : "#363d41"
+            border.color: toggle.checked ? "#6db9ef" : "#707a81"
             Rectangle {
                 width: 10; height: 10; radius: 5; y: 1
                 x: toggle.checked ? parent.width-width-1 : 1
@@ -44,7 +44,7 @@ Dialog {
         }
         contentItem: Text {
             leftPadding: toggle.indicator.width+toggle.spacing
-            text: toggle.text; color: toggle.enabled ? "#d2e4f5" : "#77828e"
+            text: toggle.text; color: toggle.enabled ? "#e0e5e8" : "#77828e"
             font: toggle.font; verticalAlignment: Text.AlignVCenter
         }
     }
@@ -52,10 +52,10 @@ Dialog {
         id: spin
         implicitHeight: 22; leftPadding: 18; rightPadding: 18
         font.pixelSize: 11
-        background: Rectangle { color: "#20252b"; border.color: "#46505b" }
+        background: Rectangle { color: "#1c2022"; border.color: "#3c4449" }
         contentItem: TextInput {
             text: spin.textFromValue(spin.value,spin.locale)
-            color: "#dce5ee"; font: spin.font
+            color: "#e0e5e8"; font: spin.font
             horizontalAlignment: TextInput.AlignHCenter
             verticalAlignment: TextInput.AlignVCenter
             readOnly: !spin.editable; validator: spin.validator
@@ -64,15 +64,15 @@ Dialog {
         }
         down.indicator: Rectangle {
             x: 0; y: 0; width: 18; height: spin.height
-            color: spin.down.pressed ? "#465564" : "#333b44"
-            border.color: "#46505b"
-            Text { anchors.centerIn: parent; text: "−"; color: spin.value>spin.from ? "#dce5ee" : "#77828e"; font.pixelSize: 12 }
+            color: spin.down.pressed ? "#465564" : "#2b3033"
+            border.color: "#3c4449"
+            Text { anchors.centerIn: parent; text: "−"; color: spin.value>spin.from ? "#e0e5e8" : "#77828e"; font.pixelSize: 12 }
         }
         up.indicator: Rectangle {
             x: spin.width-width; y: 0; width: 18; height: spin.height
-            color: spin.up.pressed ? "#465564" : "#333b44"
-            border.color: "#46505b"
-            Text { anchors.centerIn: parent; text: "+"; color: spin.value<spin.to ? "#dce5ee" : "#77828e"; font.pixelSize: 12 }
+            color: spin.up.pressed ? "#465564" : "#2b3033"
+            border.color: "#3c4449"
+            Text { anchors.centerIn: parent; text: "+"; color: spin.value<spin.to ? "#e0e5e8" : "#77828e"; font.pixelSize: 12 }
         }
     }
 
@@ -115,12 +115,12 @@ Dialog {
     ColumnLayout {
         anchors.fill: parent; spacing: 0
         Rectangle {
-            Layout.fillWidth: true; Layout.preferredHeight: 40; color: "#2c333b"
-            border.color: "#3b424b"
+            Layout.fillWidth: true; Layout.preferredHeight: 40; color: "#282d30"
+            border.color: "#343a3e"
             RowLayout {
                 anchors.fill: parent; anchors.leftMargin: 6; anchors.rightMargin: 6; spacing: 3
                 Tool { text: "▱"; Layout.preferredWidth: 32; tip: "Open image (Ctrl+O)"; onClicked: sourceDialog.open() }
-                Rectangle { Layout.preferredWidth: 1; Layout.preferredHeight: 23; color: "#3b424b" }
+                Rectangle { Layout.preferredWidth: 1; Layout.preferredHeight: 23; color: "#343a3e" }
                 Tool { text: "↻"; Layout.preferredWidth: 28; enabled: backend.slicerWidth>0; tip: "Rotate right 90°"; onClicked: { backend.slicerTransform("rotateRight"); slicer.clampSelection() } }
                 Tool { text: "↺"; Layout.preferredWidth: 28; enabled: backend.slicerWidth>0; tip: "Rotate left 90°"; onClicked: { backend.slicerTransform("rotateLeft"); slicer.clampSelection() } }
                 Tool { text: "↕"; Layout.preferredWidth: 28; enabled: backend.slicerWidth>0; tip: "Flip vertically"; onClicked: backend.slicerTransform("flipVertical") }
@@ -133,12 +133,12 @@ Dialog {
             Layout.margins: 6; spacing: 6
             Rectangle {
                 Layout.preferredWidth: 145; Layout.fillHeight: true
-                color: "#24292f"; border.color: "#3b424b"
+                color: "#202426"; border.color: "#343a3e"
                 ColumnLayout {
                     anchors.fill: parent; anchors.margins: 5; spacing: 4
                     Item { Layout.fillHeight: true }
                     Rectangle {
-                        Layout.fillWidth: true; Layout.preferredHeight: 54; color: "#24292f"; border.color: "#3b424b"
+                        Layout.fillWidth: true; Layout.preferredHeight: 54; color: "#202426"; border.color: "#343a3e"
                         ColumnLayout { anchors.fill: parent; anchors.margins: 5; spacing: 1
                             Label { text: "Sprite Dimension" }
                             ComboBox {
@@ -150,7 +150,7 @@ Dialog {
                         }
                     }
                     Rectangle {
-                        Layout.fillWidth: true; Layout.preferredHeight: 174; color: "#24292f"; border.color: "#3b424b"
+                        Layout.fillWidth: true; Layout.preferredHeight: 174; color: "#202426"; border.color: "#343a3e"
                         ColumnLayout { anchors.fill: parent; anchors.margins: 5; spacing: 2
                             Label { text: "Cells" }
                             SlicerToggle { id: subdivisions; text: "Subdivisions"; Layout.fillWidth: true; Layout.preferredHeight: 21 }
@@ -175,7 +175,7 @@ Dialog {
                         }
                     }
                     Rectangle {
-                        Layout.fillWidth: true; Layout.preferredHeight: 43; color: "#24292f"; border.color: "#3b424b"
+                        Layout.fillWidth: true; Layout.preferredHeight: 43; color: "#202426"; border.color: "#343a3e"
                         ColumnLayout { anchors.fill: parent; anchors.margins: 4; spacing: 0
                             Label { text: "Zoom  " + Math.round(slicer.zoom*100) + "%" }
                             Slider { id: zoomControl; Layout.fillWidth: true; Layout.preferredHeight: 20; from: 0.1; to: 5; value: 1; onValueChanged: slicer.zoom=value }
@@ -189,14 +189,14 @@ Dialog {
                 }
             }
             Rectangle {
-                Layout.fillWidth: true; Layout.fillHeight: true; color: "#24292f"; border.color: "#3b424b"
-                Rectangle { x: 17; y: 13; width: parent.width-23; height: 1; color: "#161b20" }
+                Layout.fillWidth: true; Layout.fillHeight: true; color: "#202426"; border.color: "#343a3e"
+                Rectangle { x: 17; y: 13; width: parent.width-23; height: 1; color: "#151819" }
                 Canvas {
                     id: topRuler; x: 17; y: 2; width: parent.width-23; height: 14
                     onWidthChanged: requestPaint()
                     onPaint: {
                         const ctx=getContext("2d"); ctx.clearRect(0,0,width,height)
-                        ctx.fillStyle="#2c333b"; ctx.fillRect(0,0,width,height)
+                        ctx.fillStyle="#282d30"; ctx.fillRect(0,0,width,height)
                         ctx.strokeStyle="#94a9bd"; ctx.fillStyle="#b9cadd"; ctx.font="8px sans-serif"
                         for(let i=0;i<width;i+=8) { const n=Math.round((i+imageViewport.contentX)/slicer.zoom); ctx.beginPath(); ctx.moveTo(i,14); ctx.lineTo(i,n%32===0?4:9); ctx.stroke(); if(n%64===0)ctx.fillText(n,i+2,7) }
                     }
@@ -208,7 +208,7 @@ Dialog {
                     onHeightChanged: requestPaint()
                     onPaint: {
                         const ctx=getContext("2d"); ctx.clearRect(0,0,width,height)
-                        ctx.fillStyle="#2c333b"; ctx.fillRect(0,0,width,height)
+                        ctx.fillStyle="#282d30"; ctx.fillRect(0,0,width,height)
                         ctx.strokeStyle="#94a9bd"
                         for(let i=0;i<height;i+=8) { const n=Math.round((i+imageViewport.contentY)/slicer.zoom); ctx.beginPath(); ctx.moveTo(14,i); ctx.lineTo(n%32===0?4:9,i); ctx.stroke() }
                     }
@@ -272,7 +272,7 @@ Dialog {
                 }
             }
             Rectangle {
-                Layout.preferredWidth: 145; Layout.fillHeight: true; color: "#24292f"; border.color: "#3b424b"
+                Layout.preferredWidth: 145; Layout.fillHeight: true; color: "#202426"; border.color: "#343a3e"
                 ColumnLayout { anchors.fill: parent; anchors.margins: 5; spacing: 4
                     Label { text: "Sprites ("+backend.slicerCount+")" }
                     ListView {
@@ -280,7 +280,7 @@ Dialog {
                         model: backend.slicerCount; spacing: 2
                         delegate: Rectangle {
                             width: ListView.view.width; height: 38
-                            color: index%2 ? "#283039" : "#2c3540"; border.color: "#3b424b"
+                            color: index%2 ? "#283039" : "#2c3540"; border.color: "#343a3e"
                             Row { anchors.verticalCenter: parent.verticalCenter; spacing: 5
                                 Image { width: 34; height: 34; fillMode: Image.PreserveAspectFit; smooth: false; source: "image://itempreview/slicer/tile/"+index+"?v="+backend.slicerRevision }
                                 Label { text: String(index+1); anchors.verticalCenter: parent.verticalCenter }

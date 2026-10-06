@@ -53,8 +53,8 @@ Panel {
                     required property int index
                     width: sprites.cellWidth - 1
                     height: sprites.cellHeight
-                    color: owner.selectedSprite === index ? "#175886" : index % 2 === 0 ? "#272d34" : "#242a30"
-                    border.color: owner.selectedSprite === index ? "#3295d2" : "#373f48"
+                    color: owner.selectedSprite === index ? "#293e4c" : index % 2 === 0 ? "#24292c" : "#202426"
+                    border.color: owner.selectedSprite === index ? "#3295d2" : "#343a3e"
                     Image {
                         id: spriteImage
                         property int spriteId: spriteDelegate.index

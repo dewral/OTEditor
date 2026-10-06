@@ -33,7 +33,7 @@ add_library(aispritecore STATIC src/aispriteservice.cpp src/aispriteservice.h)
 target_include_directories(aispritecore PUBLIC src)
 target_link_libraries(aispritecore PUBLIC Qt6::Gui Qt6::Network)
 qt_add_qml_module(OTEditor URI OTEditor VERSION 1.0 QML_FILES
-    qml/Main.qml
+    qml/Main.qml qml/FluentToolBar.qml
     qml/ItemInspector.qml qml/ServerAttributesPanel.qml qml/PaletteColorDialog.qml qml/PixelEditorDialog.qml qml/Panel.qml qml/Tool.qml qml/Checker.qml qml/AssetToggle.qml
     qml/SlicerWindow.qml
     qml/LookTypeDialog.qml qml/ObjectViewerDialog.qml qml/AnimationEditorDialog.qml
@@ -45,7 +45,8 @@ qt_add_qml_module(OTEditor URI OTEditor VERSION 1.0 QML_FILES
     qml/CompileAssetFilesDialog.qml
     qml/PreviewSidebar.qml qml/ObjectsBrowserPanel.qml qml/SpritesBrowserPanel.qml
     qml/EditorLogPanel.qml)
-qt_add_resources(OTEditor branding PREFIX "/" FILES assets/Midhem.png assets/ObjectBuilder-versions.xml assets/icons/oteditor.ico)
+qt_add_resources(OTEditor branding PREFIX "/" FILES assets/Midhem.png assets/ObjectBuilder-versions.xml assets/icons/oteditor.ico
+    assets/ui/new.svg assets/ui/open.svg assets/ui/save.svg assets/ui/add.svg assets/ui/copy.svg assets/ui/remove.svg assets/ui/undo.svg assets/ui/redo.svg assets/ui/play.svg assets/ui/pause.svg assets/ui/settings.svg assets/ui/chevron.svg)
 target_link_libraries(OTEditor PRIVATE editorcore aispritecore Qt6::QuickControls2)
 target_compile_definitions(OTEditor PRIVATE OTEDITOR_VERSION="${PROJECT_VERSION}")
 set_target_properties(OTEditor PROPERTIES WIN32_EXECUTABLE TRUE RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
@@ -59,7 +60,7 @@ endif()
 include(CTest)
 if(BUILD_TESTING)
     qt_add_executable(editor_tests tests/editor_tests.cpp)
-    qt_add_resources(editor_tests branding_test PREFIX "/" FILES assets/Midhem.png assets/ObjectBuilder-versions.xml)
+    qt_add_resources(editor_tests branding_test PREFIX "/" FILES assets/Midhem.png assets/ObjectBuilder-versions.xml assets/ui/add.svg assets/ui/chevron.svg assets/ui/copy.svg assets/ui/new.svg assets/ui/open.svg assets/ui/pause.svg assets/ui/play.svg assets/ui/redo.svg assets/ui/remove.svg assets/ui/save.svg assets/ui/settings.svg assets/ui/undo.svg)
     target_link_libraries(editor_tests PRIVATE editorcore aispritecore Qt6::Test Qt6::QuickControls2)
     set_target_properties(editor_tests PROPERTIES WIN32_EXECUTABLE FALSE)
     add_test(NAME editor_roundtrip COMMAND editor_tests -o "${CMAKE_BINARY_DIR}/editor-test-results.txt,txt")

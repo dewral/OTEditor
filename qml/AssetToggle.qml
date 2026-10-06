@@ -15,8 +15,8 @@ CheckBox {
         x: 0
         y: Math.round((toggleControl.height - height) / 2)
         radius: height / 2
-        color: toggleControl.checked ? "#168bd0" : "#37414b"
-        border.color: toggleControl.checked ? "#4cb6ed" : "#55616c"
+        color: toggleControl.checked ? "#399ee8" : "#363d41"
+        border.color: toggleControl.checked ? "#6db9ef" : "#707a81"
         border.width: 1
         Rectangle {
             width: 12
@@ -37,7 +37,7 @@ CheckBox {
     contentItem: Text {
         leftPadding: toggleControl.indicator.width + toggleControl.spacing
         text: toggleControl.text
-        color: "#d2e4f5"
+        color: "#e0e5e8"
         font: toggleControl.font
         verticalAlignment: Text.AlignVCenter
         elide: Text.ElideRight

@@ -58,7 +58,7 @@ Dialog {
             }
             Label {
                 text: importGraphicsVersion.value === 0 ? "Auto detect" : "e.g. 1098 = 10.98"
-                color: "#91a6ba"
+                color: "#a1adb5"
             }
         }
         RowLayout {
@@ -100,7 +100,7 @@ Dialog {
             }
             Label {
                 text: "ends at " + (importTargetFirst.value + importSourceLast.value - importSourceFirst.value)
-                color: "#91a6ba"
+                color: "#a1adb5"
             }
         }
         Label {

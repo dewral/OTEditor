@@ -79,7 +79,7 @@ Dialog {
         }
         Label {
             text: serverFolderPath.text.length ? serverFolderPath.text : "Client files only — server attributes will be hidden"
-            color: "#91a8bd"
+            color: "#a1adb5"
             font.pixelSize: 11
             elide: Text.ElideMiddle
             Layout.fillWidth: true
@@ -118,7 +118,7 @@ Dialog {
                         }
                         background: Rectangle {
                             color: "#2b333b"
-                            border.color: "#536171"
+                            border.color: "#737d84"
                         }
                     }
                 }

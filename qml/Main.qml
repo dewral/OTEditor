@@ -11,23 +11,23 @@ ApplicationWindow {
     minimumHeight: 720
     visible: true
     title: "OTEditor" + (Backend.dirty ? " • Unsaved changes" : "")
-    color: "#1e2329"
+    color: "#191d1f"
     font.family: "Segoe UI"
     font.pixelSize: 12
     palette {
-        window: "#24292f"
-        windowText: "#dce5ee"
-        base: "#20252b"
-        placeholderText: "#718294"
-        alternateBase: "#2c333b"
-        text: "#dce5ee"
-        button: "#333b44"
-        buttonText: "#dce5ee"
-        highlight: "#17679d"
+        window: "#202426"
+        windowText: "#e0e5e8"
+        base: "#1c2022"
+        placeholderText: "#8e9ba4"
+        alternateBase: "#282d30"
+        text: "#e0e5e8"
+        button: "#2b3033"
+        buttonText: "#e0e5e8"
+        highlight: "#399ee8"
         highlightedText: "#ffffff"
-        mid: "#424d59"
-        dark: "#161b20"
-        light: "#536171"
+        mid: "#3a4145"
+        dark: "#151819"
+        light: "#737d84"
     }
     property var d: Backend.details
     property int frame: 0
@@ -118,9 +118,28 @@ ApplicationWindow {
         delegate: CompactContextItem {}
     }
     menuBar: MenuBar {
+        height: 34
+        leftPadding: 8
         background: Rectangle {
-            color: "#252b32"
-            border.color: "#3b424b"
+            color: "#1c2022"
+            Rectangle { anchors.bottom: parent.bottom; width: parent.width; height: 1; color: "#303638" }
+        }
+        delegate: MenuBarItem {
+            id: menuItem
+            implicitWidth: contentItem.implicitWidth + 32
+            implicitHeight: 34
+            contentItem: Text {
+                text: menuItem.text
+                font.family: "Segoe UI"
+                font.pixelSize: 14
+                color: "#edf0f2"
+                verticalAlignment: Text.AlignVCenter
+                horizontalAlignment: Text.AlignHCenter
+            }
+            background: Rectangle {
+                radius: 4
+                color: menuItem.highlighted ? "#2b3134" : "transparent"
+            }
         }
         CompactDropdown {
             title: "File"
@@ -409,113 +428,15 @@ ApplicationWindow {
             }
         }
     }
-    header: ToolBar {
-        height: 44
-        background: Rectangle {
-            color: "#20262d"
-            border.color: "#39434e"
-        }
-        RowLayout {
-            anchors {
-                fill: parent
-                leftMargin: 10
-                rightMargin: 12
-            }
-            spacing: 7
-            Tool {
-                text: "▱"
-                font.pixelSize: 21
-                tip: "Open client folder · Ctrl+O"
-                onClicked: win.openProject()
-            }
-            Tool {
-                text: "▣"
-                font.pixelSize: 18
-                tip: "Compile DAT + SPR · Ctrl+S"
-                enabled: Backend.loaded
-                onClicked: Backend.compile()
-            }
-            Rectangle {
-                implicitWidth: 1
-                implicitHeight: 23
-                color: "#454b53"
-                Layout.leftMargin: 3
-                Layout.rightMargin: 3
-            }
-            Tool {
-                text: "+"
-                font.pixelSize: 20
-                tip: "New object"
-                enabled: Backend.loaded
-                onClicked: Backend.create()
-            }
-            Tool {
-                text: "⧉"
-                font.pixelSize: 19
-                tip: "Duplicate object · Ctrl+D"
-                enabled: win.objectEditable
-                onClicked: Backend.create(true)
-            }
-            Tool {
-                text: "×"
-                font.pixelSize: 18
-                tip: "Remove selected object"
-                enabled: win.objectEditable
-                onClicked: removeItemConfirm.open()
-            }
-            Tool {
-                text: "↶"
-                font.pixelSize: 21
-                tip: "Undo · Ctrl+Z"
-                enabled: Backend.canUndo
-                onClicked: Backend.undo()
-            }
-            Tool {
-                text: "↷"
-                font.pixelSize: 21
-                tip: "Redo · Ctrl+Y"
-                enabled: Backend.canRedo
-                onClicked: Backend.redo()
-            }
-            Rectangle {
-                implicitWidth: 1
-                implicitHeight: 23
-                color: "#454b53"
-            }
-            Tool {
-                text: attributes.animate ? "Ⅱ" : "▶"
-                tip: "Play animation"
-                checked: attributes.animate
-                enabled: Backend.loaded
-                onClicked: attributes.animate = !attributes.animate
-            }
-            Tool {
-                text: "⚙"
-                font.pixelSize: 18
-                tip: "Item attributes"
-                enabled: win.editable
-                onClicked: attributes.showProperties()
-            }
-            Item {
-                Layout.fillWidth: true
-            }
-            Label {
-                text: Backend.loaded ? Backend.info.folder : "DAT / SPR  •  QML + C++"
-                color: "#8e9ba9"
-                elide: Text.ElideMiddle
-                Layout.maximumWidth: 650
-            }
-            Rectangle {
-                width: 6
-                height: 6
-                radius: 3
-                color: Backend.dirty ? "#e7b467" : Backend.loaded ? "#75bb99" : "#7b8793"
-            }
-            Label {
-                text: Backend.dirty ? "Modified" : Backend.loaded ? "Ready" : "No client loaded"
-                color: "#a6b4c3"
-            }
-        }
+    header: FluentToolBar {
+        backend: Backend
+        owner: win
+        playing: attributes.animate
+        onNewRequested: win.newProject()
+        onOpenRequested: win.openProject()
+        onRemoveRequested: removeItemConfirm.open()
+        onPlaybackRequested: attributes.animate = !attributes.animate
+        onPropertiesRequested: attributes.showProperties()
     }
     ColumnLayout {
         anchors {
@@ -614,7 +535,7 @@ ApplicationWindow {
             leftPadding: compactItem.checkable ? 32 : 0
             text: compactItem.text
             font: compactItem.font
-            color: compactItem.enabled ? "#dce5ee" : "#77828e"
+            color: compactItem.enabled ? "#e0e5e8" : "#77828e"
             verticalAlignment: Text.AlignVCenter
             elide: Text.ElideRight
         }

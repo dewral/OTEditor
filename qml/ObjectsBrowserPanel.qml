@@ -61,7 +61,7 @@ Panel {
             spacing: 6
             Label {
                 text: "Columns:"
-                color: "#aab8c8"
+                color: "#c6ced3"
             }
             SpinBox {
                 id: objectColumns
@@ -76,7 +76,7 @@ Panel {
             }
             Label {
                 text: "Size:"
-                color: "#aab8c8"
+                color: "#c6ced3"
             }
             SpinBox {
                 id: cellSize
@@ -111,8 +111,8 @@ Panel {
                     Rectangle {
                         width: Math.floor((parent.width - (parent.columns - 1) * parent.spacing) / parent.columns)
                         height: 56
-                        color: "#293039"
-                        border.color: index === 0 ? "#249be7" : "#414c57"
+                        color: "#23282b"
+                        border.color: index === 0 ? "#249be7" : "#343c40"
                         radius: 2
                     }
                 }
@@ -139,7 +139,7 @@ Panel {
                     width: 12
                     minimumSize: 0.10
                     background: Rectangle {
-                        color: "#29323b"
+                        color: "#262c30"
                         radius: 4
                     }
                     contentItem: Rectangle {
@@ -160,8 +160,8 @@ Panel {
                     width: objects.cellWidth - 3
                     height: objects.cellHeight - 3
                     clip: true
-                    color: multiSelected ? "#174e73" : mouse.containsMouse ? "#35404b" : "#2b3138"
-                    border.color: multiSelected ? "#38aaf2" : "#444b54"
+                    color: multiSelected ? "#293e4c" : mouse.containsMouse ? "#30373b" : "#23282b"
+                    border.color: multiSelected ? "#38aaf2" : "#343c40"
                     border.width: multiSelected ? 2 : 1
                     radius: 1
                     Image {
@@ -175,7 +175,7 @@ Panel {
                     }
                     Label {
                         text: objectId
-                        color: "#d2e4f5"
+                        color: "#e0e5e8"
                         font.pixelSize: 11
                         x: owner.browserMode === 0 ? cellSize.value + 12 : 0
                         y: owner.browserMode === 0 ? 7 : parent.height - 18
@@ -237,7 +237,7 @@ Panel {
             spacing: 3
             Label {
                 text: backend.selectedCount > 1 ? backend.selectedCount + " selected · active ID: " + (owner.d.itemId ?? "-") : backend.selected >= 0 && backend.visibleIndex() >= 0 ? "Selected ID: " + (owner.d.itemId ?? "-") : ""
-                color: "#8da0b2"
+                color: "#a1adb5"
                 font.pixelSize: 11
             }
             Item {
@@ -245,7 +245,7 @@ Panel {
             }
             Label {
                 text: backend.count + " objects"
-                color: "#8da0b2"
+                color: "#a1adb5"
                 font.pixelSize: 11
             }
         }

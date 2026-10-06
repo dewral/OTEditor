@@ -22,7 +22,7 @@ ColumnLayout {
         indicator: Rectangle {
             width: 16; height: 16
             y: (flagControl.height - height) / 2
-            color: flagControl.checked ? "#17679d" : "#20252b"
+            color: flagControl.checked ? "#399ee8" : "#1c2022"
             border.color: "#9aabb9"
             Label { anchors.centerIn: parent; text: "✓"; font.pixelSize: 14; visible: flagControl.checked; color: "#ffffff" }
         }

@@ -41,7 +41,7 @@ Dialog {
                         }
                         background: Rectangle {
                             color: "#2b333b"
-                            border.color: "#536171"
+                            border.color: "#737d84"
                         }
                     }
                 }

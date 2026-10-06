@@ -83,7 +83,7 @@ Item {
                         anchors.centerIn: parent
                         text: "No item selected"
                         visible: backend.selected < 0
-                        color: "#8192a3"
+                        color: "#8e9ba4"
                         font.pixelSize: 11
                     }
                 }

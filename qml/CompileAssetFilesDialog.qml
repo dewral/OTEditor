@@ -109,8 +109,8 @@ Dialog {
                             ScrollIndicator.vertical: ScrollIndicator {}
                         }
                         background: Rectangle {
-                            color: "#242a30"
-                            border.color: "#536171"
+                            color: "#202426"
+                            border.color: "#737d84"
                         }
                     }
                 }
