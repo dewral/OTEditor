@@ -1,6 +1,6 @@
 .pragma library
 
-// Fluent Dark defaults shared with DewralMapEditor.
+// DewralMapEditor Fluent Dark palette with a subdued OTEditor accent.
 var background = "#202020";
 var surface = "#242424";
 var popup = "#2c2c2c";
@@ -14,7 +14,7 @@ var text = "#ffffff";
 var muted = "#c5c5c5";
 var placeholder = "#999999";
 var disabled = "#717171";
-var accent = "#60cdff";
+var accent = "#4a9ec7";
 var selected = "#404040";
 var selectedHover = "#4a4a4a";
 var scrollTrack = "#252525";
