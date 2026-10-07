@@ -30,7 +30,8 @@ Copy-Item (Join-Path $root 'assets/screenshots') (Join-Path $package 'assets') -
 Copy-Item (Join-Path $root 'docs/testing/otb-compatibility.md') (Join-Path $package 'docs/testing') -Force
 $archive = Join-Path $output 'OTEditor-windows-x64.zip'
 Compress-Archive -Path $package -DestinationPath $archive -Force
-& git -C $root archive --format=zip --output=(Join-Path $output 'OTEditor-source.zip') HEAD
+$sourceArchive = Join-Path $output 'OTEditor-source.zip'
+& git -C $root archive --format=zip "--output=$sourceArchive" HEAD
 if ($LASTEXITCODE) { throw 'Source archive creation failed.' }
 $hash = (Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash.ToLowerInvariant()
 $sourceHash = (Get-FileHash -LiteralPath (Join-Path $output 'OTEditor-source.zip') -Algorithm SHA256).Hash.ToLowerInvariant()
