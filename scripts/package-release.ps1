@@ -1,6 +1,7 @@
 param(
     [Parameter(Mandatory)][string]$BuildBin,
     [Parameter(Mandatory)][string]$QtRoot,
+    [string]$RuntimeConfiguration = '',
     [string]$Repository = 'dewral/OTEditor',
     [string]$Version = ''
 )
@@ -23,6 +24,10 @@ $deploy = Join-Path $QtRoot 'bin/windeployqt.exe'
 if ($LASTEXITCODE) { throw 'Qt application deployment failed.' }
 & $deploy --release --compiler-runtime (Join-Path $package 'OTEditorUpdater.exe')
 if ($LASTEXITCODE) { throw 'Qt updater deployment failed.' }
+if ($RuntimeConfiguration) {
+    & cmake "-DRUNTIME_CONFIGURATION=$RuntimeConfiguration" "-DPACKAGE_DIRECTORY=$package" -P (Join-Path $root 'cmake/DeployRuntimeDependencies.cmake')
+    if ($LASTEXITCODE) { throw 'Runtime dependency validation failed.' }
+}
 Copy-Item (Join-Path $root 'README.md') $package -Force
 New-Item -ItemType Directory -Force (Join-Path $package 'assets'),(Join-Path $package 'docs/testing') | Out-Null
 Copy-Item (Join-Path $root 'assets/ObjectBuilder-LICENSE.txt') (Join-Path $package 'assets') -Force

@@ -44,7 +44,7 @@ jobs:
       - name: Package and validate
         shell: pwsh
         run: |
-          ./scripts/package-release.ps1 -BuildBin "$pwd/build/ci/bin/Release" -QtRoot $env:QT_ROOT_DIR -Repository $env:GITHUB_REPOSITORY
+          ./scripts/package-release.ps1 -BuildBin "$pwd/build/ci/bin/Release" -QtRoot $env:QT_ROOT_DIR -Repository $env:GITHUB_REPOSITORY -RuntimeConfiguration "$pwd/build/ci/runtime-dependencies-Release.cmake"
           $manifest = Get-Content release/update-manifest.json -Raw | ConvertFrom-Json
           if ((Get-FileHash release/OTEditor-windows-x64.zip).Hash.ToLowerInvariant() -ne $manifest.sha256) { throw 'Manifest checksum mismatch.' }
           $env:QT_QPA_PLATFORM = 'offscreen'
