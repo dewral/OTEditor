@@ -1,3 +1,4 @@
+import "Theme.js" as Colors
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -37,13 +38,13 @@ Item {
                             width: parent.width * 0.58 - 8
                             horizontalAlignment: Text.AlignRight
                             font.pixelSize: 11
-                            color: "#c3ccd8"
+                            color: Colors.muted
                         }
                         Label {
                             text: backend.loaded ? String(modelData[1] ?? "—") : "—"
                             width: parent.width * 0.42
                             font.pixelSize: 11
-                            color: "#83cafa"
+                            color: Colors.accent
                             elide: Text.ElideRight
                         }
                     }
@@ -83,7 +84,7 @@ Item {
                         anchors.centerIn: parent
                         text: "No item selected"
                         visible: backend.selected < 0
-                        color: "#8e9ba4"
+                        color: Colors.placeholder
                         font.pixelSize: 11
                     }
                 }

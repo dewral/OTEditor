@@ -1,3 +1,4 @@
+import "Theme.js" as Colors
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -53,8 +54,8 @@ Panel {
                     required property int index
                     width: sprites.cellWidth - 1
                     height: sprites.cellHeight
-                    color: owner.selectedSprite === index ? "#293e4c" : index % 2 === 0 ? "#24292c" : "#202426"
-                    border.color: owner.selectedSprite === index ? "#3295d2" : "#343a3e"
+                    color: owner.selectedSprite === index ? Colors.selected : index % 2 === 0 ? Colors.surface : Colors.surface
+                    border.color: owner.selectedSprite === index ? Colors.accent : Colors.border
                     Image {
                         id: spriteImage
                         property int spriteId: spriteDelegate.index
@@ -82,7 +83,7 @@ Panel {
                         y: owner.spriteMode === 0 ? 11 : 37
                         width: owner.spriteMode === 0 ? 80 : parent.width
                         horizontalAlignment: owner.spriteMode === 0 ? Text.AlignLeft : Text.AlignHCenter
-                        color: "#afcde4"
+                        color: Colors.text
                         font.pixelSize: 11
                     }
                     MouseArea {
@@ -120,7 +121,7 @@ Panel {
                 Label {
                     anchors.horizontalCenter: parent.horizontalCenter
                     text: "Select an item to view its sprites."
-                    color: "#71869a"
+                    color: Colors.placeholder
                     font.pixelSize: 11
                 }
             }

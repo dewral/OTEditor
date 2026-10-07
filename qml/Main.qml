@@ -1,3 +1,4 @@
+import "Theme.js" as Colors
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -11,22 +12,22 @@ ApplicationWindow {
     minimumHeight: 720
     visible: true
     title: "OTEditor" + (Backend.dirty ? " • Unsaved changes" : "")
-    color: "#191d1f"
+    color: Colors.background
     font.family: "Segoe UI"
     font.pixelSize: 12
     palette {
-        window: "#202426"
-        windowText: "#e0e5e8"
-        base: "#1c2022"
-        placeholderText: "#8e9ba4"
-        alternateBase: "#282d30"
-        text: "#e0e5e8"
-        button: "#2b3033"
-        buttonText: "#e0e5e8"
-        highlight: "#399ee8"
+        window: Colors.surface
+        windowText: Colors.text
+        base: Colors.field
+        placeholderText: Colors.placeholder
+        alternateBase: Colors.button
+        text: Colors.text
+        button: Colors.button
+        buttonText: Colors.text
+        highlight: Colors.accent
         highlightedText: "#ffffff"
-        mid: "#3a4145"
-        dark: "#151819"
+        mid: Colors.border
+        dark: Colors.background
         light: "#737d84"
     }
     property var d: Backend.details
@@ -121,8 +122,8 @@ ApplicationWindow {
         height: 34
         leftPadding: 8
         background: Rectangle {
-            color: "#1c2022"
-            Rectangle { anchors.bottom: parent.bottom; width: parent.width; height: 1; color: "#303638" }
+            color: Colors.background
+            Rectangle { anchors.bottom: parent.bottom; width: parent.width; height: 1; color: Colors.border }
         }
         delegate: MenuBarItem {
             id: menuItem
@@ -132,13 +133,13 @@ ApplicationWindow {
                 text: menuItem.text
                 font.family: "Segoe UI"
                 font.pixelSize: 14
-                color: "#edf0f2"
+                color: Colors.text
                 verticalAlignment: Text.AlignVCenter
                 horizontalAlignment: Text.AlignHCenter
             }
             background: Rectangle {
                 radius: 4
-                color: menuItem.highlighted ? "#2b3134" : "transparent"
+                color: menuItem.highlighted ? Colors.hover : "transparent"
             }
         }
         CompactDropdown {
@@ -456,7 +457,7 @@ ApplicationWindow {
                     width: 2
                     height: 28
                     radius: 1
-                    color: SplitHandle.hovered ? "#318ac0" : "#424a54"
+                    color: SplitHandle.hovered ? Colors.accent : "#424a54"
                 }
             }
             PreviewSidebar {
@@ -535,7 +536,7 @@ ApplicationWindow {
             leftPadding: compactItem.checkable ? 32 : 0
             text: compactItem.text
             font: compactItem.font
-            color: compactItem.enabled ? "#e0e5e8" : "#77828e"
+            color: compactItem.enabled ? Colors.text : Colors.disabled
             verticalAlignment: Text.AlignVCenter
             elide: Text.ElideRight
         }

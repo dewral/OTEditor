@@ -32,7 +32,7 @@ qt_add_executable(OTEditor src/main.cpp)
 add_library(aispritecore STATIC src/aispriteservice.cpp src/aispriteservice.h)
 target_include_directories(aispritecore PUBLIC src)
 target_link_libraries(aispritecore PUBLIC Qt6::Gui Qt6::Network)
-qt_add_qml_module(OTEditor URI OTEditor VERSION 1.0 QML_FILES
+qt_add_qml_module(OTEditor URI OTEditor VERSION 1.0 RESOURCES qml/Theme.js QML_FILES
     qml/Main.qml qml/FluentToolBar.qml
     qml/ItemInspector.qml qml/ServerAttributesPanel.qml qml/PaletteColorDialog.qml qml/PixelEditorDialog.qml qml/Panel.qml qml/Tool.qml qml/Checker.qml qml/AssetToggle.qml
     qml/SlicerWindow.qml

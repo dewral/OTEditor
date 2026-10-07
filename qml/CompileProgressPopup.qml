@@ -1,3 +1,4 @@
+import "Theme.js" as Colors
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -27,11 +28,11 @@ Popup {
             text: backend.compileStage.startsWith("Import:") ? "Importing objects" : backend.compileStage.startsWith("Converting") ? "Converting project" : backend.compileStage.startsWith("Creating OTB items") ? "Creating OTB items" : backend.compileStage.startsWith("Exporting") ? "Exporting selected objects" : backend.compileStage === "Optimizing sprites" ? "Optimizing sprites" : "Compiling project"
             font.bold: true
             font.pixelSize: 15
-            color: "#e0e5e8"
+            color: Colors.text
         }
         Label {
             text: backend.compileStage
-            color: "#a9bdcf"
+            color: Colors.muted
         }
         ProgressBar {
             Layout.fillWidth: true
@@ -42,7 +43,7 @@ Popup {
         Label {
             Layout.alignment: Qt.AlignRight
             text: backend.compileProgress + "%"
-            color: "#a9bdcf"
+            color: Colors.muted
         }
     }
 }

@@ -1,3 +1,4 @@
+import "Theme.js" as Colors
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -61,7 +62,7 @@ Panel {
             spacing: 6
             Label {
                 text: "Columns:"
-                color: "#c6ced3"
+                color: Colors.muted
             }
             SpinBox {
                 id: objectColumns
@@ -76,7 +77,7 @@ Panel {
             }
             Label {
                 text: "Size:"
-                color: "#c6ced3"
+                color: Colors.muted
             }
             SpinBox {
                 id: cellSize
@@ -111,8 +112,8 @@ Panel {
                     Rectangle {
                         width: Math.floor((parent.width - (parent.columns - 1) * parent.spacing) / parent.columns)
                         height: 56
-                        color: "#23282b"
-                        border.color: index === 0 ? "#249be7" : "#343c40"
+                        color: Colors.surface
+                        border.color: index === 0 ? Colors.accent : Colors.border
                         radius: 2
                     }
                 }
@@ -139,11 +140,11 @@ Panel {
                     width: 12
                     minimumSize: 0.10
                     background: Rectangle {
-                        color: "#262c30"
+                        color: Colors.surface
                         radius: 4
                     }
                     contentItem: Rectangle {
-                        color: objectScrollBar.pressed ? "#a7c6db" : "#6f899f"
+                        color: objectScrollBar.pressed ? Colors.scrollThumb : Colors.scrollThumb
                         radius: 4
                     }
                 }
@@ -160,8 +161,8 @@ Panel {
                     width: objects.cellWidth - 3
                     height: objects.cellHeight - 3
                     clip: true
-                    color: multiSelected ? "#293e4c" : mouse.containsMouse ? "#30373b" : "#23282b"
-                    border.color: multiSelected ? "#38aaf2" : "#343c40"
+                    color: multiSelected ? Colors.selected : mouse.containsMouse ? Colors.hover : Colors.surface
+                    border.color: multiSelected ? Colors.accent : Colors.border
                     border.width: multiSelected ? 2 : 1
                     radius: 1
                     Image {
@@ -175,7 +176,7 @@ Panel {
                     }
                     Label {
                         text: objectId
-                        color: "#e0e5e8"
+                        color: Colors.text
                         font.pixelSize: 11
                         x: owner.browserMode === 0 ? cellSize.value + 12 : 0
                         y: owner.browserMode === 0 ? 7 : parent.height - 18
@@ -188,7 +189,7 @@ Panel {
                         y: 25
                         text: description
                         font.pixelSize: 10
-                        color: "#8499ac"
+                        color: Colors.placeholder
                     }
                     MouseArea {
                         id: mouse
@@ -223,12 +224,12 @@ Panel {
                     anchors.horizontalCenter: parent.horizontalCenter
                     text: "No objects found"
                     font.pixelSize: 16
-                    color: "#b4c5d6"
+                    color: Colors.muted
                 }
                 Label {
                     anchors.horizontalCenter: parent.horizontalCenter
                     text: "Try another ID or disable the filter."
-                    color: "#7e91a5"
+                    color: Colors.placeholder
                 }
             }
         }
@@ -237,7 +238,7 @@ Panel {
             spacing: 3
             Label {
                 text: backend.selectedCount > 1 ? backend.selectedCount + " selected · active ID: " + (owner.d.itemId ?? "-") : backend.selected >= 0 && backend.visibleIndex() >= 0 ? "Selected ID: " + (owner.d.itemId ?? "-") : ""
-                color: "#a1adb5"
+                color: Colors.muted
                 font.pixelSize: 11
             }
             Item {
@@ -245,7 +246,7 @@ Panel {
             }
             Label {
                 text: backend.count + " objects"
-                color: "#a1adb5"
+                color: Colors.muted
                 font.pixelSize: 11
             }
         }

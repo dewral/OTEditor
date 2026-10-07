@@ -1,3 +1,4 @@
+import "Theme.js" as Colors
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -22,7 +23,7 @@ Dialog {
         }
         Label {
             text: "Current format: " + (backend.info.groups ? "frame groups enabled" : "single group")
-            color: "#a9bdcf"
+            color: Colors.muted
         }
         Button {
             text: "Add walking groups"

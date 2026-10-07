@@ -1,3 +1,4 @@
+import "Theme.js" as Colors
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -50,7 +51,7 @@ Dialog {
                 width: 24
                 height: 20
                 color: owner.paletteColor(picker.selectedIndex)
-                border.color: "#8e9ba4"
+                border.color: Colors.placeholder
             }
             Label {
                 text: "Color index: " + picker.selectedIndex

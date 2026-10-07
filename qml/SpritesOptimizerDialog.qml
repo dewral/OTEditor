@@ -1,3 +1,4 @@
+import "Theme.js" as Colors
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -29,7 +30,7 @@ Dialog {
             text: compactSpriteIds.checked ? "Sprite IDs will change; external references may need updating." : "Sprite IDs stay unchanged. Compile to save the optimized SPR."
             wrapMode: Text.Wrap
             Layout.fillWidth: true
-            color: "#a9bdcf"
+            color: Colors.muted
         }
         RowLayout {
             Layout.fillWidth: true

@@ -1,3 +1,4 @@
+import "Theme.js" as Colors
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -22,7 +23,7 @@ ColumnLayout {
         indicator: Rectangle {
             width: 16; height: 16
             y: (flagControl.height - height) / 2
-            color: flagControl.checked ? "#399ee8" : "#1c2022"
+            color: flagControl.checked ? Colors.accent : Colors.background
             border.color: "#9aabb9"
             Label { anchors.centerIn: parent; text: "✓"; font.pixelSize: 14; visible: flagControl.checked; color: "#ffffff" }
         }

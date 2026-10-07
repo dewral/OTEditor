@@ -1,3 +1,4 @@
+import "Theme.js" as Colors
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -58,7 +59,7 @@ Dialog {
             }
             Label {
                 text: importGraphicsVersion.value === 0 ? "Auto detect" : "e.g. 1098 = 10.98"
-                color: "#a1adb5"
+                color: Colors.muted
             }
         }
         RowLayout {
@@ -100,7 +101,7 @@ Dialog {
             }
             Label {
                 text: "ends at " + (importTargetFirst.value + importSourceLast.value - importSourceFirst.value)
-                color: "#a1adb5"
+                color: Colors.muted
             }
         }
         Label {

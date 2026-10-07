@@ -1,3 +1,4 @@
+import "Theme.js" as Colors
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -14,8 +15,8 @@ ToolBar {
     signal propertiesRequested()
     height: 46
     background: Rectangle {
-        color: "#1c2022"
-        Rectangle { anchors.bottom: parent.bottom; width: parent.width; height: 1; color: "#303638" }
+        color: Colors.surface
+        Rectangle { anchors.bottom: parent.bottom; width: parent.width; height: 1; color: Colors.border }
     }
     component Command: ToolButton {
         id: command
@@ -33,7 +34,7 @@ ToolBar {
         }
         background: Rectangle {
             radius: 4
-            color: command.down ? "#363c3f" : command.hovered ? "#2b3134" : "transparent"
+            color: command.down ? Colors.pressed : command.hovered ? Colors.hover : "transparent"
         }
         ToolTip.visible: hovered
         ToolTip.delay: 600
@@ -42,7 +43,7 @@ ToolBar {
     component Divider: Rectangle {
         implicitWidth: 1
         implicitHeight: 28
-        color: "#303638"
+        color: Colors.border
         Layout.leftMargin: 5
         Layout.rightMargin: 5
     }
@@ -69,7 +70,7 @@ ToolBar {
         Command { symbol: "settings"; description: "Item properties"; enabled: root.owner.editable; onClicked: root.propertiesRequested() }
         Divider {}
         Item { Layout.fillWidth: true }
-        Label { text: "DAT / SPR  \u2022  QML \u2022 C++"; color: "#d4dce2"; font.pixelSize: 12 }
+        Label { text: "DAT / SPR  \u2022  QML \u2022 C++"; color: Colors.muted; font.pixelSize: 12 }
         Rectangle { implicitWidth: 7; implicitHeight: 7; radius: 4; color: root.backend.dirty ? "#e7b467" : "#c6d4e4"; Layout.leftMargin: 14; Layout.rightMargin: 10 }
         ToolButton {
             id: projectButton
@@ -82,14 +83,14 @@ ToolBar {
                 spacing: 12
                 Label {
                     text: root.backend.loaded ? "Project: " + root.backend.info.folder.toString().replace(/\\/g, "/").split("/").filter(function(part) { return part.length > 0 }).pop() + "/" : "No project loaded"
-                    color: "#d4dce2"
+                    color: Colors.muted
                     font.pixelSize: 12
                     elide: Text.ElideMiddle
                     Layout.maximumWidth: 250
                 }
                 Image { source: "qrc:/assets/ui/chevron.svg"; sourceSize: Qt.size(16, 16); Layout.preferredWidth: 16; Layout.preferredHeight: 16 }
             }
-            background: Rectangle { radius: 4; color: projectButton.hovered ? "#2b3134" : "transparent" }
+            background: Rectangle { radius: 4; color: projectButton.hovered ? Colors.hover : "transparent" }
             onClicked: projectMenu.open()
             Menu {
                 id: projectMenu

@@ -1,3 +1,4 @@
+import "Theme.js" as Colors
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -159,7 +160,7 @@ Item {
         property var dataSource: inspector.draft
         spacing: 8
         Layout.alignment: Qt.AlignRight
-        Label { text: caption+":"; color: "#c6ced3"; Layout.preferredWidth: 120; horizontalAlignment: Text.AlignRight }
+        Label { text: caption+":"; color: Colors.muted; Layout.preferredWidth: 120; horizontalAlignment: Text.AlignRight }
         SpinBox { from: minimum; to: maximum; value: dataSource[field] ?? minimum; enabled: available && (inspector.editable || (textureField && Backend.loaded && Backend.selected>=0)); editable: true; implicitWidth: 144; implicitHeight: 30; onValueModified: {
             if (textureField && !inspector.isItem) {
                 if (Backend.setTextureValue(inspector.outfitGroup,field,value)) {
@@ -175,7 +176,7 @@ Item {
             visible: numberField.field==="lightColor" || numberField.field==="minimapColor"
             width: 26; height: 20
             color: inspector.paletteColor(inspector.draft[numberField.field]||0)
-            border.color: "#8e9ba4"
+            border.color: Colors.placeholder
             opacity: numberField.available ? 1 : 0.4
             MouseArea {
                 anchors.fill: parent
@@ -194,7 +195,7 @@ Item {
         property bool wide: false
         Layout.fillWidth: wide
         Layout.alignment: Qt.AlignRight
-        Label { text: choiceRow.caption+":"; color: "#c6ced3"; Layout.preferredWidth: choiceRow.wide ? 32 : 120; horizontalAlignment: Text.AlignRight }
+        Label { text: choiceRow.caption+":"; color: Colors.muted; Layout.preferredWidth: choiceRow.wide ? 32 : 120; horizontalAlignment: Text.AlignRight }
         ComboBox {
             Layout.fillWidth: choiceRow.wide
             implicitWidth: 170; implicitHeight: 26
@@ -220,8 +221,8 @@ Item {
             implicitWidth: 30; implicitHeight: 16
             x: 0; y: Math.round((toggleControl.height-height)/2)
             radius: height/2
-            color: toggleControl.checked ? "#399ee8" : "#363d41"
-            border.color: toggleControl.checked ? "#6db9ef" : "#707a81"
+            color: toggleControl.checked ? Colors.accent : Colors.pressed
+            border.color: toggleControl.checked ? Colors.accent : "#707a81"
             border.width: 1
             Rectangle {
                 width: 12; height: 12; radius: 6
@@ -233,7 +234,7 @@ Item {
         }
         contentItem: Text {
             leftPadding: toggleControl.indicator.width+toggleControl.spacing
-            text: toggleControl.text; color: "#e0e5e8"
+            text: toggleControl.text; color: Colors.text
             font: toggleControl.font
             verticalAlignment: Text.AlignVCenter
             elide: Text.ElideRight
@@ -254,7 +255,7 @@ Item {
         indicator: Rectangle {
             width: 16; height: 16; radius: 8
             x: 0; y: Math.round((placementRadio.height-height)/2)
-            color: "#2b3033"; border.color: placementRadio.checked ? "#4db4ec" : "#596672"; border.width: 1
+            color: Colors.button; border.color: placementRadio.checked ? Colors.accent : "#596672"; border.width: 1
             Rectangle {
                 anchors.centerIn: parent; width: 8; height: 8; radius: 4
                 visible: placementRadio.checked; color: "#e7f5ff"
@@ -262,7 +263,7 @@ Item {
         }
         contentItem: Text {
             leftPadding: placementRadio.indicator.width+placementRadio.spacing
-            text: placementRadio.text; color: "#e0e5e8"; font: placementRadio.font
+            text: placementRadio.text; color: Colors.text; font: placementRadio.font
             verticalAlignment: Text.AlignVCenter
         }
     }
@@ -276,7 +277,7 @@ Item {
         label: Rectangle {
             x: 10; height: 27
             width: groupLabel.implicitWidth+12
-            color: "#202426"
+            color: Colors.surface
             Flag {
                 id: groupLabel
                 anchors { left: parent.left; leftMargin: 6; verticalCenter: parent.verticalCenter }
@@ -284,14 +285,14 @@ Item {
                 enabled: inspector.editable && group.supported
             }
         }
-        background: Rectangle { y: 12; height: parent.height-12; color: "#202426"; border.color: "#343a3e"; radius: 2 }
+        background: Rectangle { y: 12; height: parent.height-12; color: Colors.surface; border.color: Colors.border; radius: 2 }
     }
     component Section: GroupBox {
         id: section
         Layout.fillWidth: true
         topPadding: 29; bottomPadding: 10; leftPadding: 10; rightPadding: 10
-        label: Label { text: section.title.toUpperCase(); color: "#d9e5f0"; font.bold: true; font.pixelSize: 11; leftPadding: 2 }
-        background: Item { Rectangle { x: 0; y: 20; width: parent.width; height: 1; color: "#343a3e" } }
+        label: Label { text: section.title.toUpperCase(); color: Colors.text; font.bold: true; font.pixelSize: 11; leftPadding: 2 }
+        background: Item { Rectangle { x: 0; y: 20; width: parent.width; height: 1; color: Colors.border } }
     }
 
     ColumnLayout {
@@ -322,9 +323,9 @@ Item {
                                 Layout.fillWidth: true; columns: inspector.width<540 ? 1 : 2
                                 RowLayout {
                                     Layout.fillWidth: true
-                                    Label { text: "Zoom:"; color: "#c6ced3" }
+                                    Label { text: "Zoom:"; color: Colors.muted }
                                     Slider { from: 0.5; to: 10; value: inspector.textureZoom; stepSize: 0.1; Layout.preferredWidth: 100; onMoved: inspector.textureZoom=value }
-                                    Label { text: inspector.textureZoom.toFixed(1)+"x"; color: "#83cafa" }
+                                    Label { text: inspector.textureZoom.toFixed(1)+"x"; color: Colors.accent }
                                     Repeater {
                                         model: inspector.isOutfit ? [["↑","North"],["→","East"],["↓","South"],["←","West"]] : []
                                         Tool {
@@ -335,7 +336,7 @@ Item {
                                         }
                                     }
                                     Item { Layout.fillWidth: true }
-                                    Label { text: inspector.isOutfit ? ["North","East","South","West"][inspector.outfitDirection] : "South"; color: "#a1adb5" }
+                                    Label { text: inspector.isOutfit ? ["North","East","South","West"][inspector.outfitDirection] : "South"; color: Colors.muted }
                                 }
                                 RowLayout {
                                     Layout.alignment: Qt.AlignRight
@@ -485,43 +486,43 @@ Item {
                                         z: 4
                                         visible: textureDropArea.containsDrag
                                         color: "transparent"
-                                        border.color: "#6db9ef"
+                                        border.color: Colors.accent
                                         border.width: 2
                                     }
                                 }
                             }
-                            Label { visible: !inspector.isOutfit && inspector.patternCount>inspector.shownPatternCount; text: "Showing first " + inspector.shownPatternCount + " of " + inspector.patternCount + " patterns"; color: "#a1adb5" }
+                            Label { visible: !inspector.isOutfit && inspector.patternCount>inspector.shownPatternCount; text: "Showing first " + inspector.shownPatternCount + " of " + inspector.patternCount + " patterns"; color: Colors.muted }
                             RowLayout {
                                 visible: Number(inspector.activeFrameGroup.frames||1)>1
                                 Layout.alignment: Qt.AlignRight
-                                Label { text: "Animations:"; color: "#c6ced3" }
+                                Label { text: "Animations:"; color: Colors.muted }
                                 Slider {
                                     from: 0; to: Math.max(0,Number(inspector.activeFrameGroup.frames||1)-1); stepSize: 1
                                     value: inspector.previewFrame; Layout.preferredWidth: 100
                                     onMoved: { inspector.previewFrame=Math.round(value); inspector.animate=false }
                                 }
-                                Label { text: (inspector.previewFrame+1)+"/"+(inspector.activeFrameGroup.frames||1); color: "#e0e5e8"; Layout.preferredWidth: 40 }
+                                Label { text: (inspector.previewFrame+1)+"/"+(inspector.activeFrameGroup.frames||1); color: Colors.text; Layout.preferredWidth: 40 }
                                 Tool { text: inspector.animate ? "Ⅱ" : "▶"; tip: inspector.animate ? "Pause animation" : "Play animation"; implicitWidth: 26; implicitHeight: 24; onClicked: inspector.animate=!inspector.animate }
                             }
                             RowLayout {
                                 visible: (inspector.isItem || Backend.category===2) && Boolean(Backend.info.durations) && Number(inspector.activeFrameGroup.frames||1)>1
                                 Layout.alignment: Qt.AlignRight
-                                Label { text: "Minimum duration ("+inspector.totalDuration("minimum")+" ms):"; color: "#c6ced3" }
+                                Label { text: "Minimum duration ("+inspector.totalDuration("minimum")+" ms):"; color: Colors.muted }
                                 SpinBox { id: minimumDuration; objectName: "minimumFrameDuration"; from: 1; to: 60000; value: 100; editable: true; implicitWidth: 144; implicitHeight: 30; onValueModified: inspector.applyFrameDuration("minimum") }
                             }
                             RowLayout {
                                 visible: (inspector.isItem || Backend.category===2) && Boolean(Backend.info.durations) && Number(inspector.activeFrameGroup.frames||1)>1
                                 Layout.alignment: Qt.AlignRight
-                                Label { text: "Maximum duration ("+inspector.totalDuration("maximum")+" ms):"; color: "#c6ced3" }
+                                Label { text: "Maximum duration ("+inspector.totalDuration("maximum")+" ms):"; color: Colors.muted }
                                 SpinBox { id: maximumDuration; objectName: "maximumFrameDuration"; from: 1; to: 60000; value: 100; editable: true; implicitWidth: 144; implicitHeight: 30; onValueModified: inspector.applyFrameDuration("maximum") }
                             }
-                            Rectangle { Layout.fillWidth: true; height: 1; color: "#343a3e" }
+                            Rectangle { Layout.fillWidth: true; height: 1; color: Colors.border }
                             ListView {
                                 Layout.fillWidth: true; Layout.preferredHeight: 70; visible: inspector.filmVisible; orientation: ListView.Horizontal; spacing: 5; clip: true
                                 model: inspector.activeFrameGroup.frames||1
                                 delegate: Rectangle {
                                     required property int index
-                                    width: 62; height: 66; color: inspector.previewFrame===index ? "#293e4c" : "#23282b"; border.color: "#3c4449"
+                                    width: 62; height: 66; color: inspector.previewFrame===index ? Colors.selected : Colors.surface; border.color: Colors.border
                                     Image { anchors.horizontalCenter: parent.horizontalCenter; y: 3; width: 44; height: 44; fillMode: Image.PreserveAspectFit; smooth: false; source: { let rev=Backend.revision; return Backend.preview(Backend.selected,index,inspector.outfitPattern,inspector.outfitGroup,inspector.isOutfit ? inspector.outfitLayer : -1) } }
                                     Label { anchors.horizontalCenter: parent.horizontalCenter; y: 48; text: index+1; font.pixelSize: 11 }
                                     MouseArea { anchors.fill: parent; onClicked: { inspector.previewFrame=index; inspector.animate=false } }
@@ -531,24 +532,24 @@ Item {
                             RowLayout {
                                 visible: inspector.isOutfit && Number(inspector.draft.frameGroupCount||1)>1
                                 Layout.alignment: Qt.AlignRight
-                                Label { text: "Group:"; color: "#c6ced3" }
+                                Label { text: "Group:"; color: Colors.muted }
                                 Slider {
                                     from: 0; to: Math.max(0,Number(inspector.draft.frameGroupCount||1)-1); stepSize: 1
                                     value: inspector.outfitGroup; Layout.preferredWidth: 100
                                     onMoved: { inspector.outfitGroup=Math.round(value); inspector.outfitLayer=0; inspector.previewFrame=0 }
                                 }
-                                Label { text: inspector.outfitGroup===0 ? "Idle / Stand" : "Walking"; color: "#e0e5e8"; Layout.preferredWidth: 75 }
+                                Label { text: inspector.outfitGroup===0 ? "Idle / Stand" : "Walking"; color: Colors.text; Layout.preferredWidth: 75 }
                             }
                             RowLayout {
                                 visible: inspector.isOutfit && Number(inspector.activeFrameGroup.layers||1)>1
                                 Layout.alignment: Qt.AlignRight
-                                Label { text: "Layer:"; color: "#c6ced3" }
+                                Label { text: "Layer:"; color: Colors.muted }
                                 Slider {
                                     from: 0; to: Math.max(0,Number(inspector.activeFrameGroup.layers||1)-1); stepSize: 1
                                     value: inspector.outfitLayer; Layout.preferredWidth: 100
                                     onMoved: inspector.outfitLayer=Math.round(value)
                                 }
-                                Label { text: (inspector.outfitLayer+1)+"/"+(inspector.activeFrameGroup.layers||1); color: "#e0e5e8"; Layout.preferredWidth: 75 }
+                                Label { text: (inspector.outfitLayer+1)+"/"+(inspector.activeFrameGroup.layers||1); color: Colors.text; Layout.preferredWidth: 75 }
                             }
                             Toggle { text: "Show Crop Size"; implicitHeight: 24; Layout.maximumHeight: 24; checked: inspector.cropVisible; onClicked: inspector.cropVisible=checked }
                             Toggle { text: "Show Grid"; implicitHeight: 24; Layout.maximumHeight: 24; checked: inspector.gridVisible; onClicked: inspector.gridVisible=checked }
@@ -639,7 +640,7 @@ Item {
                     PropertyGroup { caption: "Market"; field: "hasMarket"; visible: inspector.isItem && inspector.clientVersion>=940
                         ColumnLayout { anchors.left: parent.left; anchors.right: parent.right; spacing: 3
                             RowLayout { Layout.fillWidth: true
-                                Label { text: "Name:"; color: "#c6ced3" }
+                                Label { text: "Name:"; color: Colors.muted }
                                 TextField { Layout.fillWidth: true; text: inspector.draft.marketName||""; enabled: Boolean(inspector.draft.hasMarket); onTextEdited: inspector.edit("marketName",text) }
                             }
                             ChoiceField { caption: "Category"; field: "marketCategory"; available: Boolean(inspector.draft.hasMarket); choices: ["All","Armors","Amulets","Boots","Containers","Decoration","Food","Helmets and Hats","Legs","Others","Potions","Rings","Runes","Shields","Tools","Valuables","Ammunition","Axes","Clubs","Distance Weapons","Swords","Wands and Rods","Premium Scrolls","Tibia Coins","Creature Products"] }
@@ -695,7 +696,7 @@ Item {
                 id: serverScroll; clip: true; contentWidth: availableWidth
                 ColumnLayout {
                     width: serverScroll.availableWidth; spacing: 10
-                    Label { text: Backend.info.otb ? (Backend.serverId>=0 ? "Server ID: "+Backend.serverId+"  ·  Client ID: "+(inspector.draft.itemId||"") : "No OTB entry for this item") : "No items.otb in this project"; color: "#a9bdcf"; wrapMode: Text.Wrap; Layout.fillWidth: true }
+                    Label { text: Backend.info.otb ? (Backend.serverId>=0 ? "Server ID: "+Backend.serverId+"  ·  Client ID: "+(inspector.draft.itemId||"") : "No OTB entry for this item") : "No items.otb in this project"; color: Colors.muted; wrapMode: Text.Wrap; Layout.fillWidth: true }
                     Button { text: "Create items.otb"; visible: Backend.loaded && inspector.isItem && !Boolean(Backend.info.otb); onClicked: Backend.createOtbFile() }
                     Button { text: "Create server item"; visible: inspector.isItem && Boolean(Backend.info.otb) && Backend.serverId<0; enabled: inspector.editable && Number(inspector.draft.itemId||0)<=65535; onClicked: Backend.createServerItem() }
                     ServerAttributesPanel {
@@ -706,7 +707,7 @@ Item {
                     Label {
                         visible: Backend.serverId >= 0 && String(inspector.serverDraft.nameSource || "").length > 0
                         text: "Name source: " + inspector.serverDraft.nameSource + " · server ID " + Backend.serverId
-                        color: "#a1adb5"
+                        color: Colors.muted
                         Layout.fillWidth: true
                         wrapMode: Text.Wrap
                         ToolTip.visible: nameSourceArea.containsMouse

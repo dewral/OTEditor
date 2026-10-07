@@ -1,3 +1,4 @@
+import "Theme.js" as Colors
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -22,7 +23,7 @@ Dialog {
         }
         Label {
             text: "Current format: " + (backend.info.durations ? "frame durations enabled" : "no frame durations")
-            color: "#a9bdcf"
+            color: Colors.muted
         }
         RowLayout {
             Label { text: "Minimum (ms)"; Layout.preferredWidth: 110 }

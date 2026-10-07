@@ -1,3 +1,4 @@
+import "Theme.js" as Colors
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -12,13 +13,13 @@ Dialog {
     modal: true
     padding: 0
     standardButtons: Dialog.NoButton
-    background: Rectangle { color: "#202426"; border.color: "#343a3e"; radius: 3 }
+    background: Rectangle { color: Colors.surface; border.color: Colors.border; radius: 3 }
     header: Rectangle {
-        implicitHeight: 32; color: "#282d30"; border.color: "#343a3e"
-        Label { anchors.left: parent.left; anchors.leftMargin: 12; anchors.verticalCenter: parent.verticalCenter; text: "Slicer"; font.bold: true; color: "#e5eaf1" }
+        implicitHeight: 32; color: Colors.button; border.color: Colors.border
+        Label { anchors.left: parent.left; anchors.leftMargin: 12; anchors.verticalCenter: parent.verticalCenter; text: "Slicer"; font.bold: true; color: Colors.text }
     }
     footer: Rectangle {
-        implicitHeight: 40; color: "#282d30"; border.color: "#343a3e"
+        implicitHeight: 40; color: Colors.button; border.color: Colors.border
         Tool { anchors.right: parent.right; anchors.rightMargin: 8; anchors.verticalCenter: parent.verticalCenter; width: 88; text: "Close"; onClicked: slicer.close() }
     }
     property var backend
@@ -34,8 +35,8 @@ Dialog {
         indicator: Rectangle {
             implicitWidth: 24; implicitHeight: 12
             x: 0; y: (toggle.height-height)/2; radius: 6
-            color: toggle.checked ? "#399ee8" : "#363d41"
-            border.color: toggle.checked ? "#6db9ef" : "#707a81"
+            color: toggle.checked ? Colors.accent : Colors.pressed
+            border.color: toggle.checked ? Colors.accent : "#707a81"
             Rectangle {
                 width: 10; height: 10; radius: 5; y: 1
                 x: toggle.checked ? parent.width-width-1 : 1
@@ -44,7 +45,7 @@ Dialog {
         }
         contentItem: Text {
             leftPadding: toggle.indicator.width+toggle.spacing
-            text: toggle.text; color: toggle.enabled ? "#e0e5e8" : "#77828e"
+            text: toggle.text; color: toggle.enabled ? Colors.text : Colors.disabled
             font: toggle.font; verticalAlignment: Text.AlignVCenter
         }
     }
@@ -52,10 +53,10 @@ Dialog {
         id: spin
         implicitHeight: 22; leftPadding: 18; rightPadding: 18
         font.pixelSize: 11
-        background: Rectangle { color: "#1c2022"; border.color: "#3c4449" }
+        background: Rectangle { color: Colors.background; border.color: Colors.border }
         contentItem: TextInput {
             text: spin.textFromValue(spin.value,spin.locale)
-            color: "#e0e5e8"; font: spin.font
+            color: Colors.text; font: spin.font
             horizontalAlignment: TextInput.AlignHCenter
             verticalAlignment: TextInput.AlignVCenter
             readOnly: !spin.editable; validator: spin.validator
@@ -64,15 +65,15 @@ Dialog {
         }
         down.indicator: Rectangle {
             x: 0; y: 0; width: 18; height: spin.height
-            color: spin.down.pressed ? "#465564" : "#2b3033"
-            border.color: "#3c4449"
-            Text { anchors.centerIn: parent; text: "−"; color: spin.value>spin.from ? "#e0e5e8" : "#77828e"; font.pixelSize: 12 }
+            color: spin.down.pressed ? "#465564" : Colors.button
+            border.color: Colors.border
+            Text { anchors.centerIn: parent; text: "−"; color: spin.value>spin.from ? Colors.text : Colors.disabled; font.pixelSize: 12 }
         }
         up.indicator: Rectangle {
             x: spin.width-width; y: 0; width: 18; height: spin.height
-            color: spin.up.pressed ? "#465564" : "#2b3033"
-            border.color: "#3c4449"
-            Text { anchors.centerIn: parent; text: "+"; color: spin.value<spin.to ? "#e0e5e8" : "#77828e"; font.pixelSize: 12 }
+            color: spin.up.pressed ? "#465564" : Colors.button
+            border.color: Colors.border
+            Text { anchors.centerIn: parent; text: "+"; color: spin.value<spin.to ? Colors.text : Colors.disabled; font.pixelSize: 12 }
         }
     }
 
@@ -115,12 +116,12 @@ Dialog {
     ColumnLayout {
         anchors.fill: parent; spacing: 0
         Rectangle {
-            Layout.fillWidth: true; Layout.preferredHeight: 40; color: "#282d30"
-            border.color: "#343a3e"
+            Layout.fillWidth: true; Layout.preferredHeight: 40; color: Colors.button
+            border.color: Colors.border
             RowLayout {
                 anchors.fill: parent; anchors.leftMargin: 6; anchors.rightMargin: 6; spacing: 3
                 Tool { text: "▱"; Layout.preferredWidth: 32; tip: "Open image (Ctrl+O)"; onClicked: sourceDialog.open() }
-                Rectangle { Layout.preferredWidth: 1; Layout.preferredHeight: 23; color: "#343a3e" }
+                Rectangle { Layout.preferredWidth: 1; Layout.preferredHeight: 23; color: Colors.border }
                 Tool { text: "↻"; Layout.preferredWidth: 28; enabled: backend.slicerWidth>0; tip: "Rotate right 90°"; onClicked: { backend.slicerTransform("rotateRight"); slicer.clampSelection() } }
                 Tool { text: "↺"; Layout.preferredWidth: 28; enabled: backend.slicerWidth>0; tip: "Rotate left 90°"; onClicked: { backend.slicerTransform("rotateLeft"); slicer.clampSelection() } }
                 Tool { text: "↕"; Layout.preferredWidth: 28; enabled: backend.slicerWidth>0; tip: "Flip vertically"; onClicked: backend.slicerTransform("flipVertical") }
@@ -133,12 +134,12 @@ Dialog {
             Layout.margins: 6; spacing: 6
             Rectangle {
                 Layout.preferredWidth: 145; Layout.fillHeight: true
-                color: "#202426"; border.color: "#343a3e"
+                color: Colors.surface; border.color: Colors.border
                 ColumnLayout {
                     anchors.fill: parent; anchors.margins: 5; spacing: 4
                     Item { Layout.fillHeight: true }
                     Rectangle {
-                        Layout.fillWidth: true; Layout.preferredHeight: 54; color: "#202426"; border.color: "#343a3e"
+                        Layout.fillWidth: true; Layout.preferredHeight: 54; color: Colors.surface; border.color: Colors.border
                         ColumnLayout { anchors.fill: parent; anchors.margins: 5; spacing: 1
                             Label { text: "Sprite Dimension" }
                             ComboBox {
@@ -150,7 +151,7 @@ Dialog {
                         }
                     }
                     Rectangle {
-                        Layout.fillWidth: true; Layout.preferredHeight: 174; color: "#202426"; border.color: "#343a3e"
+                        Layout.fillWidth: true; Layout.preferredHeight: 174; color: Colors.surface; border.color: Colors.border
                         ColumnLayout { anchors.fill: parent; anchors.margins: 5; spacing: 2
                             Label { text: "Cells" }
                             SlicerToggle { id: subdivisions; text: "Subdivisions"; Layout.fillWidth: true; Layout.preferredHeight: 21 }
@@ -175,7 +176,7 @@ Dialog {
                         }
                     }
                     Rectangle {
-                        Layout.fillWidth: true; Layout.preferredHeight: 43; color: "#202426"; border.color: "#343a3e"
+                        Layout.fillWidth: true; Layout.preferredHeight: 43; color: Colors.surface; border.color: Colors.border
                         ColumnLayout { anchors.fill: parent; anchors.margins: 4; spacing: 0
                             Label { text: "Zoom  " + Math.round(slicer.zoom*100) + "%" }
                             Slider { id: zoomControl; Layout.fillWidth: true; Layout.preferredHeight: 20; from: 0.1; to: 5; value: 1; onValueChanged: slicer.zoom=value }
@@ -189,14 +190,14 @@ Dialog {
                 }
             }
             Rectangle {
-                Layout.fillWidth: true; Layout.fillHeight: true; color: "#202426"; border.color: "#343a3e"
-                Rectangle { x: 17; y: 13; width: parent.width-23; height: 1; color: "#151819" }
+                Layout.fillWidth: true; Layout.fillHeight: true; color: Colors.surface; border.color: Colors.border
+                Rectangle { x: 17; y: 13; width: parent.width-23; height: 1; color: Colors.background }
                 Canvas {
                     id: topRuler; x: 17; y: 2; width: parent.width-23; height: 14
                     onWidthChanged: requestPaint()
                     onPaint: {
                         const ctx=getContext("2d"); ctx.clearRect(0,0,width,height)
-                        ctx.fillStyle="#282d30"; ctx.fillRect(0,0,width,height)
+                        ctx.fillStyle=Colors.button; ctx.fillRect(0,0,width,height)
                         ctx.strokeStyle="#94a9bd"; ctx.fillStyle="#b9cadd"; ctx.font="8px sans-serif"
                         for(let i=0;i<width;i+=8) { const n=Math.round((i+imageViewport.contentX)/slicer.zoom); ctx.beginPath(); ctx.moveTo(i,14); ctx.lineTo(i,n%32===0?4:9); ctx.stroke(); if(n%64===0)ctx.fillText(n,i+2,7) }
                     }
@@ -208,7 +209,7 @@ Dialog {
                     onHeightChanged: requestPaint()
                     onPaint: {
                         const ctx=getContext("2d"); ctx.clearRect(0,0,width,height)
-                        ctx.fillStyle="#282d30"; ctx.fillRect(0,0,width,height)
+                        ctx.fillStyle=Colors.button; ctx.fillRect(0,0,width,height)
                         ctx.strokeStyle="#94a9bd"
                         for(let i=0;i<height;i+=8) { const n=Math.round((i+imageViewport.contentY)/slicer.zoom); ctx.beginPath(); ctx.moveTo(14,i); ctx.lineTo(n%32===0?4:9,i); ctx.stroke() }
                     }
@@ -272,7 +273,7 @@ Dialog {
                 }
             }
             Rectangle {
-                Layout.preferredWidth: 145; Layout.fillHeight: true; color: "#202426"; border.color: "#343a3e"
+                Layout.preferredWidth: 145; Layout.fillHeight: true; color: Colors.surface; border.color: Colors.border
                 ColumnLayout { anchors.fill: parent; anchors.margins: 5; spacing: 4
                     Label { text: "Sprites ("+backend.slicerCount+")" }
                     ListView {
@@ -280,7 +281,7 @@ Dialog {
                         model: backend.slicerCount; spacing: 2
                         delegate: Rectangle {
                             width: ListView.view.width; height: 38
-                            color: index%2 ? "#283039" : "#2c3540"; border.color: "#343a3e"
+                            color: index%2 ? "#283039" : "#2c3540"; border.color: Colors.border
                             Row { anchors.verticalCenter: parent.verticalCenter; spacing: 5
                                 Image { width: 34; height: 34; fillMode: Image.PreserveAspectFit; smooth: false; source: "image://itempreview/slicer/tile/"+index+"?v="+backend.slicerRevision }
                                 Label { text: String(index+1); anchors.verticalCenter: parent.verticalCenter }

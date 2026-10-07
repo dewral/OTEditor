@@ -1,3 +1,4 @@
+import "Theme.js" as Colors
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -79,7 +80,7 @@ Dialog {
         }
         Label {
             text: serverFolderPath.text.length ? serverFolderPath.text : "Client files only — server attributes will be hidden"
-            color: "#a1adb5"
+            color: Colors.muted
             font.pixelSize: 11
             elide: Text.ElideMiddle
             Layout.fillWidth: true
@@ -207,35 +208,35 @@ Dialog {
                 }
                 Label {
                     text: loadDialog.previewData.datSignature || "—"
-                    color: "#83cafa"
+                    color: Colors.accent
                 }
                 Label {
                     text: "Items:"
                 }
                 Label {
                     text: loadDialog.previewData.items ?? "—"
-                    color: "#83cafa"
+                    color: Colors.accent
                 }
                 Label {
                     text: "Outfits:"
                 }
                 Label {
                     text: loadDialog.previewData.outfits ?? "—"
-                    color: "#83cafa"
+                    color: Colors.accent
                 }
                 Label {
                     text: "Effects:"
                 }
                 Label {
                     text: loadDialog.previewData.effects ?? "—"
-                    color: "#83cafa"
+                    color: Colors.accent
                 }
                 Label {
                     text: "Missiles:"
                 }
                 Label {
                     text: loadDialog.previewData.missiles ?? "—"
-                    color: "#83cafa"
+                    color: Colors.accent
                 }
             }
         }
@@ -251,14 +252,14 @@ Dialog {
                 }
                 Label {
                     text: loadDialog.previewData.sprSignature || "—"
-                    color: "#83cafa"
+                    color: Colors.accent
                 }
                 Label {
                     text: "Sprites:"
                 }
                 Label {
                     text: loadDialog.previewData.sprites ?? "—"
-                    color: "#83cafa"
+                    color: Colors.accent
                 }
             }
         }

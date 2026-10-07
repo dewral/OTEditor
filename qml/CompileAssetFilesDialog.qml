@@ -1,3 +1,4 @@
+import "Theme.js" as Colors
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Dialogs
@@ -109,7 +110,7 @@ Dialog {
                             ScrollIndicator.vertical: ScrollIndicator {}
                         }
                         background: Rectangle {
-                            color: "#202426"
+                            color: Colors.surface
                             border.color: "#737d84"
                         }
                     }
@@ -135,7 +136,7 @@ Dialog {
             text: "The open project stays unchanged. Turning off Frame Groups keeps only the first outfit group; turning off Improved animations removes frame timings."
             Layout.fillWidth: true
             wrapMode: Text.Wrap
-            color: "#a9bdcf"
+            color: Colors.muted
         }
         Label {
             text: compileDialog.error
