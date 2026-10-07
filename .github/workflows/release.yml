@@ -36,7 +36,10 @@ jobs:
           $env:PATH = "$env:QT_ROOT_DIR/bin;$env:PATH"
           $env:QT_QPA_PLATFORM = 'offscreen'
           ctest --test-dir build/ci -C Release --output-on-failure
-          if ($LASTEXITCODE) { throw 'Tests failed.' }
+          if ($LASTEXITCODE) {
+            Get-Content build/ci/editor-test-results.txt,build/ci/ai-test-results.txt
+            throw 'Tests failed.'
+          }
       - name: Package and validate
         shell: pwsh
         run: |
