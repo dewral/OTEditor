@@ -60,3 +60,9 @@ OTB round-trip tests covered 37 files and 765,403 records across major versions 
 ## Credits
 
 ObjectBuilder version metadata is covered by [its MIT license](assets/ObjectBuilder-LICENSE.txt). Client graphics are not included in the release package.
+
+## Automated releases and updates
+
+Each push to `main` builds and tests a Windows x64 package through GitHub Actions. The stable `1.0` release tag follows the published commit; the application version comes from CMake. Windows and source archives and SHA-256 checksums are uploaded before `update-manifest.json` advertises the new version.
+
+The app checks this channel at startup and from Help. Installation verifies the archive checksum, waits for all editor windows to close, replaces the installation with rollback on failure, and restarts the editor. Save pending project changes before installing. Increase the CMake application version for each update.

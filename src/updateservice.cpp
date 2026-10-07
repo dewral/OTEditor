@@ -97,7 +97,7 @@ void UpdateService::checkForUpdates()
 
 void UpdateService::requestRelease()
 {
-    const QString endpoint = QStringLiteral("%1/releases/latest")
+    const QString endpoint = QStringLiteral("%1/releases/tags/1.0")
                                  .arg(QLatin1String(kRepositoryApi));
     startRequest(QUrl(endpoint), [this](QByteArray payload) { processRelease(payload); });
 }

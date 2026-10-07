@@ -1,0 +1,71 @@
+name: Windows stable release
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: oteditor-release-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  windows:
+    if: github.ref == 'refs/heads/main'
+    runs-on: windows-2022
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Qt 6.10.2
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.10.2'
+          arch: win64_msvc2022_64
+          cache: true
+      - name: Install liblzma
+        shell: pwsh
+        run: |
+          & "$env:VCPKG_INSTALLATION_ROOT/vcpkg.exe" install liblzma:x64-windows-static-md
+          if ($LASTEXITCODE) { throw 'liblzma installation failed.' }
+      - name: Build and test
+        shell: pwsh
+        run: |
+          cmake -S . -B build/ci -G "Visual Studio 17 2022" -A x64 "-DCMAKE_PREFIX_PATH=$env:QT_ROOT_DIR" "-DCMAKE_TOOLCHAIN_FILE=$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" -DVCPKG_TARGET_TRIPLET=x64-windows-static-md
+          if ($LASTEXITCODE) { throw 'Configuration failed.' }
+          cmake --build build/ci --config Release --parallel 4
+          if ($LASTEXITCODE) { throw 'Build failed.' }
+          $env:PATH = "$env:QT_ROOT_DIR/bin;$env:PATH"
+          $env:QT_QPA_PLATFORM = 'offscreen'
+          ctest --test-dir build/ci -C Release --output-on-failure
+          if ($LASTEXITCODE) { throw 'Tests failed.' }
+      - name: Package and validate
+        shell: pwsh
+        run: |
+          ./scripts/package-release.ps1 -BuildBin "$pwd/build/ci/bin/Release" -QtRoot $env:QT_ROOT_DIR -Repository $env:GITHUB_REPOSITORY
+          $manifest = Get-Content release/update-manifest.json -Raw | ConvertFrom-Json
+          if ((Get-FileHash release/OTEditor-windows-x64.zip).Hash.ToLowerInvariant() -ne $manifest.sha256) { throw 'Manifest checksum mismatch.' }
+          $env:QT_QPA_PLATFORM = 'offscreen'
+          $app = Start-Process release/OTEditor/OTEditor.exe -ArgumentList "--screenshot $pwd/build/ci/startup.png" -Wait -PassThru
+          if ($app.ExitCode -ne 0) { throw 'Packaged startup failed.' }
+          "RELEASE_VERSION=$($manifest.version)" | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Publish stable release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $assets = @('release/OTEditor-windows-x64.zip', 'release/OTEditor-source.zip', 'release/SHA256SUMS.txt')
+          "OTEditor $env:RELEASE_VERSION stable Windows x64 release. Extract the ZIP and run OTEditor.exe." | Set-Content release/release-notes.md -Encoding utf8NoBOM
+          gh release view 1.0 --repo $env:GITHUB_REPOSITORY *> $null
+          if ($LASTEXITCODE -eq 0) {
+            git tag --force 1.0 $env:GITHUB_SHA
+            git push origin refs/tags/1.0 --force
+            if ($LASTEXITCODE) { throw 'Release tag update failed.' }
+            gh release edit 1.0 --repo $env:GITHUB_REPOSITORY --target $env:GITHUB_SHA --title "OTEditor $env:RELEASE_VERSION" --notes-file release/release-notes.md --latest
+            if ($LASTEXITCODE) { throw 'Release metadata update failed.' }
+            gh release upload 1.0 @assets --repo $env:GITHUB_REPOSITORY --clobber
+          } else {
+            gh release create 1.0 @assets --repo $env:GITHUB_REPOSITORY --target $env:GITHUB_SHA --title "OTEditor $env:RELEASE_VERSION" --notes-file release/release-notes.md --latest
+          }
+          if ($LASTEXITCODE) { throw 'Release archive publication failed.' }
+          # Advertise the update only after all archives are available.
+          gh release upload 1.0 release/update-manifest.json --repo $env:GITHUB_REPOSITORY --clobber
+          if ($LASTEXITCODE) { throw 'Manifest publication failed.' }

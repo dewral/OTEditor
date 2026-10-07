@@ -2,3 +2,5 @@
 /dist/
 *.user
 *.log
+
+/release/

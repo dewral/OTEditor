@@ -519,6 +519,18 @@ ApplicationWindow {
                 Layout.fillWidth: true
             }
             Tool {
+                text: Updater.state === "available" ? "Update " + Updater.latestVersion
+                    : Updater.state === "downloading" ? "Downloading " + Math.round(Updater.downloadProgress * 100) + "%"
+                    : Updater.state === "error" ? "Update check failed · Retry" : ""
+                visible: text.length > 0
+                implicitHeight: 22
+                accent: Updater.state === "available"
+                onClicked: {
+                    updateDialog.open()
+                    if (Updater.state === "error") Updater.checkForUpdates()
+                }
+            }
+            Tool {
                 text: "Export…"
                 implicitHeight: 22
                 enabled: Backend.selected >= 0

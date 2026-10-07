@@ -42,6 +42,7 @@ int main(int argc,char **argv){
     if(objectColumns>=0&&objectColumns+1<args.size())
         if(auto control=engine.rootObjects().first()->findChild<QObject *>("objectColumns"))
             control->setProperty("value",args[objectColumns+1].toInt());
+    if (!args.contains("--screenshot")) QTimer::singleShot(1500, &updater, &UpdateService::checkForUpdates);
     int capture=args.indexOf("--screenshot");
     int inspect=args.indexOf("--inspect-tab");
     if(capture>=0 && inspect>=0 && inspect+1<args.size()) {
