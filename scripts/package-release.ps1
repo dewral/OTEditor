@@ -17,6 +17,7 @@ $package = Join-Path $output 'OTEditor'
 New-Item -ItemType Directory -Force $package | Out-Null
 Copy-Item -LiteralPath (Join-Path $BuildBin 'OTEditor.exe') -Destination $package -Force
 Copy-Item -LiteralPath (Join-Path $BuildBin 'OTEditorUpdater.exe') -Destination $package -Force
+Get-ChildItem -LiteralPath $BuildBin -Filter '*.dll' | Copy-Item -Destination $package -Force
 $deploy = Join-Path $QtRoot 'bin/windeployqt.exe'
 & $deploy --release --compiler-runtime --qmldir (Join-Path $root 'qml') (Join-Path $package 'OTEditor.exe')
 if ($LASTEXITCODE) { throw 'Qt application deployment failed.' }

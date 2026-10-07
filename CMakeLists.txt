@@ -57,6 +57,19 @@ target_link_libraries(OTEditor PRIVATE editorcore aispritecore Qt6::QuickControl
 target_compile_definitions(OTEditor PRIVATE OTEDITOR_VERSION="${PROJECT_VERSION}")
 set_target_properties(OTEditor PROPERTIES WIN32_EXECUTABLE TRUE RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 if(WIN32)
+    if(MSVC)
+        set(CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_SKIP TRUE)
+        include(InstallRequiredSystemLibraries)
+        if(NOT CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS)
+            message(FATAL_ERROR "The MSVC redistributable runtime could not be located")
+        endif()
+        foreach(runtime IN LISTS CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS)
+            add_custom_command(TARGET OTEditor POST_BUILD
+                COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+                    "${runtime}" "$<TARGET_FILE_DIR:OTEditor>"
+                VERBATIM)
+        endforeach()
+    endif()
     target_sources(OTEditor PRIVATE assets/oteditor.rc)
     qt_add_executable(OTEditorUpdater src/updater/main.cpp)
     target_link_libraries(OTEditorUpdater PRIVATE Qt6::Widgets)
