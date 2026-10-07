@@ -186,7 +186,7 @@ private slots:
     QCOMPARE(backend.count(),2);
     QCOMPARE(backend.details().value("itemId").toInt(),100);
     QVERIFY(!backend.details().value("isStackable").toBool());
-    QCOMPARE(backend.details().value("spriteIds").toList(),QVariantList({0}));
+    QCOMPARE(backend.details().value("spriteIds").toList(),QVariantList{QVariant(0)});
     QCOMPARE(backend.serverId(),-1);
     backend.select(1);
     QCOMPARE(backend.details().value("itemId").toInt(),101);
@@ -198,7 +198,7 @@ private slots:
     QCOMPARE(reopened.count(),2);
     reopened.select(0);
     QCOMPARE(reopened.details().value("itemId").toInt(),100);
-    QCOMPARE(reopened.details().value("spriteIds").toList(),QVariantList({0}));
+    QCOMPARE(reopened.details().value("spriteIds").toList(),QVariantList{QVariant(0)});
     reopened.select(1);
     QCOMPARE(reopened.details().value("itemId").toInt(),101);
     QVERIFY(reopened.details().value("isStackable").toBool());
@@ -207,7 +207,7 @@ private slots:
     QCOMPARE(reopened.details().value("itemId").toInt(),100);
     QVERIFY(reopened.removeObject());
     QCOMPARE(reopened.count(),1);
-    QCOMPARE(reopened.details().value("spriteIds").toList(),QVariantList({0}));
+    QCOMPARE(reopened.details().value("spriteIds").toList(),QVariantList{QVariant(0)});
  }
  void categoryObjectsCreateDuplicateAndRemoveRoundTrip() {
     QTemporaryDir dir; QVERIFY(dir.isValid()); fixture(dir.path());
@@ -223,7 +223,7 @@ private slots:
         QVERIFY(backend.removeObject());
         QCOMPARE(backend.count(),category==3?3:2);
         QCOMPARE(backend.details().value("itemId").toInt(),category==3?2:1);
-        QCOMPARE(backend.details().value("spriteIds").toList(),QVariantList({0}));
+        QCOMPARE(backend.details().value("spriteIds").toList(),QVariantList{QVariant(0)});
     }
     QVERIFY2(backend.compile(),qPrintable(backend.status()));
     EditorBackend reopened; QVERIFY2(reopened.openFolder(dir.path(),860),qPrintable(reopened.status()));
@@ -1526,7 +1526,7 @@ private slots:
     QCoreApplication::processEvents();
     QCOMPARE(backend.count(),2202);
     QCOMPARE(backend.details().value("itemId").toInt(),1100);
-    QCOMPARE(backend.details().value("spriteIds").toList(),QVariantList({0}));
+    QCOMPARE(backend.details().value("spriteIds").toList(),QVariantList{QVariant(0)});
     backend.filter("",true);
     QCOMPARE(backend.count(),2);
     QVERIFY(backend.selected()!=1000);
