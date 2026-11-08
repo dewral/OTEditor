@@ -75,6 +75,7 @@ public:
     bool hasSpriteData(quint32 spriteId) const;
     // Keeps IDs stable: the entry becomes an empty sprite instead of shifting IDs.
     Q_INVOKABLE bool removeSprite(int spriteId);
+    int trimClearedTail(const QSet<quint32> &usedIds);
     void discardImportedSprites(const QSet<quint32> &ids, const QSet<quint32> &usedIds);
 
     Q_INVOKABLE QString toLocalFile(const QUrl &url) const { return url.toLocalFile(); }
@@ -115,6 +116,7 @@ private:
     void cacheItemImage(const QString &key, const QImage &image);
     QByteArray rawSpriteBlock(uint32_t spriteId);
     void clearImageCaches();
+    void truncateSprites(uint32_t newCount);
 
     QFile m_file;
     uchar *m_mappedData = nullptr;

@@ -436,6 +436,35 @@ bool SprReader::removeSprite(int spriteId)
     emit dataChanged(index(spriteId - 1), index(spriteId - 1));
     return true;
 }
+int SprReader::trimClearedTail(const QSet<quint32> &usedIds)
+{
+    if (!m_loaded) return 0;
+    const uint32_t oldCount = m_spriteCount;
+    uint32_t newCount = oldCount;
+    while (newCount > 0 && !usedIds.contains(newCount)) {
+        const auto modified = m_modifiedSprites.constFind(newCount);
+        if (modified == m_modifiedSprites.cend() || !modified.value().isNull()) break;
+        --newCount;
+    }
+    if (newCount == oldCount) return 0;
+    truncateSprites(newCount);
+    clearImageCaches();
+    m_dirty = true;
+    emit dirtyChanged();
+    return int(oldCount - newCount);
+}
+void SprReader::truncateSprites(uint32_t newCount)
+{
+    const uint32_t oldCount = m_spriteCount;
+    beginRemoveRows({}, int(newCount), int(oldCount) - 1);
+    for (uint32_t id = newCount + 1; id <= oldCount; ++id)
+        m_modifiedSprites.remove(id);
+    m_offsets.resize(int(newCount));
+    if (!m_compactedBlocks.isEmpty()) m_compactedBlocks.resize(int(newCount));
+    m_spriteCount = newCount;
+    endRemoveRows();
+    emit spriteCountChanged();
+}
 void SprReader::discardImportedSprites(const QSet<quint32> &ids, const QSet<quint32> &usedIds)
 {
     if (!m_loaded || ids.isEmpty()) return;
@@ -443,16 +472,7 @@ void SprReader::discardImportedSprites(const QSet<quint32> &ids, const QSet<quin
     uint32_t newCount = oldCount;
     while (newCount > 0 && ids.contains(newCount) && !usedIds.contains(newCount))
         --newCount;
-    if (newCount < oldCount) {
-        beginRemoveRows({}, int(newCount), int(oldCount) - 1);
-        for (uint32_t id = newCount + 1; id <= oldCount; ++id)
-            m_modifiedSprites.remove(id);
-        m_offsets.resize(int(newCount));
-        if (!m_compactedBlocks.isEmpty()) m_compactedBlocks.resize(int(newCount));
-        m_spriteCount = newCount;
-        endRemoveRows();
-        emit spriteCountChanged();
-    }
+    if (newCount < oldCount) truncateSprites(newCount);
     int firstCleared = std::numeric_limits<int>::max();
     int lastCleared = -1;
     for (quint32 id : ids) {

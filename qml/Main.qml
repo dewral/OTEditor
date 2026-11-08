@@ -768,7 +768,7 @@ ApplicationWindow {
         modal: true
         standardButtons: Dialog.Ok | Dialog.Cancel
         Label {
-            text: "The sprite slot will become transparent. Later IDs stay unchanged.\nObjects referencing this ID will display an empty sprite."
+            text: "The sprite slot will become transparent. Later IDs stay unchanged.\nObjects referencing this ID will display an empty sprite.\nUnused cleared sprites at the end of the file are removed."
         }
         onAccepted: Backend.removeSprite(win.selectedSprite)
     }

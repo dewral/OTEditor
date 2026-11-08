@@ -116,6 +116,40 @@ private slots:
     QCOMPARE(reopened.spriteCount(),originalCount);
     QCOMPARE(reopened.details().value("spriteIds").toList().first().toInt(),0);
  }
+ void clearingTrailingSpritesShrinksSprWithoutShiftingIds() {
+    QTemporaryDir dir; QVERIFY(dir.isValid()); fixture(dir.path());
+    QFile original(dir.path()+"/Tibia.spr"); QVERIFY(original.open(QIODevice::ReadOnly));
+    const QByteArray originalBytes=original.readAll(); original.close();
+    EditorBackend backend; QVERIFY2(backend.openFolder(dir.path(),860),qPrintable(backend.status()));
+    QImage image(32,32,QImage::Format_ARGB32); image.fill(Qt::green);
+    const QString imagePath=dir.path()+"/sprite.png"; QVERIFY(image.save(imagePath));
+    QCOMPARE(backend.addSprite(imagePath),2);
+    QCOMPARE(backend.addSprite(imagePath),3);
+    QVERIFY2(backend.compile(),qPrintable(backend.status()));
+    QCOMPARE(backend.spriteCount(),3);
+    QVERIFY(backend.removeSprite(2));
+    QCOMPARE(backend.spriteCount(),3);
+    QVERIFY(backend.removeSprite(3));
+    QCOMPARE(backend.spriteCount(),1);
+    QVERIFY(backend.removeSprite(1));
+    QCOMPARE(backend.spriteCount(),1);
+    QVERIFY2(backend.compile(),qPrintable(backend.status()));
+    EditorBackend reopened; QVERIFY(reopened.openFolder(dir.path(),860));
+    QCOMPARE(reopened.spriteCount(),1);
+    QCOMPARE(reopened.addSprite(imagePath),2);
+    QVERIFY(reopened.assignSprite(0,2));
+    QVERIFY(reopened.removeSprite(2));
+    QCOMPARE(reopened.spriteCount(),2);
+
+    QTemporaryDir untouched; QVERIFY(untouched.isValid()); fixture(untouched.path());
+    EditorBackend roundTrip; QVERIFY(roundTrip.openFolder(untouched.path(),860));
+    QCOMPARE(roundTrip.addSprite(imagePath),2);
+    QVERIFY2(roundTrip.compile(),qPrintable(roundTrip.status()));
+    QVERIFY(roundTrip.removeSprite(2));
+    QVERIFY2(roundTrip.compile(),qPrintable(roundTrip.status()));
+    QFile saved(untouched.path()+"/Tibia.spr"); QVERIFY(saved.open(QIODevice::ReadOnly));
+    QCOMPARE(saved.readAll(),originalBytes);
+ }
  void droppedOutfitSheetPreservesOtherGroupsAndAcceptsCombinedSheet() {
     QTemporaryDir dir; QVERIFY(dir.isValid());
     quint32 signature=0;

@@ -1057,6 +1057,10 @@ int EditorBackend::addSprite(const QString &fileUrl){
 }
 bool EditorBackend::removeSprite(int spriteId){
     if(!loaded())return false;const bool ok=m_project.sprites()->removeSprite(spriteId);
-    if(ok){++m_revision;emit changed();message(QString("Sprite %1 cleared; IDs were not shifted").arg(spriteId));}
-    return ok;
+    if(!ok)return false;
+    const int trimmed=m_project.sprites()->trimClearedTail(m_project.dat()->usedSpriteIds());
+    ++m_revision;emit changed();
+    if(trimmed)message(QString("Sprite %1 cleared; %2 unused sprite(s) removed from the end of the file").arg(spriteId).arg(trimmed));
+    else message(QString("Sprite %1 cleared; IDs were not shifted").arg(spriteId));
+    return true;
 }
