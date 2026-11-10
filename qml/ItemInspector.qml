@@ -23,7 +23,7 @@ Item {
             if(selectedKey.length && Object.keys(changes).length) pendingDrafts[selectedKey]=changes
             selectedKey=key
             changes=pendingDrafts[key] || ({})
-            previewFrame=0; outfitGroup=0; outfitLayer=0; outfitDirection=2; animate=false
+            previewFrame=0; outfitGroup=0; outfitLayer=0; outfitAddon=0; outfitMount=0; outfitDirection=2; animate=false
             Qt.callLater(function() { if (textureScroll.contentItem) textureScroll.contentItem.contentY=0 })
         }
         draft=Object.assign({},Backend.details,changes)
@@ -41,6 +41,8 @@ Item {
     property int outfitGroup: 0
     property int outfitLayer: 0
     property int outfitDirection: 2
+    property int outfitAddon: 0
+    property int outfitMount: 0
     readonly property var activeFrameGroup: inspector.isOutfit && inspector.draft.frameGroups && inspector.draft.frameGroups.length
         ? inspector.draft.frameGroups[Math.min(inspector.outfitGroup,inspector.draft.frameGroups.length-1)] : inspector.draft
     readonly property var savedFrameGroup: inspector.isOutfit && Backend.details.frameGroups && Backend.details.frameGroups.length
@@ -52,7 +54,11 @@ Item {
     readonly property int savedPatternCount: Math.max(1,Number(inspector.savedFrameGroup.patternX||1))*Math.max(1,Number(inspector.savedFrameGroup.patternY||1))*Math.max(1,Number(inspector.savedFrameGroup.patternZ||1))
     readonly property real patternCellWidth: Math.max(1,Number(inspector.activeFrameGroup.itemWidth)||1)*inspector.spriteSize*inspector.textureZoom
     readonly property real patternCellHeight: Math.max(1,Number(inspector.activeFrameGroup.itemHeight)||1)*inspector.spriteSize*inspector.textureZoom
-    readonly property int outfitPattern: inspector.isOutfit ? Math.min(inspector.outfitDirection,Math.max(0,Number(inspector.activeFrameGroup.patternX||1)-1)) : 0
+    readonly property int outfitPatternY: Math.max(1,Number(inspector.activeFrameGroup.patternY||1))
+    readonly property int outfitPatternZ: Math.max(1,Number(inspector.activeFrameGroup.patternZ||1))
+    readonly property int outfitPattern: inspector.isOutfit
+        ? (Math.min(inspector.outfitMount,inspector.outfitPatternZ-1)*inspector.outfitPatternY+Math.min(inspector.outfitAddon,inspector.outfitPatternY-1))*inspector.patternColumns
+          +Math.min(inspector.outfitDirection,inspector.patternColumns-1) : 0
     property bool cropVisible: false
     property bool gridVisible: true
     property bool filmVisible: false
@@ -536,7 +542,7 @@ Item {
                                 Slider {
                                     from: 0; to: Math.max(0,Number(inspector.draft.frameGroupCount||1)-1); stepSize: 1
                                     value: inspector.outfitGroup; Layout.preferredWidth: 100
-                                    onMoved: { inspector.outfitGroup=Math.round(value); inspector.outfitLayer=0; inspector.previewFrame=0 }
+                                    onMoved: { inspector.outfitGroup=Math.round(value); inspector.outfitLayer=0; inspector.outfitAddon=0; inspector.outfitMount=0; inspector.previewFrame=0 }
                                 }
                                 Label { text: inspector.outfitGroup===0 ? "Idle / Stand" : "Walking"; color: Colors.text; Layout.preferredWidth: 75 }
                             }
@@ -550,6 +556,28 @@ Item {
                                     onMoved: inspector.outfitLayer=Math.round(value)
                                 }
                                 Label { text: (inspector.outfitLayer+1)+"/"+(inspector.activeFrameGroup.layers||1); color: Colors.text; Layout.preferredWidth: 75 }
+                            }
+                            RowLayout {
+                                visible: inspector.isOutfit && inspector.outfitPatternY>1
+                                Layout.alignment: Qt.AlignRight
+                                Label { text: "Addons:"; color: Colors.muted }
+                                Slider {
+                                    from: 0; to: inspector.outfitPatternY-1; stepSize: 1
+                                    value: inspector.outfitAddon; Layout.preferredWidth: 100
+                                    onMoved: inspector.outfitAddon=Math.round(value)
+                                }
+                                Label { text: (inspector.outfitAddon+1)+"/"+inspector.outfitPatternY; color: Colors.text; Layout.preferredWidth: 75 }
+                            }
+                            RowLayout {
+                                visible: inspector.isOutfit && inspector.outfitPatternZ>1
+                                Layout.alignment: Qt.AlignRight
+                                Label { text: "Mount:"; color: Colors.muted }
+                                Slider {
+                                    from: 0; to: inspector.outfitPatternZ-1; stepSize: 1
+                                    value: inspector.outfitMount; Layout.preferredWidth: 100
+                                    onMoved: inspector.outfitMount=Math.round(value)
+                                }
+                                Label { text: (inspector.outfitMount+1)+"/"+inspector.outfitPatternZ; color: Colors.text; Layout.preferredWidth: 75 }
                             }
                             Toggle { text: "Show Crop Size"; implicitHeight: 24; Layout.maximumHeight: 24; checked: inspector.cropVisible; onClicked: inspector.cropVisible=checked }
                             Toggle { text: "Show Grid"; implicitHeight: 24; Layout.maximumHeight: 24; checked: inspector.gridVisible; onClicked: inspector.gridVisible=checked }
