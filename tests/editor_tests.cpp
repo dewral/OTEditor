@@ -116,6 +116,40 @@ private slots:
     QCOMPARE(reopened.spriteCount(),originalCount);
     QCOMPARE(reopened.details().value("spriteIds").toList().first().toInt(),0);
  }
+ void clearingTrailingSpritesShrinksSprWithoutShiftingIds() {
+    QTemporaryDir dir; QVERIFY(dir.isValid()); fixture(dir.path());
+    QFile original(dir.path()+"/Tibia.spr"); QVERIFY(original.open(QIODevice::ReadOnly));
+    const QByteArray originalBytes=original.readAll(); original.close();
+    EditorBackend backend; QVERIFY2(backend.openFolder(dir.path(),860),qPrintable(backend.status()));
+    QImage image(32,32,QImage::Format_ARGB32); image.fill(Qt::green);
+    const QString imagePath=dir.path()+"/sprite.png"; QVERIFY(image.save(imagePath));
+    QCOMPARE(backend.addSprite(imagePath),2);
+    QCOMPARE(backend.addSprite(imagePath),3);
+    QVERIFY2(backend.compile(),qPrintable(backend.status()));
+    QCOMPARE(backend.spriteCount(),3);
+    QVERIFY(backend.removeSprite(2));
+    QCOMPARE(backend.spriteCount(),3);
+    QVERIFY(backend.removeSprite(3));
+    QCOMPARE(backend.spriteCount(),1);
+    QVERIFY(backend.removeSprite(1));
+    QCOMPARE(backend.spriteCount(),1);
+    QVERIFY2(backend.compile(),qPrintable(backend.status()));
+    EditorBackend reopened; QVERIFY(reopened.openFolder(dir.path(),860));
+    QCOMPARE(reopened.spriteCount(),1);
+    QCOMPARE(reopened.addSprite(imagePath),2);
+    QVERIFY(reopened.assignSprite(0,2));
+    QVERIFY(reopened.removeSprite(2));
+    QCOMPARE(reopened.spriteCount(),2);
+
+    QTemporaryDir untouched; QVERIFY(untouched.isValid()); fixture(untouched.path());
+    EditorBackend roundTrip; QVERIFY(roundTrip.openFolder(untouched.path(),860));
+    QCOMPARE(roundTrip.addSprite(imagePath),2);
+    QVERIFY2(roundTrip.compile(),qPrintable(roundTrip.status()));
+    QVERIFY(roundTrip.removeSprite(2));
+    QVERIFY2(roundTrip.compile(),qPrintable(roundTrip.status()));
+    QFile saved(untouched.path()+"/Tibia.spr"); QVERIFY(saved.open(QIODevice::ReadOnly));
+    QCOMPARE(saved.readAll(),originalBytes);
+ }
  void droppedOutfitSheetPreservesOtherGroupsAndAcceptsCombinedSheet() {
     QTemporaryDir dir; QVERIFY(dir.isValid());
     quint32 signature=0;
@@ -748,6 +782,25 @@ private slots:
     QVERIFY(reopened.serverAttributes().value("useable").toBool());
     QVERIFY(!reopened.serverAttributes().value("alwaysOnTop").toBool());
  }
+ void unchangedOtbSavesIdenticalBytes() {
+    QTemporaryDir dir; QVERIFY(dir.isValid());
+    QByteArray bytes=QByteArray::fromHex("00000000" "fe" "00" "00000000" "010c00" "03000000" "13000000" "01000000");
+    bytes.append(QByteArray::fromHex("fe" "01" "00000000" "10020064 00" "11020064 00" "14020000 00" "ff"));
+    bytes.append(QByteArray::fromHex("fe" "0e" "00000000" "10020065 00" "ff"));
+    bytes.append(char(0xff));
+    const QString source=dir.filePath("items.otb");
+    QFile sourceFile(source); QVERIFY(sourceFile.open(QIODevice::WriteOnly)); sourceFile.write(bytes); sourceFile.close();
+    OtbReader otb; QVERIFY2(otb.loadFile(source),qPrintable(otb.errorString()));
+    QCOMPARE(otb.itemCount(),2);
+    const QString saved=dir.filePath("saved.otb");
+    QVERIFY2(otb.saveCopy(saved),qPrintable(otb.errorString()));
+    QFile savedFile(saved); QVERIFY(savedFile.open(QIODevice::ReadOnly));
+    QCOMPARE(savedFile.readAll().toHex(),bytes.toHex()); savedFile.close();
+    QVERIFY(otb.setValue(1,"speed",7));
+    QVERIFY2(otb.saveCopy(saved),qPrintable(otb.errorString()));
+    QVERIFY(savedFile.open(QIODevice::ReadOnly));
+    QVERIFY(savedFile.readAll().toHex().contains("10020065001402000700ff"));
+ }
  void realOtbCompatibility_data() {
     QTest::addColumn<QString>("source");
     const QStringList paths = qEnvironmentVariable("OTE_TEST_OTB_FILES").split(';', Qt::SkipEmptyParts);
@@ -766,6 +819,9 @@ private slots:
     for (int row = 0; row < original.itemCount(); ++row) expected.append(original.detailsAt(row));
     const QString saved = output.filePath("roundtrip.otb");
     QVERIFY2(original.saveCopy(saved), qPrintable(original.errorString()));
+    QFile sourceFile(source), savedFile(saved);
+    QVERIFY(sourceFile.open(QIODevice::ReadOnly) && savedFile.open(QIODevice::ReadOnly));
+    QVERIFY2(savedFile.readAll() == sourceFile.readAll(), qPrintable(source + ": unchanged OTB was not saved byte-for-byte"));
     OtbReader reopened;
     QVERIFY2(reopened.loadFile(saved), qPrintable(reopened.errorString()));
     QCOMPARE(reopened.majorVersion(), original.majorVersion());

@@ -5,6 +5,7 @@
 #include "nodefilereader.h"
 #include <QSaveFile>
 #include <QSignalBlocker>
+#include <algorithm>
 
 namespace {
 
@@ -157,6 +158,14 @@ void replaceAttribute(OtbItem &item, uint8_t type, const QByteArray &payload, bo
     }
     if (!removeEmpty || !payload.isEmpty())
         item.raw_attributes.append(qMakePair(type, payload));
+}
+
+void writeNumericAttribute(OtbItem &item, uint8_t type, const QByteArray &payload)
+{
+    const bool present = std::any_of(item.raw_attributes.cbegin(), item.raw_attributes.cend(),
+                                     [type](const auto &attribute) { return attribute.first == type; });
+    const bool zero = std::all_of(payload.cbegin(), payload.cend(), [](char byte) { return byte == 0; });
+    if (present || !zero) replaceAttribute(item, type, payload);
 }
 
 void addRow(QVariantList &rows, const QString &name, const QVariant &value)
@@ -775,19 +784,19 @@ bool OtbReader::writeFile(const QString &target)
 
     for (OtbItem &item : m_items) {
         replaceAttribute(item, 0x10, u16Payload(item.server_id));
-        replaceAttribute(item, 0x11, u16Payload(item.client_id));
+        writeNumericAttribute(item, 0x11, u16Payload(item.client_id));
         replaceAttribute(item, 0x12, item.name.isEmpty() ? QByteArray() : stringPayload(item.name), true);
         replaceAttribute(item, 0x13, item.description.isEmpty() ? QByteArray() : stringPayload(item.description), true);
-        replaceAttribute(item, 0x14, u16Payload(item.speed));
-        replaceAttribute(item, 0x21, u16Payload(item.minimap_color));
-        replaceAttribute(item, 0x22, u16Payload(item.max_read_write_length));
-        replaceAttribute(item, 0x23, u16Payload(item.max_read_length));
-        replaceAttribute(item, 0x2d, u16Payload(item.ware_id));
+        writeNumericAttribute(item, 0x14, u16Payload(item.speed));
+        writeNumericAttribute(item, 0x21, u16Payload(item.minimap_color));
+        writeNumericAttribute(item, 0x22, u16Payload(item.max_read_write_length));
+        writeNumericAttribute(item, 0x23, u16Payload(item.max_read_length));
+        writeNumericAttribute(item, 0x2d, u16Payload(item.ware_id));
         QByteArray light;
         appendU16(light, item.light_level);
         appendU16(light, item.light_color);
-        replaceAttribute(item, 0x2a, light);
-        replaceAttribute(item, 0x2b, QByteArray(1, static_cast<char>(item.stack_order)));
+        writeNumericAttribute(item, 0x2a, light);
+        writeNumericAttribute(item, 0x2b, QByteArray(1, static_cast<char>(item.stack_order)));
 
         QByteArray node;
         node.append(static_cast<char>(item.group));
