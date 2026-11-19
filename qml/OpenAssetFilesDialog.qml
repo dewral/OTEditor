@@ -34,7 +34,28 @@ Dialog {
             loadTransparency.checked = Boolean(previewData.transparency);
         }
     }
-    onOpened: refreshPreview()
+    function restoreSaved() {
+        let saved = backend.lastOpenSettings();
+        if (saved.folder === undefined)
+            return;
+        folderPath.text = saved.folder;
+        serverFolderPath.text = saved.serverFolder;
+        let index = loadVersion.model.findIndex(label => Number(label.replace(".", "")) === saved.version);
+        if (index >= 0)
+            loadVersion.currentIndex = index;
+        loadTransparency.checked = saved.transparency;
+        dimensionOverride = saved.spriteSize;
+    }
+    function browse(dialog, currentPath) {
+        let start = backend.folderUrl(currentPath);
+        if (start.toString().length > 0)
+            dialog.currentFolder = start;
+        dialog.open();
+    }
+    onOpened: {
+        restoreSaved();
+        refreshPreview();
+    }
     ColumnLayout {
         anchors.fill: parent
         spacing: 9
@@ -45,6 +66,7 @@ Dialog {
             Layout.fillWidth: true
             TextField {
                 id: folderPath
+                objectName: "clientFolder"
                 Layout.fillWidth: true
                 placeholderText: "Folder with Tibia.dat and Tibia.spr"
                 selectByMouse: true
@@ -52,7 +74,7 @@ Dialog {
             }
             Button {
                 text: "Browse"
-                onClicked: folderDialog.open()
+                onClicked: loadDialog.browse(folderDialog, folderPath.text)
             }
         }
         Label {
@@ -70,7 +92,7 @@ Dialog {
             }
             Button {
                 text: "Browse"
-                onClicked: serverFolderDialog.open()
+                onClicked: loadDialog.browse(serverFolderDialog, serverFolderPath.text)
             }
             Button {
                 text: "Clear"
@@ -100,6 +122,7 @@ Dialog {
                 anchors.fill: parent
                 ComboBox {
                     id: loadVersion
+                    objectName: "loadVersion"
                     Layout.fillWidth: true
                     model: ["13.10", "12.00", "10.99", "10.98", "10.95", "10.94", "10.93", "10.57", "10.50", "10.10", "9.60", "8.60", "8.00", "7.80", "7.72"]
                     currentIndex: 3
@@ -280,7 +303,7 @@ Dialog {
                 text: "Load"
                 enabled: Boolean(loadDialog.previewData.ok)
                 onClicked: {
-                    if (backend.openFolder(folderPath.text, loadVersion.selectedVersion, loadTransparency.checked, serverFolderPath.text, loadDialog.dimensionOverride)) {
+                    if (backend.openFolderFromDialog(folderPath.text, loadVersion.selectedVersion, loadTransparency.checked, serverFolderPath.text, loadDialog.dimensionOverride)) {
                         owner.frame = 0;
                         owner.pattern = 0;
                         owner.selectedSprite = 0;

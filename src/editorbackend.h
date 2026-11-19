@@ -4,6 +4,7 @@
 #include <QQuickImageProvider>
 #include <QSet>
 #include <QColor>
+#include <QUrl>
 #include <memory>
 #include <optional>
 
@@ -106,6 +107,10 @@ public:
     Q_INVOKABLE void copyId(bool server=false);
     Q_INVOKABLE bool openFolder(const QString &url, int version, bool alpha=false,
                                const QString &serverFolder=QString(), int spriteSizeOverride=0);
+    Q_INVOKABLE bool openFolderFromDialog(const QString &url, int version, bool alpha=false,
+                                          const QString &serverFolder=QString(), int spriteSizeOverride=0);
+    Q_INVOKABLE QVariantMap lastOpenSettings() const;
+    Q_INVOKABLE QUrl folderUrl(const QString &path) const;
     Q_INVOKABLE QString localPath(const QString &url) const;
     Q_INVOKABLE bool openNewWindow() const;
     Q_INVOKABLE int mergeProject(const QString &folderUrl, int version=0);

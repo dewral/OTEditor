@@ -1,6 +1,8 @@
 #include <QtTest>
 #include <QJSValue>
 #include <QTemporaryDir>
+#include <QSettings>
+#include <QStandardPaths>
 #include <QDataStream>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
@@ -35,7 +37,43 @@ private:
     for(int i=0;i<1024;++i)s<<quint8(230)<<quint8(90)<<quint8(20);
  }
 private slots:
- void initTestCase() { QQuickStyle::setStyle("Basic"); }
+ void initTestCase() { QQuickStyle::setStyle("Basic"); QStandardPaths::setTestModeEnabled(true); }
+ void rememberedOpenSettingsAreSavedOnlyAfterDialogLoad() {
+    QSettings().remove("open");
+    QTemporaryDir client;QVERIFY(client.isValid());fixture(client.path());QTemporaryDir server;QVERIFY(server.isValid());
+    EditorBackend backend;QVERIFY(backend.lastOpenSettings().isEmpty());
+    QVERIFY2(backend.openFolder(client.path(),860),qPrintable(backend.status()));QVERIFY(backend.lastOpenSettings().isEmpty());
+    QVERIFY2(backend.openFolderFromDialog(QUrl::fromLocalFile(client.path()).toString(),860,false,server.path(),64),qPrintable(backend.status()));
+    QVariantMap saved=backend.lastOpenSettings();
+    QCOMPARE(saved.value("folder").toString(),client.path());QCOMPARE(saved.value("serverFolder").toString(),server.path());
+    QCOMPARE(saved.value("version").toInt(),860);QCOMPARE(saved.value("transparency").toBool(),false);QCOMPARE(saved.value("spriteSize").toInt(),64);
+    QVERIFY(!backend.openFolderFromDialog(client.path()+"/missing",1098,true));QCOMPARE(backend.lastOpenSettings(),saved);
+    QVERIFY2(backend.openFolderFromDialog(client.path(),860),qPrintable(backend.status()));
+    QCOMPARE(backend.lastOpenSettings().value("serverFolder").toString(),QString());QCOMPARE(backend.lastOpenSettings().value("spriteSize").toInt(),0);
+    QSettings().remove("open");
+ }
+ void openDialogRestoresRememberedSettings() {
+    QSettings().remove("open");
+    QTemporaryDir client;QVERIFY(client.isValid());fixture(client.path());EditorBackend backend;
+    QVERIFY2(backend.openFolderFromDialog(client.path(),860,false,client.path()),qPrintable(backend.status()));
+    QQmlApplicationEngine engine;engine.rootContext()->setContextProperty("Backend",&backend);
+    engine.rootContext()->setContextProperty("AiSprites", new AiSpriteService(AiSpriteService::Timing{}, false, &engine));
+    engine.rootContext()->setContextProperty("Updater", new UpdateService(&backend, &engine));
+    engine.addImageProvider("itempreview",new EditorImageProvider(&backend));
+    engine.load(QUrl::fromLocalFile(QStringLiteral(QT_TESTCASE_SOURCEDIR "/qml/Main.qml")));
+    QVERIFY(!engine.rootObjects().isEmpty());auto root=engine.rootObjects().first();
+    auto dialog=root->findChild<QObject *>("loadDialog");QVERIFY(dialog);
+    auto clientField=root->findChild<QObject *>("clientFolder");QVERIFY(clientField);
+    QVERIFY(QMetaObject::invokeMethod(dialog,"open"));QTRY_VERIFY(dialog->property("visible").toBool());
+    QCOMPARE(clientField->property("text").toString(),client.path());
+    QCOMPARE(root->findChild<QObject *>("serverFilesFolder")->property("text").toString(),client.path());
+    QCOMPARE(root->findChild<QObject *>("loadVersion")->property("currentText").toString(),QString("8.60"));
+    clientField->setProperty("text",QStringLiteral("/somewhere/else"));
+    QVERIFY(QMetaObject::invokeMethod(dialog,"close"));QTRY_VERIFY(!dialog->property("visible").toBool());
+    QVERIFY(QMetaObject::invokeMethod(dialog,"open"));QTRY_VERIFY(dialog->property("visible").toBool());
+    QCOMPARE(clientField->property("text").toString(),client.path());
+    QSettings().remove("open");
+ }
  void droppedImageDetectsItemSizeAndTargetsSpriteCell() {
     QTemporaryDir dir; QVERIFY(dir.isValid()); fixture(dir.path());
     EditorBackend backend; QVERIFY2(backend.openFolder(dir.path(),860),qPrintable(backend.status()));

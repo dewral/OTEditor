@@ -7,6 +7,7 @@
 #include <QDataStream>
 #include <QDateTime>
 #include <QUrl>
+#include <QSettings>
 #include <QClipboard>
 #include <QGuiApplication>
 #include <QProcess>
@@ -122,6 +123,27 @@ bool EditorBackend::openFolder(const QString &url,int version,bool alpha,const Q
                 .arg(spriteCount())
                 .arg(m_project.otbLoaded()?QStringLiteral(" • OTB"):QString())
                 .arg(m_project.itemsXmlLoaded()?QStringLiteral(" • items.xml"):QString()));return true;
+}
+bool EditorBackend::openFolderFromDialog(const QString &url,int version,bool alpha,const QString &serverFolder,int spriteSizeOverride) {
+    if(!openFolder(url,version,alpha,serverFolder,spriteSizeOverride))return false;
+    QSettings settings;
+    settings.setValue("open/folder",path(url));settings.setValue("open/serverFolder",path(serverFolder));
+    settings.setValue("open/version",version);settings.setValue("open/transparency",alpha);
+    settings.setValue("open/spriteSize",spriteSizeOverride);
+    return true;
+}
+QVariantMap EditorBackend::lastOpenSettings() const {
+    QSettings settings;
+    if(!settings.contains("open/folder"))return {};
+    return {{"folder",settings.value("open/folder").toString()},
+            {"serverFolder",settings.value("open/serverFolder").toString()},
+            {"version",settings.value("open/version").toInt()},
+            {"transparency",settings.value("open/transparency").toBool()},
+            {"spriteSize",settings.value("open/spriteSize").toInt()}};
+}
+QUrl EditorBackend::folderUrl(const QString &folder) const {
+    const QString local=path(folder);
+    return !local.isEmpty()&&QDir(local).exists()?QUrl::fromLocalFile(QDir(local).absolutePath()):QUrl();
 }
 QVariantMap EditorBackend::inspectFolder(const QString &url,int version,bool alpha,const QString &serverFolder,int spriteSizeOverride) {
     if (url.isEmpty()) return {};
